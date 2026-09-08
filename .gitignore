@@ -1,0 +1,24 @@
+# Planning/design docs — kept in the repo for reference in Android Studio,
+# not meant to be pushed to GitHub
+docs/
+
+# Android Studio / IntelliJ project files
+.idea/
+
+# Gradle / Android build outputs
+.gradle/
+build/
+app/build/
+app/release/
+local.properties
+*.apk
+*.aab
+captures/
+.cxx/
+app/schemas/
+
+# Local signing (kept off git — release signing is deferred per-project decision)
+*.jks
+*.keystore
+keystore.properties
+
