@@ -7,6 +7,7 @@ import dev.kumbuka.app.data.local.KumbukaDatabase
 import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
+import dev.kumbuka.app.data.repository.PackRepository
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
@@ -24,6 +25,9 @@ class KumbukaApplication : Application() {
     val deadlineRepository: DeadlineRepository by lazy { DeadlineRepository(database.deadlineDao()) }
     val assessmentMarkRepository: AssessmentMarkRepository by lazy {
         AssessmentMarkRepository(database.assessmentMarkDao())
+    }
+    val packRepository: PackRepository by lazy {
+        PackRepository(database, unitRepository, topicRepository, deadlineRepository)
     }
 
     val preferences: AppPreferences by lazy { AppPreferences(dataStore) }

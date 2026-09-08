@@ -46,4 +46,55 @@
 
     <!-- Home placeholder (real Today screen lands in a later phase) -->
     <string name="home_placeholder_title">Today\'s review list lands here</string>
+    <string name="home_browse_units">Browse units</string>
+
+    <!-- Phase 3: packs -->
+    <string name="generic_back">Back</string>
+    <string name="units_list_title">Units</string>
+    <string name="units_list_subtitle">Imported packs show up here with their topics underneath.</string>
+    <string name="units_empty_title">No units yet</string>
+    <string name="units_empty_body">Import a Course Pack or start building one from the unit list.</string>
+    <string name="import_pack_cta">Import pack</string>
+    <string name="unit_pack_version">Pack version %1$d • %2$s</string>
+    <string name="unit_pack_id_missing">unassigned pack id</string>
+    <string name="unit_export_pack">Export pack</string>
+    <string name="unit_no_topics">No topics have been imported for this unit yet.</string>
+    <string name="unit_more_topics">+%1$d more topics</string>
+    <string name="topic_detail_cta">Open</string>
+    <string name="topic_detail_title">Topic detail</string>
+    <string name="topic_not_found">That topic could not be found.</string>
+    <string name="topic_unit_unknown">Unknown unit</string>
+    <string name="topic_weight_label">Weight %1$.2f • %2$s</string>
+    <string name="topic_edited_by_you">edited by you</string>
+    <string name="topic_from_pack">from pack</string>
+    <string name="topic_objective_label">Objective</string>
+    <string name="topic_retrieval_prompt_label">Retrieval prompt</string>
+    <string name="topic_retrieval_prompt_empty">No retrieval prompt in this pack yet.</string>
+    <string name="topic_resources_label">Resource pointers</string>
+    <string name="topic_save_objective">Save objective</string>
+    <string name="import_pack_title">Import Course Pack</string>
+    <string name="import_pick_file">Pick file</string>
+    <string name="import_pack_step_0">Step 0 — add a pack file or paste the JSON</string>
+    <string name="import_pack_step_0_body">WhatsApp and email often deliver packs as text, so the importer accepts both a file and pasted JSON.</string>
+    <string name="import_paste_label">Pack JSON</string>
+    <string name="import_parse">Preview</string>
+    <string name="import_parse_failed">Could not parse that Course Pack.</string>
+    <string name="import_pack_step_1">Step 1 — preview the merge</string>
+    <string name="import_pack_metadata">Pack %1$s • version %2$d</string>
+    <string name="import_added_topics">Topics to add</string>
+    <string name="import_changed_topics">Topics to update</string>
+    <string name="import_conflicted_topics">Topics with local edits</string>
+    <string name="import_removed_topics">Topics missing from pack</string>
+    <string name="import_added_deadlines">Deadlines to add</string>
+    <string name="import_changed_deadlines">Deadlines to update</string>
+    <string name="import_removed_deadlines">Deadlines missing from pack</string>
+    <string name="import_preview_note">Removed topics are counted for visibility; later phases add the explicit review flow for deletions and field conflicts.</string>
+    <string name="import_apply">Import now</string>
+    <string name="import_complete_message">Imported %1$d topics, updated %2$d, with %3$d local conflicts preserved.</string>
+    <string name="export_pack_title">Export Course Pack</string>
+    <string name="export_loading">Preparing export…</string>
+    <string name="export_failed">Could not build an export file.</string>
+    <string name="export_body">Copy the JSON below and share it as a `.coursepack` file or as pasted text.</string>
+    <string name="export_json_label">Course Pack JSON</string>
+    <string name="export_copy">Copy JSON</string>
 </resources>

@@ -6,14 +6,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import dev.kumbuka.app.data.prefs.AppPreferences
+import dev.kumbuka.app.KumbukaApplication
 import dev.kumbuka.app.ui.screens.auth.LoginScreen
 import dev.kumbuka.app.ui.screens.consent.ConsentScreen
 import dev.kumbuka.app.ui.screens.home.HomePlaceholderScreen
 import dev.kumbuka.app.ui.screens.onboarding.OnboardingScreen
+import dev.kumbuka.app.ui.screens.packs.ExportPackScreen
+import dev.kumbuka.app.ui.screens.packs.ImportPackScreen
+import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
+import dev.kumbuka.app.ui.screens.packs.UnitsListScreen
 import dev.kumbuka.app.ui.screens.splash.SplashScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -24,6 +30,13 @@ object KbRoute {
     const val CONSENT = "consent"
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
+    const val UNITS = "units"
+    const val IMPORT_PACK = "import-pack"
+    const val TOPIC_DETAIL = "topic/{topicId}"
+    const val EXPORT_PACK = "export-pack/{unitId}"
+
+    fun topicDetail(topicId: String) = "topic/$topicId"
+    fun exportPack(unitId: String) = "export-pack/$unitId"
 }
 
 /**
@@ -33,7 +46,8 @@ object KbRoute {
  * returning user skips straight to Home.
  */
 @Composable
-fun KumbukaNavGraph(preferences: AppPreferences, navController: NavHostController = rememberNavController()) {
+fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = rememberNavController()) {
+    val preferences = app.preferences
     val language by preferences.language.collectAsState(initial = "en")
     val onboardingComplete by preferences.onboardingComplete.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
@@ -80,7 +94,45 @@ fun KumbukaNavGraph(preferences: AppPreferences, navController: NavHostControlle
             )
         }
         composable(KbRoute.HOME) {
-            HomePlaceholderScreen()
+            HomePlaceholderScreen(onBrowseUnits = { navController.navigate(KbRoute.UNITS) })
+        }
+        composable(KbRoute.UNITS) {
+            UnitsListScreen(
+                unitRepository = app.unitRepository,
+                topicRepository = app.topicRepository,
+                onBack = { navController.popBackStack() },
+                onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
+                onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
+                onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
+            )
+        }
+        composable(KbRoute.IMPORT_PACK) {
+            ImportPackScreen(
+                packRepository = app.packRepository,
+                onBack = { navController.popBackStack() },
+                onImported = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = KbRoute.TOPIC_DETAIL,
+            arguments = listOf(navArgument("topicId") { type = NavType.StringType }),
+        ) { entry ->
+            TopicDetailScreen(
+                topicRepository = app.topicRepository,
+                unitRepository = app.unitRepository,
+                topicId = requireNotNull(entry.arguments?.getString("topicId")),
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = KbRoute.EXPORT_PACK,
+            arguments = listOf(navArgument("unitId") { type = NavType.StringType }),
+        ) { entry ->
+            ExportPackScreen(
+                packRepository = app.packRepository,
+                unitId = requireNotNull(entry.arguments?.getString("unitId")),
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
             val language by app.preferences.language.collectAsState(initial = "en")
             KumbukaTheme {
                 Localized(languageCode = language) {
-                    KumbukaNavGraph(preferences = app.preferences)
+                    KumbukaNavGraph(app = app)
                 }
             }
         }
