@@ -61,14 +61,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
+import dev.kumbuka.app.data.repository.PackChangeKind
+import dev.kumbuka.app.data.repository.PackDiff
+import dev.kumbuka.app.data.repository.PackImportResolution
 import dev.kumbuka.app.data.repository.PackImportPreview
 import dev.kumbuka.app.data.repository.PackRepository
+import dev.kumbuka.app.data.repository.TopicConflictChoice
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
 import dev.kumbuka.app.domain.model.Topic
 import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.pack.CoursePack
-import dev.kumbuka.app.pack.CoursePackCodec
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbSecondaryButton
 import dev.kumbuka.app.ui.theme.KbColors
@@ -85,6 +88,7 @@ fun UnitsListScreen(
     topicRepository: TopicRepository,
     onBack: () -> Unit,
     onImportPack: () -> Unit,
+    onCreateUnit: () -> Unit,
     onOpenTopic: (String) -> Unit,
     onExportUnit: (String) -> Unit,
 ) {
@@ -100,6 +104,9 @@ fun UnitsListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onCreateUnit) {
+                        Icon(Icons.Outlined.AddCircleOutline, contentDescription = stringResource(R.string.author_start_cta))
+                    }
                     IconButton(onClick = onImportPack) {
                         Icon(Icons.Outlined.UploadFile, contentDescription = stringResource(R.string.import_pack_title))
                     }
@@ -402,6 +409,9 @@ fun ImportPackScreen(
     var rawInput by remember { mutableStateOf("") }
     var parsedPack by remember { mutableStateOf<CoursePack?>(null) }
     var preview by remember { mutableStateOf<PackImportPreview?>(null) }
+    var diff by remember { mutableStateOf<PackDiff?>(null) }
+    var resolution by remember { mutableStateOf(PackImportResolution()) }
+    var showDiff by remember { mutableStateOf(false) }
     var parseError by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
 
@@ -412,6 +422,9 @@ fun ImportPackScreen(
                 parseError = null
                 parsedPack = null
                 preview = null
+                diff = null
+                resolution = PackImportResolution()
+                showDiff = false
             }
         }
     }
@@ -419,9 +432,15 @@ fun ImportPackScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.import_pack_title)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (showDiff) R.string.diff_title else R.string.import_pack_title,
+                        ),
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { if (showDiff) showDiff = false else onBack() }) {
                         Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
                     }
                 },
@@ -435,6 +454,57 @@ fun ImportPackScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = KbColors.paper,
     ) { innerPadding ->
+        if (showDiff && parsedPack != null && diff != null) {
+            PackDiffScreen(
+                diff = diff!!,
+                resolution = resolution,
+                onConflictChoice = { topicId, choice ->
+                    resolution = resolution.copy(
+                        topicConflictChoices = resolution.topicConflictChoices.toMutableMap().apply {
+                            this[topicId] = choice
+                        },
+                    )
+                },
+                onTopicRemovalChoice = { topicId, choice ->
+                    resolution = resolution.copy(
+                        topicRemovalChoices = resolution.topicRemovalChoices.toMutableMap().apply {
+                            this[topicId] = choice
+                        },
+                    )
+                },
+                onDeadlineRemovalChoice = { deadlineId, choice ->
+                    resolution = resolution.copy(
+                        deadlineRemovalChoices = resolution.deadlineRemovalChoices.toMutableMap().apply {
+                            this[deadlineId] = choice
+                        },
+                    )
+                },
+                onBack = { showDiff = false },
+                onApply = {
+                    scope.launch {
+                        busy = true
+                        try {
+                            val result = packRepository.importPack(parsedPack!!, resolution)
+                            snackbarHostState.showSnackbar(
+                                context.getString(
+                                    R.string.import_complete_message,
+                                    result.topicsToAdd,
+                                    result.topicsToUpdate,
+                                    result.topicsWithConflicts,
+                                ),
+                            )
+                            onImported()
+                        } finally {
+                            busy = false
+                        }
+                    }
+                },
+                busy = busy,
+                modifier = Modifier.padding(innerPadding),
+            )
+            return@Scaffold
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -463,6 +533,9 @@ fun ImportPackScreen(
                         parseError = null
                         parsedPack = null
                         preview = null
+                        diff = null
+                        resolution = PackImportResolution()
+                        showDiff = false
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 10,
@@ -485,14 +558,21 @@ fun ImportPackScreen(
                                 try {
                                     busy = true
                                     val pack = packRepository.parse(rawInput)
-                                    val packPreview = packRepository.previewImport(pack)
+                                    val packDiff = packRepository.buildDiff(pack)
                                     parsedPack = pack
-                                    preview = packPreview
+                                    diff = packDiff
+                                    preview = packDiff.preview
+                                    resolution = PackImportResolution(
+                                        topicConflictChoices = packDiff.topicDiffs
+                                            .filter { it.kind == PackChangeKind.CONFLICTED }
+                                            .associate { it.topicId to TopicConflictChoice.KEEP_LOCAL },
+                                    )
                                     parseError = null
                                 } catch (t: Throwable) {
                                     parseError = t.message ?: context.getString(R.string.import_parse_failed)
                                     parsedPack = null
                                     preview = null
+                                    diff = null
                                 } finally {
                                     busy = false
                                 }
@@ -521,27 +601,11 @@ fun ImportPackScreen(
                 }
                 item {
                     KbPrimaryButton(
-                        text = stringResource(R.string.import_apply),
+                        text = stringResource(R.string.import_review_diff),
                         onClick = {
-                            scope.launch {
-                                busy = true
-                                try {
-                                    val result = packRepository.importPack(parsedPack!!)
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(
-                                            R.string.import_complete_message,
-                                            result.topicsToAdd,
-                                            result.topicsToUpdate,
-                                            result.topicsWithConflicts,
-                                        ),
-                                    )
-                                    onImported()
-                                } finally {
-                                    busy = false
-                                }
-                            }
+                            showDiff = true
                         },
-                        enabled = !busy,
+                        enabled = !busy && diff != null,
                     )
                 }
             }

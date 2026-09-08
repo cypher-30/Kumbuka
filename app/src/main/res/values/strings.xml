@@ -109,9 +109,11 @@
     <string name="diff_failed">Could not build the pack diff.</string>
     <string name="diff_summary_title">Import summary</string>
     <string name="diff_conflict_note">Choose whether Kumbuka should keep your local edit or use the incoming pack value.</string>
-    <string name="diff_removed_note">This topic is missing from the incoming pack. Kumbuka keeps the local row so session history stays intact.</string>
+    <string name="diff_removed_note">This row is missing from the incoming pack. Choose whether to keep it (session history stays intact) or delete it.</string>
     <string name="diff_keep_local">Keep local</string>
     <string name="diff_use_pack">Use pack</string>
+    <string name="diff_keep_row">Keep</string>
+    <string name="diff_delete_row">Delete</string>
     <string name="diff_back_to_preview">Back to preview</string>
     <string name="diff_apply">Apply import</string>
     <string name="diff_no_changes">No changes detected in this pack.</string>
