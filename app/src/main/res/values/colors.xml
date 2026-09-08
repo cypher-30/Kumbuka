@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1B4332</color>
+    <color name="ic_launcher_background">#005860</color>
+
+    <!-- Figma variables kb/primary, kb/paper (node 1:5551) + the app-mark's amber accent -->
+    <color name="kb_primary">#005860</color>
+    <color name="kb_paper">#EFF7F7</color>
+    <color name="kb_accent">#DE9C31</color>
 </resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Kiswahili translation is a work in progress (DESIGN.md §5). The language
+  toggle itself is real - only this file's content is a stub. Any string
+  not yet listed here falls back to values/strings.xml (English) through
+  Android's normal resource resolution, so the toggle never shows blank
+  text, only untranslated text, while translation continues.
+-->
+<resources>
+    <string name="splash_tagline">kumbuka, kwa ratiba</string>
+</resources>

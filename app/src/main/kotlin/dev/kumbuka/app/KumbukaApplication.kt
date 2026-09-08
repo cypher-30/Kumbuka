@@ -1,13 +1,17 @@
 package dev.kumbuka.app
 
 import android.app.Application
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import dev.kumbuka.app.data.local.KumbukaDatabase
+import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
+
+private val android.content.Context.dataStore by preferencesDataStore(name = "kumbuka_prefs")
 
 class KumbukaApplication : Application() {
     val database: KumbukaDatabase by lazy {
@@ -21,4 +25,6 @@ class KumbukaApplication : Application() {
     val assessmentMarkRepository: AssessmentMarkRepository by lazy {
         AssessmentMarkRepository(database.assessmentMarkDao())
     }
+
+    val preferences: AppPreferences by lazy { AppPreferences(dataStore) }
 }

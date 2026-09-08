@@ -3,7 +3,13 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Figma node 1:5551 "app-mark", recentred from its native 52x52 viewBox -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M40,30 L48,30 L48,50 L66,30 L76,30 L56,53 L78,78 L67,78 L48,56 L48,78 L40,78 Z" />
+        android:pathData="M32.875,65.375C42.625,65.375 44.25,44.25 54,44.25C63.75,44.25 65.375,65.375 75.125,65.375"
+        android:strokeColor="#DE9C31"
+        android:strokeWidth="4.875"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M75.125,69.8438C77.593,69.8438 79.5938,67.843 79.5938,65.375C79.5938,62.907 77.593,60.9062 75.125,60.9062C72.657,60.9062 70.6562,62.907 70.6562,65.375C70.6562,67.843 72.657,69.8438 75.125,69.8438Z"
+        android:fillColor="#DE9C31" />
 </vector>

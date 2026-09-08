@@ -1,5 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Kumbuka</string>
-    <string name="scaffold_hello">Kumbuka — remember, on schedule</string>
+
+    <!-- Splash -->
+    <string name="splash_tagline">remember, on schedule</string>
+
+    <!-- Login -->
+    <string name="login_welcome_back">Welcome back</string>
+    <string name="login_subtitle">Sign in to pick up tonight\'s revision.</string>
+    <string name="login_not_wired_note">Prototype note: accounts aren\'t wired up yet — sign-in is a placeholder for v2.</string>
+    <string name="login_tab_signin">Sign in</string>
+    <string name="login_tab_signup">Create account</string>
+    <string name="login_email_label">Email</string>
+    <string name="login_email_placeholder">you@strathmore.edu</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_confirm_password_label">Confirm password</string>
+    <string name="login_submit_signin">Sign in</string>
+    <string name="login_submit_signup">Create account</string>
+    <string name="login_or">or</string>
+    <string name="login_continue_guest">Continue as guest</string>
+    <string name="login_switch_language">Switch to Kiswahili</string>
+
+    <!-- Consent -->
+    <string name="consent_title">Before we start</string>
+    <string name="consent_body">Kumbuka keeps your review history on this device to build your personal study schedule. It does not share this with anyone else.</string>
+    <string name="consent_checkbox_label">I understand how my review history is used.</string>
+    <string name="consent_continue">Continue</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_1_title">One list, every day</string>
+    <string name="onboarding_1_body">Kumbuka looks across all your units and tells you what to study today, in the order that matters most.</string>
+    <string name="onboarding_2_title">Trained on how you forget</string>
+    <string name="onboarding_2_body">A model learns your personal forgetting curve per topic, instead of a fixed formula everyone shares.</string>
+    <string name="onboarding_3_title">Grounded in your own material</string>
+    <string name="onboarding_3_body">Every topic can point back to the lecture, slide, or chapter it came from, so restudying never means guessing.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_get_started">Get started</string>
+
+    <!-- Bottom nav -->
+    <string name="nav_tonight">Tonight</string>
+    <string name="nav_progress">Progress</string>
+    <string name="nav_exams">Exams</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home placeholder (real Today screen lands in a later phase) -->
+    <string name="home_placeholder_title">Today\'s review list lands here</string>
 </resources>
