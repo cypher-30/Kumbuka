@@ -171,11 +171,11 @@ fun scoreTopic(
     val latestConfidence = latest?.confidenceBefore
     val daysSinceReview = daysBetween(latest?.endedAt ?: latest?.startedAt ?: topic.createdAt, nowMillis)
     val nearestDeadline = deadlines.minByOrNull { it.date }
-    val daysUntilDeadline = nearestDeadline?.let { daysBetween(nowMillis, it.date).coerceAtLeast(0) }
+    val daysUntilDeadline = nearestDeadline?.let { daysUntilDeadline(it.date, nowMillis).toLong() }
 
     val gap = latestConfidence?.asGap() ?: 1f
     val staleness = normalize(daysSinceReview.toFloat(), STALENESS_WINDOW_DAYS)
-    val urgency = nearestDeadline?.let { max(0f, 1f - (daysUntilDeadline!!.toFloat() / URGENCY_WINDOW_DAYS)) } ?: 0f
+    val urgency = nearestDeadline?.let { schedulerUrgency(it.date, nowMillis) } ?: 0f
     val avoidance = normalize(history.count { it.wasDeferred }.toFloat(), AVOIDANCE_WINDOW)
     val score = 0.40f * gap + 0.20f * staleness + 0.30f * urgency + 0.10f * avoidance
 
@@ -193,6 +193,14 @@ fun scoreTopic(
             deferralCount = history.count { it.wasDeferred },
         ),
     )
+}
+
+fun daysUntilDeadline(deadlineMillis: Long, nowMillis: Long = System.currentTimeMillis()): Int =
+    ((deadlineMillis - nowMillis) / DAY_MILLIS).toInt().coerceAtLeast(0)
+
+fun schedulerUrgency(deadlineMillis: Long, nowMillis: Long = System.currentTimeMillis()): Float {
+    val daysUntil = daysUntilDeadline(deadlineMillis, nowMillis)
+    return max(0f, 1f - (daysUntil.toFloat() / URGENCY_WINDOW_DAYS))
 }
 
 fun allocateMinutes(
@@ -263,5 +271,6 @@ private fun daysBetween(startMillis: Long, endMillis: Long): Long =
 
 private fun normalize(value: Float, window: Float): Float =
     if (window <= 0f) 0f else (value / window).coerceIn(0f, 1f)
+
 
 

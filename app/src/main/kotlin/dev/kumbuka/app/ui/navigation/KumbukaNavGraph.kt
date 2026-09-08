@@ -16,6 +16,8 @@ import dev.kumbuka.app.ui.screens.auth.LoginScreen
 import dev.kumbuka.app.ui.screens.consent.ConsentScreen
 import dev.kumbuka.app.ui.screens.home.HomePlaceholderScreen
 import dev.kumbuka.app.ui.screens.onboarding.OnboardingScreen
+import dev.kumbuka.app.ui.screens.session.SessionFlowScreen
+import dev.kumbuka.app.ui.screens.packs.PackAuthoringScreen
 import dev.kumbuka.app.ui.screens.packs.ExportPackScreen
 import dev.kumbuka.app.ui.screens.packs.ImportPackScreen
 import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
@@ -32,11 +34,14 @@ object KbRoute {
     const val HOME = "home"
     const val UNITS = "units"
     const val IMPORT_PACK = "import-pack"
+    const val AUTHOR_PACK = "author-pack"
     const val TOPIC_DETAIL = "topic/{topicId}"
     const val EXPORT_PACK = "export-pack/{unitId}"
+    const val SESSION = "session/{topicId}/{plannedMinutes}"
 
     fun topicDetail(topicId: String) = "topic/$topicId"
     fun exportPack(unitId: String) = "export-pack/$unitId"
+    fun session(topicId: String, plannedMinutes: Int) = "session/$topicId/$plannedMinutes"
 }
 
 /**
@@ -99,8 +104,10 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
                 topicRepository = app.topicRepository,
                 sessionRepository = app.sessionRepository,
                 deadlineRepository = app.deadlineRepository,
+                assessmentMarkRepository = app.assessmentMarkRepository,
                 onBrowseUnits = { navController.navigate(KbRoute.UNITS) },
                 onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
+                onStartSession = { topicId, plannedMinutes -> navController.navigate(KbRoute.session(topicId, plannedMinutes)) },
             )
         }
         composable(KbRoute.UNITS) {
@@ -109,8 +116,18 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
                 topicRepository = app.topicRepository,
                 onBack = { navController.popBackStack() },
                 onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
+                onCreateUnit = { navController.navigate(KbRoute.AUTHOR_PACK) },
                 onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
                 onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
+            )
+        }
+        composable(KbRoute.AUTHOR_PACK) {
+            PackAuthoringScreen(
+                unitRepository = app.unitRepository,
+                topicRepository = app.topicRepository,
+                deadlineRepository = app.deadlineRepository,
+                onBack = { navController.popBackStack() },
+                onSaved = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
             )
         }
         composable(KbRoute.IMPORT_PACK) {
@@ -139,6 +156,25 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
                 packRepository = app.packRepository,
                 unitId = requireNotNull(entry.arguments?.getString("unitId")),
                 onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = KbRoute.SESSION,
+            arguments = listOf(
+                navArgument("topicId") { type = NavType.StringType },
+                navArgument("plannedMinutes") { type = NavType.IntType },
+            ),
+        ) { entry ->
+            SessionFlowScreen(
+                topicRepository = app.topicRepository,
+                unitRepository = app.unitRepository,
+                sessionRepository = app.sessionRepository,
+                topicId = requireNotNull(entry.arguments?.getString("topicId")),
+                plannedMinutes = entry.arguments?.getInt("plannedMinutes") ?: 60,
+                onBack = { navController.popBackStack() },
+                onFinished = {
+                    navController.popBackStack(KbRoute.HOME, inclusive = false)
+                },
             )
         }
     }

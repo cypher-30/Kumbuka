@@ -47,6 +47,10 @@
     <!-- Home placeholder (real Today screen lands in a later phase) -->
     <string name="home_placeholder_title">Today\'s review list lands here</string>
     <string name="home_browse_units">Browse units</string>
+    <string name="home_progress_placeholder_title">Progress is landing soon</string>
+    <string name="home_progress_placeholder_body">Phase 8 focuses on exams and marks first. Progress analytics come next.</string>
+    <string name="home_settings_placeholder_title">Settings are landing soon</string>
+    <string name="home_settings_placeholder_body">Language and profile controls will appear here in a later phase.</string>
 
     <!-- Phase 3: packs -->
     <string name="generic_back">Back</string>
@@ -88,7 +92,8 @@
     <string name="import_added_deadlines">Deadlines to add</string>
     <string name="import_changed_deadlines">Deadlines to update</string>
     <string name="import_removed_deadlines">Deadlines missing from pack</string>
-    <string name="import_preview_note">Removed topics are counted for visibility; later phases add the explicit review flow for deletions and field conflicts.</string>
+    <string name="import_preview_note">Review the detailed diff before importing so Kumbuka can surface local-edit conflicts and missing topics explicitly.</string>
+    <string name="import_review_diff">Review diff</string>
     <string name="import_apply">Import now</string>
     <string name="import_complete_message">Imported %1$d topics, updated %2$d, with %3$d local conflicts preserved.</string>
     <string name="export_pack_title">Export Course Pack</string>
@@ -97,6 +102,79 @@
     <string name="export_body">Copy the JSON below and share it as a `.coursepack` file or as pasted text.</string>
     <string name="export_json_label">Course Pack JSON</string>
     <string name="export_copy">Copy JSON</string>
+
+    <!-- Phase 6: Re-import diff -->
+    <string name="diff_title">Pack diff</string>
+    <string name="diff_loading">Building the diff…</string>
+    <string name="diff_failed">Could not build the pack diff.</string>
+    <string name="diff_summary_title">Import summary</string>
+    <string name="diff_conflict_note">Choose whether Kumbuka should keep your local edit or use the incoming pack value.</string>
+    <string name="diff_removed_note">This topic is missing from the incoming pack. Kumbuka keeps the local row so session history stays intact.</string>
+    <string name="diff_keep_local">Keep local</string>
+    <string name="diff_use_pack">Use pack</string>
+    <string name="diff_back_to_preview">Back to preview</string>
+    <string name="diff_apply">Apply import</string>
+    <string name="diff_no_changes">No changes detected in this pack.</string>
+    <string name="diff_changed_fields">Changed fields</string>
+    <string name="diff_local_value">Local</string>
+    <string name="diff_pack_value">Pack</string>
+    <string name="diff_conflict_value">Conflict</string>
+    <string name="diff_field_title">Title</string>
+    <string name="diff_field_objective">Objective</string>
+    <string name="diff_field_retrieval_prompt">Retrieval prompt</string>
+    <string name="diff_field_exam_weight">Exam weight</string>
+    <string name="diff_field_order_index">Order</string>
+    <string name="diff_field_resource_pointers">Resource pointers</string>
+    <string name="diff_field_date">Date</string>
+    <string name="diff_field_kind">Kind</string>
+    <string name="diff_field_topic_ids">Topic ids</string>
+
+    <!-- Phase 7: Pack authoring scaffold -->
+    <string name="author_start_cta">Create unit</string>
+    <string name="author_step_1_title">Add Unit - Step 1</string>
+    <string name="author_step_1_body">Set the unit code, title, and pack version for this authored Course Pack.</string>
+    <string name="author_step_2_title">Add Unit - Step 2</string>
+    <string name="author_step_2_body">Add topics and objectives. Use Add Choice for resource-pointer labels.</string>
+    <string name="author_step_3_title">Add Unit - Step 3</string>
+    <string name="author_step_3_body">Review what you authored, save it to this device, then export the `.coursepack` JSON.</string>
+    <string name="author_unit_code">Unit code</string>
+    <string name="author_unit_title">Unit title</string>
+    <string name="author_pack_version">Pack version</string>
+    <string name="author_continue_step_2">Continue to topics</string>
+    <string name="author_topic_title">Topic title</string>
+    <string name="author_topic_objective">Topic objective</string>
+    <string name="author_topic_prompt">Retrieval prompt</string>
+    <string name="author_topic_weight">Exam weight (0.0 - 1.0)</string>
+    <string name="author_add_choice_title">Add Choice</string>
+    <string name="author_add_choice_body">Add resource-pointer labels like "Lecture 6 slides" or "Textbook ch. 9".</string>
+    <string name="author_pointer_label">Resource pointer label</string>
+    <string name="author_add_choice_button">Add choice</string>
+    <string name="author_add_topic_clear">Clear draft</string>
+    <string name="author_add_topic">Add topic</string>
+    <string name="author_topics_added">Topics added: %1$d</string>
+    <string name="author_deadline_title">Add deadlines</string>
+    <string name="author_deadline_body">Capture CAT/assignment/exam dates and link each to covered topics.</string>
+    <string name="author_deadline_name">Deadline title</string>
+    <string name="author_deadline_date">Deadline date</string>
+    <string name="author_deadline_date_hint">Use YYYY-MM-DD</string>
+    <string name="author_deadline_topics">Covered topics</string>
+    <string name="author_deadline_topics_empty">Add at least one topic first so deadlines can be linked.</string>
+    <string name="author_add_deadline_clear">Clear deadline</string>
+    <string name="author_add_deadline">Add deadline</string>
+    <string name="author_deadlines_added">Deadlines added: %1$d</string>
+    <string name="author_continue_step_3">Continue to review</string>
+    <string name="author_review_counts">%1$d topics • %2$d deadlines • version %3$s</string>
+    <string name="author_save_and_export">Save unit and export pack</string>
+    <string name="author_error_weight">Exam weight must be a valid number.</string>
+    <string name="author_error_weight_range">Exam weight must be between 0.0 and 1.0.</string>
+    <string name="author_error_topic_duplicate">That topic title is already in this pack draft.</string>
+    <string name="author_error_deadline_date">Deadline date must be valid and formatted as YYYY-MM-DD.</string>
+    <string name="author_error_deadline_topics">Pick at least one covered topic for this deadline.</string>
+    <string name="author_save_failed">Could not save this authored unit.</string>
+    <string name="author_discard_title">Discard this draft?</string>
+    <string name="author_discard_body">Going back now will lose the unit details, topics, and deadlines you\'ve entered so far.</string>
+    <string name="author_discard_confirm">Discard</string>
+    <string name="author_discard_cancel">Keep editing</string>
 
     <!-- Phase 4: Today -->
     <string name="today_session_length">%1$d min baseline session</string>
@@ -111,5 +189,86 @@
     <string name="today_staleness">Staleness</string>
     <string name="today_urgency">Urgency</string>
     <string name="today_avoidance">Avoidance</string>
+    <string name="today_start_session">Start session</string>
     <string name="generic_ok">OK</string>
+
+    <!-- Phase 8: Exams and marks -->
+    <string name="exams_title">Exams</string>
+    <string name="exams_body">Track upcoming exam deadlines and log objective exam results tied to topics.</string>
+    <string name="exams_upcoming">Upcoming exam deadlines</string>
+    <string name="exams_recent_results">Recent exam results</string>
+    <string name="exams_no_results_yet">No exam results saved yet.</string>
+    <string name="exams_unit_bucket_title">%1$s</string>
+    <string name="exams_bucket_today">Due today</string>
+    <string name="exams_bucket_this_week">Due this week</string>
+    <string name="exams_bucket_this_month">Due this month</string>
+    <string name="exams_bucket_later">Later</string>
+    <string name="exams_add_result">Add exam result</string>
+    <string name="exams_hide_entry">Hide entry</string>
+    <string name="exams_empty_title">No exam deadlines yet</string>
+    <string name="exams_empty_body">Import a pack with exam dates, then log your exam results to anchor the model with objective marks.</string>
+    <string name="exams_deadline_date">%1$s (%2$d days left)</string>
+    <string name="exams_urgency_high">high urgency</string>
+    <string name="exams_urgency_medium">medium urgency</string>
+    <string name="exams_urgency_low">low urgency</string>
+    <string name="exams_urgency_chip">%1$s • %2$d%%</string>
+    <string name="exams_result_score">Score %1$.1f / %2$.1f</string>
+    <string name="exams_entry_title">Exam result entry</string>
+    <string name="exams_entry_pick_unit">Unit</string>
+    <string name="exams_entry_score">Score</string>
+    <string name="exams_entry_out_of">Out of</string>
+    <string name="exams_entry_date">Date</string>
+    <string name="exams_entry_topics">Covered topics</string>
+    <string name="exams_entry_topics_empty">This unit has no topics yet.</string>
+    <string name="exams_save_result">Save exam result</string>
+    <string name="exams_update_result">Update result</string>
+    <string name="exams_edit_title">Edit exam result</string>
+    <string name="exams_cancel_edit">Cancel edit</string>
+    <string name="exams_edit_result">Edit</string>
+    <string name="exams_delete_result">Delete</string>
+    <string name="exams_saved_result">Saved exam result.</string>
+    <string name="exams_updated_result">Updated exam result.</string>
+    <string name="exams_deleted_result">Deleted exam result.</string>
+    <string name="exams_save_failed">Could not save exam result.</string>
+    <string name="exams_delete_failed">Could not delete exam result.</string>
+    <string name="exams_delete_title">Delete exam result?</string>
+    <string name="exams_delete_body">This removes the objective mark from your history and scheduler signals.</string>
+    <string name="exams_delete_confirm">Delete</string>
+    <string name="exams_delete_cancel">Keep</string>
+    <string name="exams_entry_error_unit">Pick a unit first.</string>
+    <string name="exams_entry_error_number">Score and out-of must be valid numbers.</string>
+    <string name="exams_entry_error_range">Score must be between 0 and out-of, and out-of must be greater than 0.</string>
+    <string name="exams_entry_error_topics">Pick at least one covered topic.</string>
+
+    <!-- Phase 5: Session flow -->
+    <string name="session_title">Session</string>
+    <string name="session_loading">Loading session…</string>
+    <string name="session_not_found">That topic could not be found.</string>
+    <string name="session_unit_unknown">Unknown unit</string>
+    <string name="session_planned_minutes">%1$d min planned</string>
+    <string name="session_time_remaining">%1$s remaining</string>
+    <string name="session_recall_title">Recall first</string>
+    <string name="session_recall_body">Close your notes and pull everything you remember before you rate yourself.</string>
+    <string name="session_done_recalling">I’m done recalling</string>
+    <string name="session_defer">Defer this topic</string>
+    <string name="session_defer_title">Defer topic?</string>
+    <string name="session_defer_body">This will mark the topic as deferred and count toward avoidance.</string>
+    <string name="session_defer_confirm">Defer</string>
+    <string name="session_defer_cancel">Keep studying</string>
+    <string name="session_rate_before_title">Rate what you recalled</string>
+    <string name="session_rate_before_body">Be honest about the attempt before you restudy.</string>
+    <string name="session_continue_after_rate">Continue</string>
+    <string name="session_restudy_title">Restudy</string>
+    <string name="session_restudy_body">Use your notes or slides to patch the gap, then come back for the final rating.</string>
+    <string name="session_restudy_done">Restudy time is up.</string>
+    <string name="session_continue_after_restudy">Rate again</string>
+    <string name="session_rate_after_title">Rate what you landed on</string>
+    <string name="session_rate_after_body">After restudying, rate how solid it feels now.</string>
+    <string name="session_finish">Finish session</string>
+    <string name="session_complete_title">Session saved</string>
+    <string name="session_complete_body">This topic will now feed back into the scheduler.</string>
+    <string name="confidence_blank">Blank</string>
+    <string name="confidence_shaky">Shaky</string>
+    <string name="confidence_ok">OK</string>
+    <string name="confidence_solid">Solid</string>
 </resources>

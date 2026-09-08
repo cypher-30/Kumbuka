@@ -88,6 +88,14 @@ class TodaySchedulerTest {
         assertTrue(plan.cards.isEmpty())
     }
 
+    @Test
+    fun schedulerUrgency_matchesDeadlineWindow() {
+        assertEquals(1f, schedulerUrgency(now, now), 0.0001f)
+        assertEquals(0.5f, schedulerUrgency(now + (10 * day), now), 0.05f)
+        assertEquals(0f, schedulerUrgency(now + (30 * day), now), 0.0001f)
+        assertEquals(0, daysUntilDeadline(now - (2 * day), now))
+    }
+
     private fun unit() = UnitModel(
         id = "u1",
         code = "ICS 3102",
@@ -128,6 +136,7 @@ class TodaySchedulerTest {
         updatedAt = now,
     )
 }
+
 
 
 
