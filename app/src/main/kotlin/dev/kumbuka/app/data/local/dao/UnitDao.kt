@@ -2,16 +2,19 @@ package dev.kumbuka.app.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import dev.kumbuka.app.data.local.entity.UnitEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UnitDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // Must be a real UPDATE-or-INSERT, not @Insert(onConflict = REPLACE): REPLACE
+    // deletes the conflicting row before re-inserting, which cascades through
+    // TopicEntity's ON DELETE CASCADE FK and silently wipes every topic (and
+    // their local-edit flags) for this unit on every reimport.
+    @Upsert
     suspend fun upsert(unit: UnitEntity)
 
     @Update
