@@ -94,7 +94,14 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
             )
         }
         composable(KbRoute.HOME) {
-            HomePlaceholderScreen(onBrowseUnits = { navController.navigate(KbRoute.UNITS) })
+            HomePlaceholderScreen(
+                unitRepository = app.unitRepository,
+                topicRepository = app.topicRepository,
+                sessionRepository = app.sessionRepository,
+                deadlineRepository = app.deadlineRepository,
+                onBrowseUnits = { navController.navigate(KbRoute.UNITS) },
+                onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
+            )
         }
         composable(KbRoute.UNITS) {
             UnitsListScreen(

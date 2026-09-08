@@ -74,12 +74,12 @@
     <string name="topic_save_objective">Save objective</string>
     <string name="import_pack_title">Import Course Pack</string>
     <string name="import_pick_file">Pick file</string>
-    <string name="import_pack_step_0">Step 0 — add a pack file or paste the JSON</string>
+    <string name="import_pack_step_0">Step 0 - add a pack file or paste the JSON</string>
     <string name="import_pack_step_0_body">WhatsApp and email often deliver packs as text, so the importer accepts both a file and pasted JSON.</string>
     <string name="import_paste_label">Pack JSON</string>
     <string name="import_parse">Preview</string>
     <string name="import_parse_failed">Could not parse that Course Pack.</string>
-    <string name="import_pack_step_1">Step 1 — preview the merge</string>
+    <string name="import_pack_step_1">Step 1 - preview the merge</string>
     <string name="import_pack_metadata">Pack %1$s • version %2$d</string>
     <string name="import_added_topics">Topics to add</string>
     <string name="import_changed_topics">Topics to update</string>
@@ -97,4 +97,19 @@
     <string name="export_body">Copy the JSON below and share it as a `.coursepack` file or as pasted text.</string>
     <string name="export_json_label">Course Pack JSON</string>
     <string name="export_copy">Copy JSON</string>
+
+    <!-- Phase 4: Today -->
+    <string name="today_session_length">%1$d min baseline session</string>
+    <string name="today_no_units_body">Import a Course Pack before Kumbuka can rank tonight\'s revision list.</string>
+    <string name="today_keep_going_title">Fresh topics, no history yet</string>
+    <string name="today_keep_going_body">The scheduler is ready to rank your topics by exam weight and urgency as soon as you start reviewing them.</string>
+    <string name="today_all_caught_up_title">All caught up</string>
+    <string name="today_all_caught_up_body">Every tracked topic is currently below the baseline threshold. Check back later or browse units to add more work.</string>
+    <string name="today_why_this">Why this?</string>
+    <string name="today_score_label">Score %1$.2f</string>
+    <string name="today_gap">Gap</string>
+    <string name="today_staleness">Staleness</string>
+    <string name="today_urgency">Urgency</string>
+    <string name="today_avoidance">Avoidance</string>
+    <string name="generic_ok">OK</string>
 </resources>

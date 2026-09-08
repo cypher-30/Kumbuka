@@ -26,6 +26,9 @@ interface DeadlineDao {
     @Query("SELECT * FROM deadlines WHERE unitId = :unitId ORDER BY date ASC")
     fun observeByUnit(unitId: String): Flow<List<DeadlineEntity>>
 
+    @Query("SELECT * FROM deadlines ORDER BY date ASC")
+    fun observeAll(): Flow<List<DeadlineEntity>>
+
     @Query("SELECT topicId FROM deadline_topic_cross_ref WHERE deadlineId = :deadlineId")
     suspend fun getTopicIdsForDeadline(deadlineId: String): List<String>
 

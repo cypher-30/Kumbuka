@@ -3,6 +3,8 @@ package dev.kumbuka.app
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
@@ -37,10 +39,20 @@ class MainActivity : ComponentActivity() {
  * re-derives the Context's resources against the chosen locale, so
  * stringResource() picks up values-sw/ where it exists and falls back to
  * values/ (English) for anything not yet translated (DESIGN.md §5).
+ *
+ * The replacement Context from createConfigurationContext() isn't chained
+ * back to the real Activity, so ambient lookups that walk the Context chain
+ * (LocalActivityResultRegistryOwner, LocalOnBackPressedDispatcherOwner) fail
+ * once LocalContext is overridden - e.g. rememberLauncherForActivityResult()
+ * crashes with "No ActivityResultRegistryOwner was provided". Capture the
+ * real owners before the override and re-provide them explicitly so screens
+ * further down the tree (like the pack file picker) keep working.
  */
 @Composable
 private fun Localized(languageCode: String, content: @Composable () -> Unit) {
     val context = LocalContext.current
+    val activityResultRegistryOwner = requireNotNull(LocalActivityResultRegistryOwner.current)
+    val onBackPressedDispatcherOwner = requireNotNull(LocalOnBackPressedDispatcherOwner.current)
     val configuration = remember(languageCode) {
         Configuration(context.resources.configuration).apply {
             setLocale(Locale(languageCode))
@@ -50,6 +62,8 @@ private fun Localized(languageCode: String, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalContext provides localizedContext,
         LocalConfiguration provides configuration,
+        LocalActivityResultRegistryOwner provides activityResultRegistryOwner,
+        LocalOnBackPressedDispatcherOwner provides onBackPressedDispatcherOwner,
     ) {
         content()
     }

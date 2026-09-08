@@ -7,6 +7,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class DeadlineRepository(private val deadlineDao: DeadlineDao) {
+    fun observeAll(): Flow<List<Deadline>> =
+        deadlineDao.observeAll().map { list ->
+            list.map { entity -> entity.toDomain(deadlineDao.getTopicIdsForDeadline(entity.id)) }
+        }
+
     fun observeByUnit(unitId: String): Flow<List<Deadline>> =
         deadlineDao.observeByUnit(unitId).map { list ->
             list.map { entity -> entity.toDomain(deadlineDao.getTopicIdsForDeadline(entity.id)) }
