@@ -9,6 +9,7 @@
   scripts\build.ps1 assembleDebug
   scripts\build.ps1 installDebug -Stacktrace
 #>
+# Pass Gradle tasks as arguments, e.g. scripts\build.ps1 assembleDebug testDebugUnitTest.
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$Tasks,
