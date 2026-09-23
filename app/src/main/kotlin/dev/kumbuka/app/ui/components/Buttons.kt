@@ -63,6 +63,7 @@ fun KbSecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -74,6 +75,7 @@ fun KbSecondaryButton(
 
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()

@@ -118,6 +118,8 @@
     <string name="topic_save_objective">Hifadhi lengo</string>
     <string name="topic_saved_objective">Lengo limehifadhiwa.</string>
     <string name="import_pack_title">Ingiza Course Pack</string>
+    <string name="import_pack_intro">Chagua kwanza faili la Course Pack. Kama limefika kupitia gumzo au barua pepe kama maandishi ya kawaida, unaweza kubandika JSON badala yake.</string>
+    <string name="import_choose_file">Chagua faili</string>
     <string name="import_pick_file">Faili</string>
     <string name="import_pack_step_0">Hatua ya 0 - ongeza faili ya pakiti au bandika JSON</string>
     <string name="import_pack_step_0_body">WhatsApp na barua pepe mara nyingi huleta pakiti kama maandishi, hivyo kiingizaji kinakubali faili na JSON iliyobandikwa.</string>
@@ -125,9 +127,14 @@
     <string name="import_try_sample_body">Jaribu pakiti ya mfano kuona jinsi Kumbuka inavyofanya kazi. Imewekwa alama wazi kama mfano na haijumuishwi kwenye Maarifa yako halisi.</string>
     <string name="import_try_sample_cta">Jaribu pakiti ya mfano</string>
     <string name="import_try_sample_done">Pakiti za mfano zimeongezwa - fungua Vitengo kuziona.</string>
+    <string name="import_show_paste">Bandika maandishi badala yake</string>
+    <string name="import_hide_paste">Ficha maandishi yaliyobandikwa</string>
     <string name="import_paste_label">JSON ya pakiti</string>
-    <string name="import_parse">Kagua awali</string>
+    <string name="import_parse">Endelea</string>
     <string name="import_parse_failed">Haikuwezekana kuchanganua Course Pack hiyo.</string>
+    <string name="import_pick_cancelled">Hakuna faili lililochaguliwa.</string>
+    <string name="import_file_permission_denied">Kumbuka haina tena ruhusa ya kusoma faili hilo.</string>
+    <string name="import_file_read_failed">Haikuwezekana kusoma faili hilo.</string>
     <string name="import_pack_step_1">Hatua ya 1 - kagua muunganisho</string>
     <string name="import_pack_metadata">Pakiti %1$s • toleo %2$d</string>
     <string name="import_added_topics">Mada za kuongeza</string>
@@ -141,6 +148,8 @@
     <string name="import_review_diff">Ona tofauti</string>
     <string name="import_apply">Ingiza sasa</string>
     <string name="import_complete_message">Mada %1$d zimeingizwa, %2$d zimesasishwa, na migongano %3$d ya hapa imehifadhiwa.</string>
+    <string name="import_no_changes_message">Pakiti hiyo tayari ni ya sasa.</string>
+    <string name="import_apply_failed">Haikuwezekana kuingiza Course Pack hiyo.</string>
     <string name="export_pack_title">Hamisha Course Pack</string>
     <string name="export_loading">Inatayarisha uhamisho…</string>
     <string name="export_failed">Haikuwezekana kuunda faili la kuhamisha.</string>

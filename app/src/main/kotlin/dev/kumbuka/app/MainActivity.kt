@@ -1,5 +1,7 @@
 package dev.kumbuka.app
 
+import android.content.Intent
+import android.net.Uri
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val app = application as KumbukaApplication
+        cachePendingImportFromIntent(intent, app)
 
         var startRoute by mutableStateOf<String?>(null)
         // Keeps the native splash on screen only while the real routing
@@ -84,6 +87,28 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        cachePendingImportFromIntent(intent, application as KumbukaApplication)
+    }
+
+    private fun cachePendingImportFromIntent(intent: Intent?, app: KumbukaApplication) {
+        val importUri = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data ?: return
+        persistReadPermissionIfPossible(importUri, intent.flags)
+        app.queuePendingImportUri(importUri.toString())
+    }
+
+    private fun persistReadPermissionIfPossible(uri: Uri, flags: Int) {
+        val takeFlags = flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        if (takeFlags and Intent.FLAG_GRANT_READ_URI_PERMISSION == 0) return
+        runCatching {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }.onFailure { error ->
+            Log.d(TAG, "Persistable permission not available for $uri", error)
         }
     }
 

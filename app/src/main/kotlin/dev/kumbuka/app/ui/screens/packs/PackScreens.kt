@@ -5,7 +5,10 @@ package dev.kumbuka.app.ui.screens.packs
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -52,6 +55,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -78,6 +82,7 @@ import dev.kumbuka.app.ui.components.KbSecondaryButton
 import dev.kumbuka.app.ui.theme.LocalKbColors
 import dev.kumbuka.app.ui.theme.KbSpacing
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.Dispatchers
@@ -374,6 +379,8 @@ fun TopicDetailScreen(
 @Composable
 fun ImportPackScreen(
     packRepository: PackRepository,
+    pendingImportUri: String?,
+    onPendingImportUriHandled: (String) -> Unit,
     onBack: () -> Unit,
     onImported: () -> Unit,
 ) {
@@ -381,25 +388,144 @@ fun ImportPackScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var rawInput by remember { mutableStateOf("") }
+    var showPasteInput by rememberSaveable { mutableStateOf(false) }
     var parsedPack by remember { mutableStateOf<CoursePack?>(null) }
-    var preview by remember { mutableStateOf<PackImportPreview?>(null) }
     var diff by remember { mutableStateOf<PackDiff?>(null) }
     var resolution by remember { mutableStateOf(PackImportResolution()) }
     var showDiff by remember { mutableStateOf(false) }
     var parseError by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var queuedPendingImportUri by rememberSaveable { mutableStateOf<String?>(null) }
+
+    fun resetReviewState() {
+        parsedPack = null
+        diff = null
+        resolution = PackImportResolution()
+        showDiff = false
+    }
+
+    fun defaultResolutionFor(packDiff: PackDiff): PackImportResolution = PackImportResolution(
+        topicConflictChoices = packDiff.topicDiffs
+            .filter { it.kind == PackChangeKind.CONFLICTED }
+            .associate { it.topicId to TopicConflictChoice.KEEP_LOCAL },
+    )
+
+    fun needsReview(packDiff: PackDiff): Boolean {
+        val preview = packDiff.preview
+        return packDiff.existingUnitId != null &&
+            (
+                preview.topicsWithConflicts > 0 ||
+                    preview.topicsMissingInPack > 0 ||
+                    preview.deadlinesMissingInPack > 0
+                )
+    }
+
+    fun importSuccessMessage(preview: PackImportPreview): String {
+        val hasChanges = preview.topicsToAdd > 0 ||
+            preview.topicsToUpdate > 0 ||
+            preview.deadlinesToAdd > 0 ||
+            preview.deadlinesToUpdate > 0 ||
+            preview.topicsMissingInPack > 0 ||
+            preview.deadlinesMissingInPack > 0
+        return if (hasChanges) {
+            context.getString(
+                R.string.import_complete_message,
+                preview.topicsToAdd,
+                preview.topicsToUpdate,
+                preview.topicsWithConflicts,
+            )
+        } else {
+            context.getString(R.string.import_no_changes_message)
+        }
+    }
+
+    suspend fun applyPack(pack: CoursePack, resolution: PackImportResolution) {
+        val result = packRepository.importPack(pack, resolution)
+        Toast.makeText(context, importSuccessMessage(result), Toast.LENGTH_SHORT).show()
+        onImported()
+    }
+
+    suspend fun parseAndRoute(raw: String) {
+        val pack = packRepository.parse(raw)
+        val packDiff = packRepository.buildDiff(pack)
+        val defaultResolution = defaultResolutionFor(packDiff)
+        rawInput = raw
+        parsedPack = pack
+        diff = packDiff
+        resolution = defaultResolution
+        parseError = null
+        if (needsReview(packDiff)) {
+            showDiff = true
+        } else {
+            applyPack(pack, defaultResolution)
+        }
+    }
+
+    suspend fun importFromUri(uri: Uri) {
+        persistReadPermissionIfPossible(context, uri)
+        val raw = readTextFromUri(context, uri)
+        showPasteInput = false
+        parseAndRoute(raw)
+    }
 
     val openDocument = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        if (uri != null) {
-            scope.launch {
-                rawInput = withContext(Dispatchers.IO) { readTextFromUri(context, uri) }
-                parseError = null
-                parsedPack = null
-                preview = null
-                diff = null
-                resolution = PackImportResolution()
-                showDiff = false
+        scope.launch {
+            if (uri == null) {
+                parseError = context.getString(R.string.import_pick_cancelled)
+                snackbarHostState.showSnackbar(parseError!!)
+                return@launch
             }
+            busy = true
+            try {
+                importFromUri(uri)
+            } catch (error: SecurityException) {
+                resetReviewState()
+                parseError = context.getString(R.string.import_file_permission_denied)
+            } catch (error: IOException) {
+                resetReviewState()
+                parseError = context.getString(R.string.import_file_read_failed)
+            } catch (error: Throwable) {
+                resetReviewState()
+                parseError = error.message ?: context.getString(R.string.import_parse_failed)
+            } finally {
+                busy = false
+            }
+        }
+    }
+
+    BackHandler(enabled = showDiff && !busy) {
+        showDiff = false
+    }
+
+    LaunchedEffect(pendingImportUri) {
+        val uriString = pendingImportUri ?: return@LaunchedEffect
+        queuedPendingImportUri = uriString
+        onPendingImportUriHandled(uriString)
+    }
+
+    LaunchedEffect(queuedPendingImportUri, busy) {
+        if (busy) return@LaunchedEffect
+        val uriString = queuedPendingImportUri ?: return@LaunchedEffect
+        queuedPendingImportUri = null
+        val uri = runCatching { Uri.parse(uriString) }.getOrNull()
+        if (uri == null) {
+            parseError = context.getString(R.string.import_file_read_failed)
+            return@LaunchedEffect
+        }
+        busy = true
+        try {
+            importFromUri(uri)
+        } catch (error: SecurityException) {
+            resetReviewState()
+            parseError = context.getString(R.string.import_file_permission_denied)
+        } catch (error: IOException) {
+            resetReviewState()
+            parseError = context.getString(R.string.import_file_read_failed)
+        } catch (error: Throwable) {
+            resetReviewState()
+            parseError = error.message ?: context.getString(R.string.import_parse_failed)
+        } finally {
+            busy = false
         }
     }
 
@@ -414,13 +540,11 @@ fun ImportPackScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { if (showDiff) showDiff = false else onBack() }) {
+                    IconButton(
+                        onClick = { if (showDiff) showDiff = false else onBack() },
+                        enabled = !busy,
+                    ) {
                         Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { openDocument.launch(arrayOf("application/json", "text/plain", "*/*")) }) {
-                        Icon(Icons.Outlined.FolderOpen, contentDescription = stringResource(R.string.import_pick_file))
                     }
                 },
             )
@@ -453,21 +577,15 @@ fun ImportPackScreen(
                         },
                     )
                 },
-                onBack = { showDiff = false },
+                onBack = { if (!busy) showDiff = false },
                 onApply = {
                     scope.launch {
                         busy = true
                         try {
-                            val result = packRepository.importPack(parsedPack!!, resolution)
-                            snackbarHostState.showSnackbar(
-                                context.getString(
-                                    R.string.import_complete_message,
-                                    result.topicsToAdd,
-                                    result.topicsToUpdate,
-                                    result.topicsWithConflicts,
-                                ),
-                            )
-                            onImported()
+                            applyPack(parsedPack!!, resolution)
+                        } catch (error: Throwable) {
+                            parseError = error.message ?: context.getString(R.string.import_apply_failed)
+                            snackbarHostState.showSnackbar(parseError!!)
                         } finally {
                             busy = false
                         }
@@ -489,13 +607,7 @@ fun ImportPackScreen(
         ) {
             item {
                 Text(
-                    text = stringResource(R.string.import_pack_step_0),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = LocalKbColors.current.ink,
-                )
-                Spacer(Modifier.height(KbSpacing.x1 / 2))
-                Text(
-                    text = stringResource(R.string.import_pack_step_0_body),
+                    text = stringResource(R.string.import_pack_intro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = LocalKbColors.current.inkMuted,
                 )
@@ -524,60 +636,30 @@ fun ImportPackScreen(
                 }
             }
             item {
-                OutlinedTextField(
-                    value = rawInput,
-                    onValueChange = {
-                        rawInput = it
+                KbPrimaryButton(
+                    text = stringResource(R.string.import_choose_file),
+                    onClick = {
                         parseError = null
-                        parsedPack = null
-                        preview = null
-                        diff = null
-                        resolution = PackImportResolution()
-                        showDiff = false
+                        openDocument.launch(arrayOf("application/json", "text/plain"))
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 10,
-                    maxLines = 16,
-                    shape = RoundedCornerShape(14.dp),
-                    label = { Text(stringResource(R.string.import_paste_label)) },
+                    enabled = !busy,
                 )
             }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    KbSecondaryButton(
-                        text = stringResource(R.string.import_pick_file),
-                        onClick = { openDocument.launch(arrayOf("application/json", "text/plain", "*/*")) },
-                        modifier = Modifier.weight(1f),
-                    )
-                    KbPrimaryButton(
-                        text = stringResource(R.string.import_parse),
-                        onClick = {
-                            scope.launch {
-                                try {
-                                    busy = true
-                                    val pack = packRepository.parse(rawInput)
-                                    val packDiff = packRepository.buildDiff(pack)
-                                    parsedPack = pack
-                                    diff = packDiff
-                                    preview = packDiff.preview
-                                    resolution = PackImportResolution(
-                                        topicConflictChoices = packDiff.topicDiffs
-                                            .filter { it.kind == PackChangeKind.CONFLICTED }
-                                            .associate { it.topicId to TopicConflictChoice.KEEP_LOCAL },
-                                    )
-                                    parseError = null
-                                } catch (t: Throwable) {
-                                    parseError = t.message ?: context.getString(R.string.import_parse_failed)
-                                    parsedPack = null
-                                    preview = null
-                                    diff = null
-                                } finally {
-                                    busy = false
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = rawInput.isNotBlank() && !busy,
+                TextButton(
+                    onClick = {
+                        showPasteInput = !showPasteInput
+                        parseError = null
+                        if (!showPasteInput) {
+                            resetReviewState()
+                        }
+                    },
+                    enabled = !busy,
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (showPasteInput) R.string.import_hide_paste else R.string.import_show_paste,
+                        ),
                     )
                 }
             }
@@ -586,62 +668,43 @@ fun ImportPackScreen(
                     InfoBanner(text = it, accent = LocalKbColors.current.accent)
                 }
             }
-            if (parsedPack != null && preview != null) {
+            if (showPasteInput) {
                 item {
-                    Text(
-                        text = stringResource(R.string.import_pack_step_1),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = LocalKbColors.current.ink,
+                    OutlinedTextField(
+                        value = rawInput,
+                        onValueChange = {
+                            rawInput = it
+                            parseError = null
+                            resetReviewState()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 10,
+                        maxLines = 16,
+                        shape = RoundedCornerShape(14.dp),
+                        label = { Text(stringResource(R.string.import_paste_label)) },
                     )
                 }
                 item {
-                    ImportPreviewCard(preview = preview!!, pack = parsedPack!!)
-                }
-                item {
                     KbPrimaryButton(
-                        text = stringResource(R.string.import_review_diff),
+                        text = stringResource(R.string.import_parse),
                         onClick = {
-                            showDiff = true
+                            scope.launch {
+                                busy = true
+                                try {
+                                    parseAndRoute(rawInput)
+                                } catch (error: Throwable) {
+                                    resetReviewState()
+                                    parseError = error.message ?: context.getString(R.string.import_parse_failed)
+                                } finally {
+                                    busy = false
+                                }
+                            }
                         },
-                        enabled = !busy && diff != null,
+                        enabled = rawInput.isNotBlank() && !busy,
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ImportPreviewCard(preview: PackImportPreview, pack: CoursePack) {
-    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(pack.unit.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
-            Text(
-                text = stringResource(R.string.import_pack_metadata, preview.packId, preview.packVersion),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalKbColors.current.inkMuted,
-            )
-            CountRow(label = stringResource(R.string.import_added_topics), value = preview.topicsToAdd)
-            CountRow(label = stringResource(R.string.import_changed_topics), value = preview.topicsToUpdate)
-            CountRow(label = stringResource(R.string.import_conflicted_topics), value = preview.topicsWithConflicts)
-            CountRow(label = stringResource(R.string.import_removed_topics), value = preview.topicsMissingInPack)
-            CountRow(label = stringResource(R.string.import_added_deadlines), value = preview.deadlinesToAdd)
-            CountRow(label = stringResource(R.string.import_changed_deadlines), value = preview.deadlinesToUpdate)
-            CountRow(label = stringResource(R.string.import_removed_deadlines), value = preview.deadlinesMissingInPack)
-            Text(
-                text = stringResource(R.string.import_preview_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalKbColors.current.inkFaint,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CountRow(label: String, value: Int) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-        Text(value.toString(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink)
     }
 }
 
@@ -740,7 +803,12 @@ private suspend fun readTextFromUri(context: Context, uri: Uri): String {
     return withContext(Dispatchers.IO) {
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
             BufferedReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).readText()
-        } ?: error("Unable to open file")
+        } ?: throw IOException("Unable to open file")
     }
 }
 
+private fun persistReadPermissionIfPossible(context: Context, uri: Uri) {
+    runCatching {
+        context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+}

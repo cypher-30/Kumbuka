@@ -1,6 +1,7 @@
 package dev.kumbuka.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -9,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.kumbuka.app.KumbukaApplication
 import dev.kumbuka.app.ui.screens.home.HomeScreen
@@ -52,6 +54,18 @@ fun KumbukaNavGraph(
 ) {
     val preferences = app.preferences
     val scope = rememberCoroutineScope()
+    val pendingImportUri = app.pendingImportUri
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
+
+    LaunchedEffect(currentRoute, pendingImportUri) {
+        if (pendingImportUri == null || currentRoute == null || currentRoute == KbRoute.ONBOARDING) return@LaunchedEffect
+        if (currentRoute != KbRoute.IMPORT_PACK) {
+            navController.navigate(KbRoute.IMPORT_PACK) {
+                launchSingleTop = true
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(KbRoute.ONBOARDING) {
@@ -106,6 +120,8 @@ fun KumbukaNavGraph(
         composable(KbRoute.IMPORT_PACK) {
             ImportPackScreen(
                 packRepository = app.packRepository,
+                pendingImportUri = pendingImportUri,
+                onPendingImportUriHandled = { handledUri -> app.clearPendingImportUri(handledUri) },
                 onBack = { navController.popBackStack() },
                 onImported = { navController.popBackStack() },
             )
