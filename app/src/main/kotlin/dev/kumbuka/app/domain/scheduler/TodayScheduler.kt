@@ -71,8 +71,9 @@ fun ratedCompletedReviews(history: List<Session>): List<Session> =
 
 sealed interface TodayState {
     data object NoUnits : TodayState
+    data object NoActiveTopics : TodayState
     data object FreshStart : TodayState
-    data object Tonight : TodayState
+    data object Today : TodayState
     data object AllCaughtUp : TodayState
 }
 
@@ -93,6 +94,14 @@ data class TodayCard(
     val score: Float,
     val breakdown: ScoreBreakdown,
 )
+
+sealed interface TodayReasonFact {
+    data class DueInDays(val days: Int) : TodayReasonFact
+    data class LastRated(val confidence: Confidence) : TodayReasonFact
+    data class StaleForDays(val days: Int) : TodayReasonFact
+    data class DeferredCount(val count: Int) : TodayReasonFact
+    data object NoHistory : TodayReasonFact
+}
 
 data class ScoreBreakdown(
     val gap: Float,
@@ -125,6 +134,14 @@ data class ScoreBreakdown(
 
     fun formulaSummary(): String = "score = 0.40×gap + 0.20×staleness + 0.30×urgency + 0.10×avoidance"
 
+    fun reasonFacts(): List<TodayReasonFact> = buildList {
+        daysUntilDeadline?.let { add(TodayReasonFact.DueInDays(it)) }
+        latestConfidence?.let { add(TodayReasonFact.LastRated(it)) }
+        if (daysSinceReview > 0) add(TodayReasonFact.StaleForDays(daysSinceReview))
+        if (deferralCount > 0) add(TodayReasonFact.DeferredCount(deferralCount))
+        if (isEmpty()) add(TodayReasonFact.NoHistory)
+    }.take(2)
+
     private fun percent(value: Float): String = "${(value * 100).roundToInt()}%"
 }
 
@@ -138,11 +155,21 @@ fun buildTodayPlan(
     arm: SchedulerArmKind = SchedulerArmKind.BASELINE,
     predictor: RecallPredictor = BaselineRecallPredictor,
 ): TodayPlan {
-    if (units.isEmpty() || topics.isEmpty()) {
+    if (units.isEmpty()) {
         return TodayPlan(
             state = TodayState.NoUnits,
             headline = "Import a Course Pack to start",
-            body = "Kumbuka needs imported units before it can rank tonight's revision list.",
+            body = "Kumbuka needs imported units before it can rank today's revision list.",
+            sessionLengthMinutes = sessionLengthMinutes,
+            cards = emptyList(),
+        )
+    }
+
+    if (topics.isEmpty()) {
+        return TodayPlan(
+            state = TodayState.NoActiveTopics,
+            headline = "No active topics",
+            body = "Your units are here, but none of their topics are active for revision right now.",
             sessionLengthMinutes = sessionLengthMinutes,
             cards = emptyList(),
         )
@@ -191,8 +218,8 @@ fun buildTodayPlan(
 
     val cards = allocateMinutes(dueTopics.take(maxTopicsForSession(sessionLengthMinutes)), sessionLengthMinutes, unitCodesById)
     return TodayPlan(
-        state = TodayState.Tonight,
-        headline = "Tonight",
+        state = TodayState.Today,
+        headline = "Today",
         body = "These topics scored highest on the baseline formula. Bigger exam-weight topics also get more of the session minutes.",
         sessionLengthMinutes = sessionLengthMinutes,
         cards = cards,
@@ -430,6 +457,5 @@ private fun daysBetween(startMillis: Long, endMillis: Long): Long =
 
 private fun normalize(value: Float, window: Float): Float =
     if (window <= 0f) 0f else (value / window).coerceIn(0f, 1f)
-
 
 

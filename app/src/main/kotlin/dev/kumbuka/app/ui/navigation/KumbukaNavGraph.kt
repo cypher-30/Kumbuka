@@ -77,6 +77,7 @@ fun KumbukaNavGraph(
                 sessionRepository = app.sessionRepository,
                 deadlineRepository = app.deadlineRepository,
                 assessmentMarkRepository = app.assessmentMarkRepository,
+                schedulerLogRepository = app.schedulerLogRepository,
                 onBrowseUnits = { navController.navigate(KbRoute.UNITS) },
                 onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
                 onCreateUnit = { navController.navigate(KbRoute.AUTHOR_PACK) },

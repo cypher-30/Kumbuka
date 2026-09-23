@@ -33,13 +33,19 @@ import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.reminders.ReminderScheduler
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
+import dev.kumbuka.app.data.repository.SchedulerLogRepository
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
+import dev.kumbuka.app.domain.model.Session
+import dev.kumbuka.app.domain.scheduler.PlaceholderRecallPredictor
+import dev.kumbuka.app.domain.scheduler.SchedulerArmKind
 import dev.kumbuka.app.domain.scheduler.buildTodayPlan
+import dev.kumbuka.app.domain.scheduler.evaluateBothArms
 import dev.kumbuka.app.ui.components.KbBottomNavBar
 import dev.kumbuka.app.ui.components.KbNavTab
 import dev.kumbuka.app.ui.theme.LocalKbColors
+import java.util.UUID
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,6 +56,7 @@ fun HomeScreen(
     sessionRepository: SessionRepository,
     deadlineRepository: DeadlineRepository,
     assessmentMarkRepository: AssessmentMarkRepository,
+    schedulerLogRepository: SchedulerLogRepository,
     onBrowseUnits: () -> Unit,
     onImportPack: () -> Unit,
     onCreateUnit: () -> Unit,
@@ -72,8 +79,24 @@ fun HomeScreen(
     val reminderEnabled by preferences.reminderEnabled.collectAsState(initial = false)
     val reminderHour by preferences.reminderHour.collectAsState(initial = 20)
     val reminderMinute by preferences.reminderMinute.collectAsState(initial = 0)
-    val plan = remember(units, topics, sessions, deadlines, sessionLengthMinutes) {
-        buildTodayPlan(units = units, topics = topics, sessions = sessions, deadlines = deadlines, sessionLengthMinutes = sessionLengthMinutes)
+    val requestedArm = remember(schedulerArm) {
+        if (schedulerArm == "placeholder") SchedulerArmKind.PLACEHOLDER else SchedulerArmKind.BASELINE
+    }
+    val plan = remember(units, topics, sessions, deadlines, sessionLengthMinutes, requestedArm) {
+        buildTodayPlan(
+            units = units,
+            topics = topics,
+            sessions = sessions,
+            deadlines = deadlines,
+            sessionLengthMinutes = sessionLengthMinutes,
+            arm = requestedArm,
+            predictor = PlaceholderRecallPredictor,
+        )
+    }
+    val unitIdByTopicId = remember(topics) { topics.associateBy({ it.id }, { it.unitId }) }
+    val sampleTopicIds = remember(units, topics) {
+        val sampleUnitIds = units.filter { it.isSample }.map { it.id }.toSet()
+        topics.filter { it.unitId in sampleUnitIds }.map { it.id }.toSet()
     }
 
     var activeTabName by rememberSaveable { mutableStateOf(KbNavTab.TODAY.name) }
@@ -91,6 +114,57 @@ fun HomeScreen(
             reminderPermissionDenied = true
         }
         pendingReminderEnable = false
+    }
+    val startScheduledSession: (dev.kumbuka.app.domain.scheduler.TodayCard) -> Unit = { card ->
+        scope.launch {
+            val now = System.currentTimeMillis()
+            val (baseline, placeholder) = evaluateBothArms(
+                units = units,
+                topics = topics,
+                sessions = sessions,
+                deadlines = deadlines,
+                sessionLengthMinutes = sessionLengthMinutes,
+                nowMillis = now,
+                requestedArm = requestedArm,
+                placeholderPredictor = PlaceholderRecallPredictor,
+            )
+            val planId = schedulerLogRepository.logPlan(
+                baseline = baseline,
+                placeholder = placeholder,
+                unitIdByTopicId = unitIdByTopicId,
+                sampleTopicIds = sampleTopicIds,
+                evaluatedAt = now,
+            )
+            val activeSession = sessionRepository.getLatestActiveForTopic(card.topicId)
+            if (activeSession == null) {
+                sessionRepository.upsert(
+                    Session(
+                        id = UUID.randomUUID().toString(),
+                        topicId = card.topicId,
+                        startedAt = now,
+                        endedAt = null,
+                        plannedMinutes = card.minutes,
+                        actualSeconds = 0,
+                        confidenceBefore = null,
+                        confidenceAfter = null,
+                        wasDeferred = false,
+                        updatedAt = now,
+                        sourcePlanId = planId,
+                        sourceArm = card.breakdown.actualSource,
+                    ),
+                )
+            } else if (activeSession.sourcePlanId == null || activeSession.sourceArm == null) {
+                sessionRepository.upsert(
+                    activeSession.copy(
+                        plannedMinutes = activeSession.plannedMinutes.takeIf { it > 0 } ?: card.minutes,
+                        updatedAt = now,
+                        sourcePlanId = activeSession.sourcePlanId ?: planId,
+                        sourceArm = activeSession.sourceArm ?: card.breakdown.actualSource,
+                    ),
+                )
+            }
+            onStartSession(card.topicId, card.minutes)
+        }
     }
 
     Scaffold(
@@ -126,7 +200,8 @@ fun HomeScreen(
                 plan = plan,
                 onBrowseUnits = { activeTabName = KbNavTab.UNITS.name },
                 onImportPack = onImportPack,
-                onStartSession = onStartSession,
+                onStartSession = startScheduledSession,
+                onOpenInsights = onOpenInsights,
                 modifier = Modifier.padding(innerPadding),
             )
             KbNavTab.UNITS -> UnitsTabContent(

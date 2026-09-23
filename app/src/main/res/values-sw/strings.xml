@@ -15,7 +15,6 @@
     <string name="onboarding_retry">Jaribu tena</string>
 
     <!-- Bottom nav -->
-    <string name="nav_tonight">Leo usiku</string>
     <string name="nav_today">Leo</string>
     <string name="nav_units">Vitengo</string>
     <string name="nav_marks">Alama</string>
@@ -211,11 +210,13 @@
 
     <!-- Phase 4: Today -->
     <string name="today_session_length">Kipindi %1$d dk</string>
-    <string name="today_no_units_body">Ingiza Course Pack kabla Kumbuka haijapanga orodha ya marudio ya usiku wa leo.</string>
-    <string name="today_keep_going_title">Mada mpya, bado hakuna historia</string>
-    <string name="today_keep_going_body">Ratiba iko tayari kupanga mada zako kwa uzito wa mtihani na uharaka mara tu unapoanza kuzipitia.</string>
+    <string name="today_no_units_body">Ingiza Course Pack kabla Kumbuka haijapanga orodha ya marudio ya leo.</string>
+    <string name="today_no_active_topics_body">Vitengo vyako vipo, lakini hakuna mada yake iliyo hai kwa marudio kwa sasa.</string>
+    <string name="today_fresh_start_body">Una mada hai lakini bado hakuna historia ya marudio, kwa hiyo Kumbuka inaanza na mada zenye uzito mkubwa kwanza.</string>
+    <string name="today_due_today_body">Angalau muda mmoja wa mwisho unaohusishwa unadaiwa leo, kwa hiyo mada hizi zinasogezwa mbele.</string>
+    <string name="today_ranked_body">Mada hizi zinafaa zaidi kwa kipindi chako kijacho cha marudio cha dakika %1$d.</string>
     <string name="today_all_caught_up_title">Kila kitu kiko sawa</string>
-    <string name="today_all_caught_up_body">Kila mada inayofuatiliwa sasa iko chini ya kizingiti cha msingi. Rudi baadaye au vinjari vitengo kuongeza kazi zaidi.</string>
+    <string name="today_all_caught_up_body">Hakuna kinachohitaji uangalizi wa haraka sasa. Rudi baada ya marudio mengine, kuahirisha, au tarehe za mwisho zijazo kubadilisha mpangilio.</string>
     <string name="today_why_this">Kwa nini hii?</string>
     <string name="today_score_label">Alama %1$.2f</string>
     <string name="today_gap">Pengo</string>
@@ -223,6 +224,13 @@
     <string name="today_urgency">Uharaka</string>
     <string name="today_avoidance">Uepukaji</string>
     <string name="today_start_session">Anza kipindi</string>
+    <string name="today_minutes_short">%1$d dk</string>
+    <string name="today_reason_due_today">inadaiwa leo</string>
+    <string name="today_reason_due_in_days">inadaiwa baada ya siku %1$d</string>
+    <string name="today_reason_last_rated">ilipimwa mwisho kama %1$s</string>
+    <string name="today_reason_last_reviewed_days">ilipitiwa mwisho siku %1$d zilizopita</string>
+    <string name="today_reason_deferred_count">imeahirishwa mara %1$d</string>
+    <string name="today_reason_no_history">bado hakuna historia ya marudio</string>
     <string name="generic_ok">SAWA</string>
     <string name="insights_title">Maarifa</string>
     <string name="insights_placeholder_body">Maarifa yanahamia kwenye skrini yake ili tabo za nyumbani zibaki zenye mwelekeo.</string>
