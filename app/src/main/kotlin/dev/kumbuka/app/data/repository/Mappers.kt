@@ -19,6 +19,7 @@ fun UnitEntity.toDomain(): UnitModel = UnitModel(
     packVersion = packVersion,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    isSample = isSample,
 )
 
 fun UnitModel.toEntity(): UnitEntity = UnitEntity(
@@ -29,6 +30,7 @@ fun UnitModel.toEntity(): UnitEntity = UnitEntity(
     packVersion = packVersion,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    isSample = isSample,
 )
 
 fun TopicEntity.toDomain(): Topic = Topic(
@@ -45,6 +47,7 @@ fun TopicEntity.toDomain(): Topic = Topic(
     weightEditedLocally = weightEditedLocally,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    archived = archived,
 )
 
 fun Topic.toEntity(): TopicEntity = TopicEntity(
@@ -61,6 +64,7 @@ fun Topic.toEntity(): TopicEntity = TopicEntity(
     weightEditedLocally = weightEditedLocally,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    archived = archived,
 )
 
 fun SessionEntity.toDomain(): Session = Session(
@@ -74,6 +78,8 @@ fun SessionEntity.toDomain(): Session = Session(
     confidenceAfter = confidenceAfter,
     wasDeferred = wasDeferred,
     updatedAt = updatedAt,
+    sourcePlanId = sourcePlanId,
+    sourceArm = sourceArm,
 )
 
 fun Session.toEntity(): SessionEntity = SessionEntity(
@@ -87,6 +93,8 @@ fun Session.toEntity(): SessionEntity = SessionEntity(
     confidenceAfter = confidenceAfter,
     wasDeferred = wasDeferred,
     updatedAt = updatedAt,
+    sourcePlanId = sourcePlanId,
+    sourceArm = sourceArm,
 )
 
 fun DeadlineEntity.toDomain(topicIds: List<String>): Deadline = Deadline(

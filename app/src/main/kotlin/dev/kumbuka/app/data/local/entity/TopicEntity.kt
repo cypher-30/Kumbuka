@@ -31,4 +31,13 @@ data class TopicEntity(
     val weightEditedLocally: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
+    /**
+     * Set when a topic is removed from a re-imported pack and the student
+     * chooses not to keep studying it. Never physically deleted - archiving
+     * hides it from active scheduling/search/export while preserving every
+     * session and assessment-mark link (DESIGN.md §7: re-import "never
+     * touches a student's existing confidence or session history").
+     * Re-importing the same topic id un-archives it in place.
+     */
+    val archived: Boolean = false,
 )

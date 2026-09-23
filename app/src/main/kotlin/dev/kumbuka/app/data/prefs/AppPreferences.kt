@@ -19,7 +19,6 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val CONSENT_ACCEPTED = booleanPreferencesKey("consent_accepted")
         val LANGUAGE = stringPreferencesKey("language")
-        val IS_GUEST = booleanPreferencesKey("is_guest")
         val SESSION_LENGTH_MINUTES = intPreferencesKey("session_length_minutes")
         val SCHEDULER_ARM = stringPreferencesKey("scheduler_arm")
         val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
@@ -37,14 +36,18 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
     val language: Flow<String> =
         dataStore.data.map { it[Keys.LANGUAGE] ?: "en" }
 
-    val isGuest: Flow<Boolean> =
-        dataStore.data.map { it[Keys.IS_GUEST] ?: false }
-
     val sessionLengthMinutes: Flow<Int> =
         dataStore.data.map { it[Keys.SESSION_LENGTH_MINUTES] ?: 60 }
 
+    /** "baseline" (default, always shown) or "placeholder" - a hidden research setting; never surfaced in ordinary Settings. */
     val schedulerArm: Flow<String> =
-        dataStore.data.map { it[Keys.SCHEDULER_ARM] ?: "baseline" }
+        dataStore.data.map { prefs ->
+            when (prefs[Keys.SCHEDULER_ARM]) {
+                "learned" -> "placeholder" // migrate a pre-rename stored value
+                null -> "baseline"
+                else -> prefs[Keys.SCHEDULER_ARM]!!
+            }
+        }
 
     val reminderEnabled: Flow<Boolean> =
         dataStore.data.map { it[Keys.REMINDER_ENABLED] ?: false }
@@ -69,10 +72,6 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
 
     suspend fun setLanguage(code: String) {
         dataStore.edit { it[Keys.LANGUAGE] = code }
-    }
-
-    suspend fun setGuest(value: Boolean) {
-        dataStore.edit { it[Keys.IS_GUEST] = value }
     }
 
     suspend fun setSessionLengthMinutes(value: Int) {

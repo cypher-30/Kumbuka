@@ -12,7 +12,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.kumbuka.app.KumbukaApplication
-import dev.kumbuka.app.ui.screens.auth.LoginScreen
 import dev.kumbuka.app.ui.screens.consent.ConsentScreen
 import dev.kumbuka.app.ui.screens.home.HomePlaceholderScreen
 import dev.kumbuka.app.ui.screens.onboarding.OnboardingScreen
@@ -23,12 +22,10 @@ import dev.kumbuka.app.ui.screens.packs.ImportPackScreen
 import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
 import dev.kumbuka.app.ui.screens.packs.UnitsListScreen
 import dev.kumbuka.app.ui.screens.splash.SplashScreen
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object KbRoute {
     const val SPLASH = "splash"
-    const val LOGIN = "login"
     const val CONSENT = "consent"
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
@@ -45,15 +42,15 @@ object KbRoute {
 }
 
 /**
- * Entry flow per the group's decision on the login screens: Splash -> Login
- * (real "not wired up yet" note, working guest path) -> Consent (local-only
- * privacy notice) -> Onboarding (1-3) -> Home. Preferences decide whether a
- * returning user skips straight to Home.
+ * Entry flow: Splash -> Consent (local-only privacy notice) -> Onboarding
+ * (1-3) -> Home. Login was removed entirely - there is no account, no
+ * backend, and nothing to sign into, so the shortest possible first run
+ * goes straight from the privacy notice into onboarding. Preferences decide
+ * whether a returning user skips straight to Home.
  */
 @Composable
 fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = rememberNavController()) {
     val preferences = app.preferences
-    val language by preferences.language.collectAsState(initial = "en")
     val onboardingComplete by preferences.onboardingComplete.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
 
@@ -64,23 +61,10 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
             // returning user back into onboarding they already finished.
             LaunchedEffect(onboardingComplete) {
                 val resolved = onboardingComplete ?: return@LaunchedEffect
-                delay(1600) // lets the splash's pop-in/curve-draw/fade-up entrance finish (~1.4s) before leaving
-                val destination = if (resolved) KbRoute.HOME else KbRoute.LOGIN
+                val destination = if (resolved) KbRoute.HOME else KbRoute.CONSENT
                 navController.navigate(destination) { popUpTo(KbRoute.SPLASH) { inclusive = true } }
             }
             SplashScreen()
-        }
-        composable(KbRoute.LOGIN) {
-            LoginScreen(
-                currentLanguage = language,
-                onToggleLanguage = {
-                    scope.launch { preferences.setLanguage(if (language == "sw") "en" else "sw") }
-                },
-                onContinueAsGuest = {
-                    scope.launch { preferences.setGuest(true) }
-                    navController.navigate(KbRoute.CONSENT) { popUpTo(KbRoute.LOGIN) { inclusive = true } }
-                },
-            )
         }
         composable(KbRoute.CONSENT) {
             ConsentScreen(

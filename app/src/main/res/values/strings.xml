@@ -6,20 +6,6 @@
     <string name="splash_tagline">remember, on schedule</string>
 
     <!-- Login -->
-    <string name="login_welcome_back">Welcome back</string>
-    <string name="login_subtitle">Sign in to pick up tonight\'s revision.</string>
-    <string name="login_not_wired_note">Prototype note: accounts aren\'t wired up yet — sign-in is a placeholder for v2.</string>
-    <string name="login_tab_signin">Sign in</string>
-    <string name="login_tab_signup">Create account</string>
-    <string name="login_email_label">Email</string>
-    <string name="login_email_placeholder">you@strathmore.edu</string>
-    <string name="login_password_label">Password</string>
-    <string name="login_confirm_password_label">Confirm password</string>
-    <string name="login_submit_signin">Sign in</string>
-    <string name="login_submit_signup">Create account</string>
-    <string name="login_or">or</string>
-    <string name="login_continue_guest">Continue as guest</string>
-    <string name="login_switch_language">Switch to Kiswahili</string>
 
     <!-- Consent -->
     <string name="consent_title">Before we start</string>
@@ -123,6 +109,10 @@
     <string name="import_pick_file">File</string>
     <string name="import_pack_step_0">Step 0 - add a pack file or paste the JSON</string>
     <string name="import_pack_step_0_body">WhatsApp and email often deliver packs as text, so the importer accepts both a file and pasted JSON.</string>
+    <string name="import_try_sample_title">No pack yet?</string>
+    <string name="import_try_sample_body">Try a sample pack to see how Kumbuka works. It\'s clearly marked as a sample and never counts toward your real Insights.</string>
+    <string name="import_try_sample_cta">Try a sample pack</string>
+    <string name="import_try_sample_done">Sample packs added - open Units to see them.</string>
     <string name="import_paste_label">Pack JSON</string>
     <string name="import_parse">Preview</string>
     <string name="import_parse_failed">Could not parse that Course Pack.</string>
@@ -153,10 +143,12 @@
     <string name="diff_summary_title">Import summary</string>
     <string name="diff_conflict_note">Choose whether Kumbuka should keep your local edit or use the incoming pack value.</string>
     <string name="diff_removed_note">This row is missing from the incoming pack. Choose whether to keep it (session history stays intact) or delete it.</string>
+    <string name="diff_removed_note_topic">This topic is missing from the incoming pack. Choose whether to keep it, or archive it (it disappears from Today and Units, but its sessions and marks are kept for history).</string>
     <string name="diff_keep_local">Keep local</string>
     <string name="diff_use_pack">Use pack</string>
     <string name="diff_keep_row">Keep</string>
     <string name="diff_delete_row">Delete</string>
+    <string name="diff_archive_row">Archive</string>
     <string name="diff_back_to_preview">Back to preview</string>
     <string name="diff_apply">Apply import</string>
     <string name="diff_no_changes">No changes detected in this pack.</string>

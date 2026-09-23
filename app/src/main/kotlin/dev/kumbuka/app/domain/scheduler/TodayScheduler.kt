@@ -17,22 +17,57 @@ private const val STALENESS_WINDOW_DAYS = 14f
 private const val URGENCY_WINDOW_DAYS = 21f
 private const val AVOIDANCE_WINDOW = 5f
 
-interface RecallPredictor {
-    suspend fun predictRecall(topic: Topic, history: List<Session>): RecallPrediction?
-}
+/** How many reviews must be completed, rated, and non-deferred before the placeholder predictor will run at all (DESIGN.md §8: "cold start"). */
+const val MIN_RATED_REVIEWS_FOR_PLACEHOLDER = 3
+
+enum class SchedulerArmKind { BASELINE, PLACEHOLDER }
 
 data class RecallPrediction(
     val probability: Float,
-    val source: String,
+    val version: String,
 )
 
-object BaselineRecallPredictor : RecallPredictor {
-    override suspend fun predictRecall(topic: Topic, history: List<Session>): RecallPrediction? = null
+interface RecallPredictor {
+    /** Returns null when this predictor has no eligible history to predict from. */
+    fun predictRecall(topic: Topic, history: List<Session>, nowMillis: Long): RecallPrediction?
 }
 
-object LearnedRecallPredictor : RecallPredictor {
-    override suspend fun predictRecall(topic: Topic, history: List<Session>): RecallPrediction? = null
+/** The hand-written formula itself - never predicts a recall probability. */
+object BaselineRecallPredictor : RecallPredictor {
+    override fun predictRecall(topic: Topic, history: List<Session>, nowMillis: Long): RecallPrediction? = null
 }
+
+/**
+ * A deterministic, hand-set stand-in for the trained model that will
+ * eventually load from the separate SemProject_MLEngine repo. This is NOT a
+ * trained model - it is a fixed exponential-decay curve seeded only from the
+ * student's own last rated after-confidence, so the "model" arm has a real,
+ * versioned implementation to log and compare against baseline now, instead
+ * of shipping a null slot. Every prediction is tagged with [VERSION] so
+ * research output never confuses this for a trained result.
+ */
+object PlaceholderRecallPredictor : RecallPredictor {
+    const val VERSION = "placeholder-v1"
+    private const val BASE_HALF_LIFE_DAYS = 4f
+
+    override fun predictRecall(topic: Topic, history: List<Session>, nowMillis: Long): RecallPrediction? {
+        val rated = ratedCompletedReviews(history)
+        if (rated.size < MIN_RATED_REVIEWS_FOR_PLACEHOLDER) return null
+        val latest = rated.maxByOrNull { it.endedAt ?: it.startedAt } ?: return null
+        val lastConfidence = latest.confidenceAfter ?: return null
+        val referenceMillis = latest.endedAt ?: latest.startedAt
+        val elapsedDays = daysBetween(referenceMillis, nowMillis).toFloat()
+        // A higher last "after" rating means the student landed on it more
+        // solidly, so the hand-set half-life stretches out (forgets slower).
+        val halfLifeDays = BASE_HALF_LIFE_DAYS * (1f + lastConfidence.score / 3f)
+        val probability = Math.pow(0.5, (elapsedDays / halfLifeDays).toDouble()).toFloat().coerceIn(0f, 1f)
+        return RecallPrediction(probability = probability, version = VERSION)
+    }
+}
+
+/** A completed, non-deferred attempt with both ratings recorded - the only history the placeholder may learn from. */
+fun ratedCompletedReviews(history: List<Session>): List<Session> =
+    history.filter { it.endedAt != null && !it.wasDeferred && it.confidenceBefore != null && it.confidenceAfter != null }
 
 sealed interface TodayState {
     data object NoUnits : TodayState
@@ -69,6 +104,12 @@ data class ScoreBreakdown(
     val daysSinceReview: Int,
     val daysUntilDeadline: Int?,
     val deferralCount: Int,
+    val arm: SchedulerArmKind = SchedulerArmKind.BASELINE,
+    val predictedRecall: Float? = null,
+    val predictorVersion: String? = null,
+    /** "baseline", "placeholder", or "baseline_fallback" when the placeholder arm was requested but had no eligible history. */
+    val actualSource: String = "baseline",
+    val fallbackReason: String? = null,
 ) {
     fun plainLanguageSummary(): String = buildString {
         append("Gap contributes ")
@@ -94,6 +135,8 @@ fun buildTodayPlan(
     deadlines: List<Deadline>,
     sessionLengthMinutes: Int = DEFAULT_SESSION_LENGTH_MINUTES,
     nowMillis: Long = System.currentTimeMillis(),
+    arm: SchedulerArmKind = SchedulerArmKind.BASELINE,
+    predictor: RecallPredictor = BaselineRecallPredictor,
 ): TodayPlan {
     if (units.isEmpty() || topics.isEmpty()) {
         return TodayPlan(
@@ -112,7 +155,7 @@ fun buildTodayPlan(
     val scoredTopics = topics.map { topic ->
         val history = sessionsByTopic[topic.id].orEmpty()
         val topicDeadlines = deadlinesByTopic[topic.id].orEmpty()
-        scoreTopic(topic, history, topicDeadlines, nowMillis)
+        scoreTopicForArm(topic, history, topicDeadlines, arm, predictor, nowMillis)
     }.sortedWith(
         compareByDescending<ScoredTopic> { it.breakdown.score }
             .thenByDescending { it.topic.examWeight }
@@ -193,6 +236,122 @@ fun scoreTopic(
             deferralCount = history.count { it.wasDeferred },
         ),
     )
+}
+
+/**
+ * Scores one topic under the requested arm. BASELINE always runs the
+ * published formula unchanged. PLACEHOLDER runs the provisional model
+ * formula `0.60*(1-predictedRecall) + 0.30*urgency + 0.10*avoidance` when the
+ * predictor has enough eligible history; otherwise it falls back to the
+ * exact baseline result for that topic, tagged honestly as
+ * "baseline_fallback" with a reason - never a silently-substituted number.
+ */
+fun scoreTopicForArm(
+    topic: Topic,
+    history: List<Session>,
+    deadlines: List<Deadline>,
+    arm: SchedulerArmKind,
+    predictor: RecallPredictor,
+    nowMillis: Long = System.currentTimeMillis(),
+): ScoredTopic {
+    val baseline = scoreTopic(topic, history, deadlines, nowMillis)
+    if (arm == SchedulerArmKind.BASELINE) return baseline
+
+    val prediction = predictor.predictRecall(topic, history, nowMillis)
+    if (prediction == null) {
+        val reason = if (ratedCompletedReviews(history).size < MIN_RATED_REVIEWS_FOR_PLACEHOLDER) {
+            "cold_start"
+        } else {
+            "predictor_unavailable"
+        }
+        return baseline.copy(
+            breakdown = baseline.breakdown.copy(
+                arm = SchedulerArmKind.PLACEHOLDER,
+                actualSource = "baseline_fallback",
+                fallbackReason = reason,
+            ),
+        )
+    }
+
+    val score = 0.60f * (1f - prediction.probability) + 0.30f * baseline.breakdown.urgency + 0.10f * baseline.breakdown.avoidance
+    return baseline.copy(
+        breakdown = baseline.breakdown.copy(
+            score = score,
+            arm = SchedulerArmKind.PLACEHOLDER,
+            predictedRecall = prediction.probability,
+            predictorVersion = prediction.version,
+            actualSource = "placeholder",
+            fallbackReason = null,
+        ),
+    )
+}
+
+data class ArmEvaluation(
+    val arm: SchedulerArmKind,
+    val requestedArm: SchedulerArmKind,
+    /** Every scored topic, ranked - not just the ones that made the cut - so research logging can compare full candidate sets. */
+    val rankedTopics: List<ScoredTopic>,
+    val selectedTopicIds: Set<String>,
+    val cards: List<TodayCard>,
+)
+
+/**
+ * Evaluates both scheduler arms against one coherent snapshot (DESIGN.md
+ * §4: "both arms are live in the same app"). [requestedArm] is whichever arm
+ * the student (or the hidden research setting) actually wants displayed;
+ * both are still computed and returned so every plan can be logged for
+ * comparison regardless of which one is shown.
+ */
+fun evaluateBothArms(
+    units: List<UnitModel>,
+    topics: List<Topic>,
+    sessions: List<Session>,
+    deadlines: List<Deadline>,
+    sessionLengthMinutes: Int,
+    nowMillis: Long,
+    requestedArm: SchedulerArmKind,
+    placeholderPredictor: RecallPredictor = PlaceholderRecallPredictor,
+): Pair<ArmEvaluation, ArmEvaluation> {
+    val baseline = evaluateArm(units, topics, sessions, deadlines, sessionLengthMinutes, nowMillis, SchedulerArmKind.BASELINE, requestedArm, BaselineRecallPredictor)
+    val placeholder = evaluateArm(units, topics, sessions, deadlines, sessionLengthMinutes, nowMillis, SchedulerArmKind.PLACEHOLDER, requestedArm, placeholderPredictor)
+    return baseline to placeholder
+}
+
+private fun evaluateArm(
+    units: List<UnitModel>,
+    topics: List<Topic>,
+    sessions: List<Session>,
+    deadlines: List<Deadline>,
+    sessionLengthMinutes: Int,
+    nowMillis: Long,
+    arm: SchedulerArmKind,
+    requestedArm: SchedulerArmKind,
+    predictor: RecallPredictor,
+): ArmEvaluation {
+    if (units.isEmpty() || topics.isEmpty()) {
+        return ArmEvaluation(arm, requestedArm, emptyList(), emptySet(), emptyList())
+    }
+    val sessionsByTopic = sessions.groupBy { it.topicId }
+    val deadlinesByTopic = deadlines.flatMap { d -> d.topicIds.map { topicId -> topicId to d } }.groupBy({ it.first }, { it.second })
+    val unitCodesById = units.associateBy({ it.id }, { it.code })
+
+    val ranked = topics.map { topic ->
+        scoreTopicForArm(topic, sessionsByTopic[topic.id].orEmpty(), deadlinesByTopic[topic.id].orEmpty(), arm, predictor, nowMillis)
+    }.sortedWith(
+        compareByDescending<ScoredTopic> { it.breakdown.score }
+            .thenByDescending { it.topic.examWeight }
+            .thenBy { it.topic.orderIndex },
+    )
+
+    val isFreshStart = sessions.isEmpty() && deadlines.isEmpty()
+    val dueTopics = ranked.filter { it.breakdown.score >= DUE_SCORE_THRESHOLD }
+    val selected = if (isFreshStart) {
+        ranked.take(maxTopicsForSession(sessionLengthMinutes))
+    } else {
+        dueTopics.take(maxTopicsForSession(sessionLengthMinutes))
+    }
+    val cards = allocateMinutes(selected, sessionLengthMinutes, unitCodesById)
+    return ArmEvaluation(arm, requestedArm, ranked, selected.map { it.topic.id }.toSet(), cards)
 }
 
 fun daysUntilDeadline(deadlineMillis: Long, nowMillis: Long = System.currentTimeMillis()): Int =

@@ -211,7 +211,7 @@ private fun TopicDiffCard(
                     }
                 }
                 PackChangeKind.REMOVED -> {
-                    Text(stringResource(R.string.diff_removed_note), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    Text(stringResource(R.string.diff_removed_note_topic), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
                     Text(diff.local?.let(::topicSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         FilterChip(
@@ -221,9 +221,9 @@ private fun TopicDiffCard(
                             modifier = Modifier.weight(1f),
                         )
                         FilterChip(
-                            selected = selectedRemovalChoice == RemovalChoice.DELETE,
-                            onClick = { onRemovalChoice(diff.topicId, RemovalChoice.DELETE) },
-                            label = { Text(stringResource(R.string.diff_delete_row)) },
+                            selected = selectedRemovalChoice == RemovalChoice.ARCHIVE,
+                            onClick = { onRemovalChoice(diff.topicId, RemovalChoice.ARCHIVE) },
+                            label = { Text(stringResource(R.string.diff_archive_row)) },
                             modifier = Modifier.weight(1f),
                         )
                     }
