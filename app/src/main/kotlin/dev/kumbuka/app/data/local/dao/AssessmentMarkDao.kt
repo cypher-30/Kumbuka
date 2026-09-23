@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import dev.kumbuka.app.data.local.entity.AssessmentMarkEntity
 import dev.kumbuka.app.data.local.entity.AssessmentMarkTopicCrossRef
 import kotlinx.coroutines.flow.Flow
@@ -41,4 +42,19 @@ interface AssessmentMarkDao {
         """,
     )
     suspend fun getMarksForTopic(topicId: String): List<AssessmentMarkEntity>
+
+    @Transaction
+    suspend fun upsertWithTopics(mark: AssessmentMarkEntity, topicIds: List<String>) {
+        upsert(mark)
+        clearCrossRefsForMark(mark.id)
+        topicIds.forEach { topicId ->
+            insertCrossRef(AssessmentMarkTopicCrossRef(mark.id, topicId))
+        }
+    }
+
+    @Transaction
+    suspend fun deleteWithTopics(mark: AssessmentMarkEntity) {
+        clearCrossRefsForMark(mark.id)
+        delete(mark)
+    }
 }
