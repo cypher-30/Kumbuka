@@ -6,16 +6,18 @@
 
     <!--
       Native Android 12+ SplashScreen (via androidx.core:core-splashscreen for
-      API 26-30 compatibility). One OS-owned launch sequence - the amber
-      curve-draw animated icon on the brand teal background - replaces the
-      old Compose splash route entirely, so there is no "icon, then a second
-      separate intro" anymore. postSplashScreenTheme hands off to the normal
-      app theme once MainActivity's keep-on-screen condition clears.
+      API 26-30 compatibility). Shows the static amber mark on the brand teal
+      background with no motion of its own - it only owns the very first
+      frame while MainActivity resolves the real start route. The single
+      curve-draw/wordmark animation lives entirely in the Compose
+      SplashScreen composable that plays right after (KbRoute.SPLASH), so
+      there is exactly one animated launch beat, not two. postSplashScreenTheme
+      hands off to the normal app theme once the keep-on-screen condition
+      clears.
     -->
     <style name="Theme.Kumbuka.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/kb_primary</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_animated</item>
-        <item name="windowSplashScreenAnimationDuration">850</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_static</item>
         <item name="postSplashScreenTheme">@style/Theme.Kumbuka</item>
     </style>
 </resources>

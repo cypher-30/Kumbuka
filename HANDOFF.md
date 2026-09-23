@@ -24,8 +24,10 @@ locked-in notes below):
 
 - Kotlin, Jetpack Compose, Navigation-Compose, Room, DataStore, kotlinx.serialization,
   repository pattern. No DI framework.
-- Single-Activity (`MainActivity.kt`), native `androidx.core:core-splashscreen` startup
-  (`Theme.Kumbuka.Starting` in `themes.xml`), no app-authored Compose splash/intro.
+- Single-Activity (`MainActivity.kt`): native `androidx.core:core-splashscreen` startup
+  (`Theme.Kumbuka.Starting` in `themes.xml`) owns the first frame, then `KbRoute.SPLASH`
+  (`ui/screens/splash/SplashScreen.kt`) plays a ~1.5s Compose icon/wordmark animation before
+  routing on — see "Native startup" below.
 - `ui/screens/home/HomeScreen.kt` is the one shell Scaffold: owns the toolbar, bottom nav
   (`ui/components/BottomNavBar.kt`, tabs Today/Units/Marks/Settings in that order) and
   tab-content switching. Tab bodies live in `TodayTabContent.kt`, `UnitsTabContent.kt`,
@@ -80,12 +82,21 @@ locked-in notes below):
 
 ## Native startup
 
-Startup uses one platform-owned `core-splashscreen` sequence (`Theme.Kumbuka.Starting`,
-installed in `MainActivity` before `super.onCreate`), gated only until the real routing decision
-(onboarding vs. Today) is ready — no fixed delay, no second app-authored intro/bounce/wordmark
-animation. See `docs/UI-TOKENS.md`'s "Native startup ownership" section for the exact contract
-and platform limitations (older API levels show the static compat mark; Android itself owns
-cold/warm-start replay behavior).
+Startup is a deliberate two-beat sequence, restored by explicit product request after the
+single-native-only version shipped:
+
+1. A platform-owned `core-splashscreen` sequence (`Theme.Kumbuka.Starting`, installed in
+   `MainActivity` before `super.onCreate`) shows the static amber mark (`splash_icon_static.xml`,
+   no motion) and owns only the very first frame, gated until the real routing decision
+   (onboarding vs. Today) is ready — no fixed delay here.
+2. Once that decision resolves, `KumbukaNavGraph` always starts at `KbRoute.SPLASH`, which plays
+   `ui/screens/splash/SplashScreen.kt`'s ~1.5s Compose choreography (icon pop-in, curve draw,
+   wordmark fade-up, tagline fade-up) before navigating on to `KbRoute.ONBOARDING`/`KbRoute.HOME`.
+   This is the one and only animated launch beat — see `SplashAnimationDurationMs`.
+
+See `docs/UI-TOKENS.md`'s "Native startup ownership" section for the platform limitations that
+still apply to the first beat (older API levels show the static compat mark; Android itself owns
+cold/warm-start replay behavior for that first frame only).
 
 ## Import flow
 

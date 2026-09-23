@@ -2,6 +2,9 @@
 <resources>
     <string name="app_name">Kumbuka</string>
 
+    <!-- Splash -->
+    <string name="splash_tagline">kumbuka, kwa ratiba</string>
+
     <!-- Onboarding: ukurasa mmoja ulioungana (lugha + maelezo ya kweli ya
          nje-mtandao + kukiri faragha + kitendo kimoja "Anza"). Hakuna
          kuingia, hakuna skrini tofauti ya idhini, hakuna dai la mfano
@@ -240,11 +243,10 @@
     <string name="today_all_caught_up_title">Kila kitu kiko sawa</string>
     <string name="today_all_caught_up_body">Hakuna kinachohitaji uangalizi wa haraka sasa. Rudi baada ya marudio mengine, kuahirisha, au tarehe za mwisho zijazo kubadilisha mpangilio.</string>
     <string name="today_why_this">Kwa nini hii?</string>
-    <string name="today_score_label">Alama %1$.2f</string>
-    <string name="today_gap">Pengo</string>
-    <string name="today_staleness">Uchakavu</string>
-    <string name="today_urgency">Uharaka</string>
-    <string name="today_avoidance">Uepukaji</string>
+    <string name="today_why_dominant_gap">Hasa kwa sababu kuna pengo halisi kati ya jinsi unavyojiamini na jinsi kumbukumbu inavyofifia.</string>
+    <string name="today_why_dominant_staleness">Hasa kwa sababu ni muda mrefu tangu mapitio yako ya mwisho.</string>
+    <string name="today_why_dominant_urgency">Hasa kwa sababu ya tarehe ya mwisho inayokaribia.</string>
+    <string name="today_why_dominant_avoidance">Hasa kwa sababu umewahi kuiahirisha hapo awali.</string>
     <string name="today_start_session">Anza kipindi</string>
     <string name="today_minutes_short">%1$d dk</string>
     <string name="today_reason_due_today">inadaiwa leo</string>

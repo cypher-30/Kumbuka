@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.domain.model.Confidence
+import dev.kumbuka.app.domain.scheduler.DominantPressure
 import dev.kumbuka.app.domain.scheduler.TodayCard
 import dev.kumbuka.app.domain.scheduler.TodayPlan
 import dev.kumbuka.app.domain.scheduler.TodayReasonFact
@@ -169,11 +170,7 @@ private fun WhyThisSheet(card: TodayCard, onDismiss: () -> Unit, sheetState: and
                 Text(stringResource(R.string.today_why_this), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
             }
             Text(todayReasonText(card), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink)
-            Text(card.breakdown.plainLanguageSummary(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-            BreakdownLine(label = stringResource(R.string.today_gap), value = "${(card.breakdown.gap * 100).toInt()}%")
-            BreakdownLine(label = stringResource(R.string.today_staleness), value = "${(card.breakdown.staleness * 100).toInt()}%")
-            BreakdownLine(label = stringResource(R.string.today_urgency), value = "${(card.breakdown.urgency * 100).toInt()}%")
-            BreakdownLine(label = stringResource(R.string.today_avoidance), value = "${(card.breakdown.avoidance * 100).toInt()}%")
+            Text(dominantPressureText(card.breakdown.dominantPressure()), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
                 Text(stringResource(R.string.generic_ok))
             }
@@ -183,11 +180,11 @@ private fun WhyThisSheet(card: TodayCard, onDismiss: () -> Unit, sheetState: and
 }
 
 @Composable
-private fun BreakdownLine(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
-        Text(value, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
-    }
+private fun dominantPressureText(pressure: DominantPressure): String = when (pressure) {
+    DominantPressure.GAP -> stringResource(R.string.today_why_dominant_gap)
+    DominantPressure.STALENESS -> stringResource(R.string.today_why_dominant_staleness)
+    DominantPressure.URGENCY -> stringResource(R.string.today_why_dominant_urgency)
+    DominantPressure.AVOIDANCE -> stringResource(R.string.today_why_dominant_avoidance)
 }
 
 @Composable

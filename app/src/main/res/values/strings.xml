@@ -2,6 +2,9 @@
 <resources>
     <string name="app_name">Kumbuka</string>
 
+    <!-- Splash -->
+    <string name="splash_tagline">remember, on schedule</string>
+
     <!-- Onboarding: one merged page (language + honest local/offline copy + privacy
          acknowledgement + a single "Get started" action). No login, no consent as a
          separate screen, no trained-model claims. -->
@@ -239,11 +242,10 @@
     <string name="today_all_caught_up_title">All caught up</string>
     <string name="today_all_caught_up_body">Nothing needs immediate attention right now. Check back after another review, deferral, or upcoming deadline changes the order.</string>
     <string name="today_why_this">Why this?</string>
-    <string name="today_score_label">Score %1$.2f</string>
-    <string name="today_gap">Gap</string>
-    <string name="today_staleness">Staleness</string>
-    <string name="today_urgency">Urgency</string>
-    <string name="today_avoidance">Avoidance</string>
+    <string name="today_why_dominant_gap">Mainly because there\'s a real gap between how confident you feel and how it tends to fade.</string>
+    <string name="today_why_dominant_staleness">Mainly because it\'s been a while since your last review.</string>
+    <string name="today_why_dominant_urgency">Mainly because of an upcoming deadline.</string>
+    <string name="today_why_dominant_avoidance">Mainly because you\'ve deferred it before.</string>
     <string name="today_start_session">Start session</string>
     <string name="today_minutes_short">%1$d min</string>
     <string name="today_reason_due_today">due today</string>
