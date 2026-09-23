@@ -234,6 +234,24 @@
     <string name="generic_ok">SAWA</string>
     <string name="insights_title">Maarifa</string>
     <string name="insights_placeholder_body">Maarifa yanahamia kwenye skrini yake ili tabo za nyumbani zibaki zenye mwelekeo.</string>
+    <string name="insights_overview_title">Uchanganuzi wa hapa kifaa</string>
+    <string name="insights_overview_body">Muhtasari huu unabaki kwenye kifaa hiki. Pakiti za mfano zinaondolewa kwa chaguo-msingi, na data haba huonyeshwa kama haipo badala ya kukisiwa.</string>
+    <string name="insights_sessions_title">Vipindi vya kujifunza</string>
+    <string name="insights_sessions_summary">Vipindi %1$d vilivyokamilika • %2$d visivyoahirishwa</string>
+    <string name="insights_sessions_measured">Dakika %1$d zilizopimwa • vipindi %2$d vilivyokamilika bila muda uliopimwa</string>
+    <string name="insights_assessments_title">Viungo vya tathmini</string>
+    <string name="insights_assessments_summary">Tathmini %1$d zilizohifadhiwa zimejumuishwa</string>
+    <string name="insights_same_day_note">Vipindi vya siku ileile vinaondolewa kwenye ulinganisho wa kujiamini na alama kwa sababu alama huhifadhiwa kama tarehe pekee.</string>
+    <string name="insights_not_enough_data">Bado hakuna data ya kutosha kutoa ulinganisho wenye manufaa hapa.</string>
+    <string name="insights_requested_baseline">Mapendekezo ya msingi yaliyoombwa</string>
+    <string name="insights_requested_placeholder">Mapendekezo ya placeholder yaliyoombwa</string>
+    <string name="insights_actual_baseline">Mapendekezo yaliyohusishwa na msingi kwa kweli</string>
+    <string name="insights_actual_placeholder">Mapendekezo yaliyohusishwa na placeholder kwa kweli</string>
+    <string name="insights_fallbacks">Fallback za placeholder</string>
+    <string name="insights_scheduler_note">Hesabu hizi zinaeleza kile programu ilichagua na kuhifadhi. Hazionyeshi umuhimu wa takwimu wala kuthibitisha athari ya kisababishi.</string>
+    <string name="insights_mark_score">Alama: %1$.1f%%</string>
+    <string name="insights_mark_not_enough_data">Hakuna ratings za kutosha kabla ya tathmini hii (mada %1$d/%2$d zimefunikwa).</string>
+    <string name="insights_mark_correlation">Wastani wa kujiamini kabla: %1$.2f / 3.0 kwenye mada zilizounganishwa %2$d/%3$d.</string>
 
     <!-- Phase 8: Exams and marks -->
     <string name="exams_title">Mitihani</string>
