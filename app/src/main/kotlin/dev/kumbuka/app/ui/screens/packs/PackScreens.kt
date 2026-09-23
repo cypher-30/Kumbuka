@@ -85,63 +85,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun UnitsListScreen(
-    unitRepository: UnitRepository,
-    topicRepository: TopicRepository,
-    onBack: () -> Unit,
-    onImportPack: () -> Unit,
-    onCreateUnit: () -> Unit,
-    onOpenTopic: (String) -> Unit,
-    onExportUnit: (String) -> Unit,
-) {
-    val units by unitRepository.observeAll().collectAsState(initial = emptyList())
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.units_list_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onCreateUnit) {
-                        Icon(Icons.Outlined.AddCircleOutline, contentDescription = stringResource(R.string.author_start_cta))
-                    }
-                    IconButton(onClick = onImportPack) {
-                        Icon(Icons.Outlined.UploadFile, contentDescription = stringResource(R.string.import_pack_title))
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = SnackbarHostState()) },
-        containerColor = LocalKbColors.current.paper,
-    ) { innerPadding ->
-        UnitsListBody(
-            units = units,
-            topicRepository = topicRepository,
-            onImportPack = onImportPack,
-            onOpenTopic = onOpenTopic,
-            onExportUnit = onExportUnit,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            headerContent = {
-                item {
-                    Text(
-                        text = stringResource(R.string.units_list_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LocalKbColors.current.inkMuted,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
-            },
-        )
-    }
-}
-
-@Composable
 fun UnitsListBody(
     units: List<UnitModel>,
     topicRepository: TopicRepository,

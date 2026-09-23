@@ -57,7 +57,6 @@ fun HomeScreen(
     deadlineRepository: DeadlineRepository,
     assessmentMarkRepository: AssessmentMarkRepository,
     schedulerLogRepository: SchedulerLogRepository,
-    onBrowseUnits: () -> Unit,
     onImportPack: () -> Unit,
     onCreateUnit: () -> Unit,
     onOpenTopic: (String) -> Unit,
