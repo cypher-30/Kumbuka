@@ -19,13 +19,11 @@ import dev.kumbuka.app.ui.screens.packs.PackAuthoringScreen
 import dev.kumbuka.app.ui.screens.packs.ExportPackScreen
 import dev.kumbuka.app.ui.screens.packs.ImportPackScreen
 import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
-import dev.kumbuka.app.ui.screens.packs.UnitsListScreen
 import kotlinx.coroutines.launch
 
 object KbRoute {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
-    const val UNITS = "units"
     const val INSIGHTS = "insights"
     const val IMPORT_PACK = "import-pack"
     const val AUTHOR_PACK = "author-pack"
@@ -78,24 +76,12 @@ fun KumbukaNavGraph(
                 deadlineRepository = app.deadlineRepository,
                 assessmentMarkRepository = app.assessmentMarkRepository,
                 schedulerLogRepository = app.schedulerLogRepository,
-                onBrowseUnits = { navController.navigate(KbRoute.UNITS) },
                 onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
                 onCreateUnit = { navController.navigate(KbRoute.AUTHOR_PACK) },
                 onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
                 onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
                 onStartSession = { topicId, plannedMinutes -> navController.navigate(KbRoute.session(topicId, plannedMinutes)) },
                 onOpenInsights = { navController.navigate(KbRoute.INSIGHTS) },
-            )
-        }
-        composable(KbRoute.UNITS) {
-            UnitsListScreen(
-                unitRepository = app.unitRepository,
-                topicRepository = app.topicRepository,
-                onBack = { navController.popBackStack() },
-                onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
-                onCreateUnit = { navController.navigate(KbRoute.AUTHOR_PACK) },
-                onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
-                onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
             )
         }
         composable(KbRoute.INSIGHTS) {
