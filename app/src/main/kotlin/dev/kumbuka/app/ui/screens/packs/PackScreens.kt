@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Card
@@ -40,7 +40,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +56,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
@@ -74,7 +72,8 @@ import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.pack.CoursePack
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbSecondaryButton
-import dev.kumbuka.app.ui.theme.KbColors
+import dev.kumbuka.app.ui.theme.LocalKbColors
+import dev.kumbuka.app.ui.theme.KbSpacing
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
@@ -114,7 +113,7 @@ fun UnitsListScreen(
             )
         },
         snackbarHost = { SnackbarHost(hostState = SnackbarHostState()) },
-        containerColor = KbColors.paper,
+        containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
         if (units.isEmpty()) {
             EmptyUnitsState(
@@ -128,14 +127,14 @@ fun UnitsListScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(KbSpacing.x2),
+                verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
             ) {
                 item {
                     Text(
                         text = stringResource(R.string.units_list_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = KbColors.inkMuted,
+                        color = LocalKbColors.current.inkMuted,
                         modifier = Modifier.padding(bottom = 4.dp),
                     )
                 }
@@ -155,28 +154,28 @@ fun UnitsListScreen(
 @Composable
 private fun EmptyUnitsState(modifier: Modifier = Modifier, onImportPack: () -> Unit) {
     Column(
-        modifier = modifier.padding(24.dp),
+        modifier = modifier.padding(KbSpacing.x3),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
                 .size(72.dp)
-                .background(KbColors.primaryTint, RoundedCornerShape(20.dp)),
+                .background(LocalKbColors.current.primaryTint, RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.AddCircleOutline, contentDescription = null, tint = KbColors.primary)
+            Icon(Icons.Outlined.AddCircleOutline, contentDescription = null, tint = LocalKbColors.current.primary)
         }
-        Spacer(Modifier.height(18.dp))
-        Text(stringResource(R.string.units_empty_title), style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(KbSpacing.x2))
+        Text(stringResource(R.string.units_empty_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+        Spacer(Modifier.height(KbSpacing.x1))
         Text(
             text = stringResource(R.string.units_empty_body),
             style = MaterialTheme.typography.bodyMedium,
-            color = KbColors.inkMuted,
+            color = LocalKbColors.current.inkMuted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(KbSpacing.x2))
         KbPrimaryButton(text = stringResource(R.string.import_pack_cta), onClick = onImportPack)
     }
 }
@@ -190,13 +189,13 @@ private fun UnitCard(
 ) {
     val topics by topicRepository.observeByUnit(unit.id).collectAsState(initial = emptyList())
     Card(
-        colors = CardDefaults.cardColors(containerColor = KbColors.surface),
+        colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface),
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(unit.code, style = MaterialTheme.typography.labelLarge, color = KbColors.primary)
-                Text(unit.title, style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
+                Text(unit.code, style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.primary)
+                Text(unit.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
                 Text(
                     text = stringResource(
                         R.string.unit_pack_version,
@@ -204,7 +203,7 @@ private fun UnitCard(
                         unit.packId ?: stringResource(R.string.unit_pack_id_missing),
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = KbColors.inkMuted,
+                    color = LocalKbColors.current.inkMuted,
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -218,7 +217,7 @@ private fun UnitCard(
                 Text(
                     text = stringResource(R.string.unit_no_topics),
                     style = MaterialTheme.typography.bodySmall,
-                    color = KbColors.inkMuted,
+                    color = LocalKbColors.current.inkMuted,
                 )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -229,7 +228,7 @@ private fun UnitCard(
                         Text(
                             text = stringResource(R.string.unit_more_topics, topics.size - 4),
                             style = MaterialTheme.typography.bodySmall,
-                            color = KbColors.inkFaint,
+                            color = LocalKbColors.current.inkFaint,
                         )
                     }
                 }
@@ -243,18 +242,18 @@ private fun TopicRow(topic: Topic, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(KbColors.paper2, RoundedCornerShape(12.dp))
+            .background(LocalKbColors.current.paper2, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(topic.title, style = MaterialTheme.typography.bodyMedium, color = KbColors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(topic.title, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 text = topic.objective,
                 style = MaterialTheme.typography.bodySmall,
-                color = KbColors.inkMuted,
+                color = LocalKbColors.current.inkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -262,7 +261,7 @@ private fun TopicRow(topic: Topic, onClick: () -> Unit) {
         Text(
             text = stringResource(R.string.topic_detail_cta),
             style = MaterialTheme.typography.labelMedium,
-            color = KbColors.primary,
+            color = LocalKbColors.current.primary,
             modifier = Modifier.padding(start = 8.dp),
         )
     }
@@ -276,15 +275,17 @@ fun TopicDetailScreen(
     onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val savedMessageText = stringResource(R.string.topic_saved_objective)
     var topic by remember(topicId) { mutableStateOf<Topic?>(null) }
     var unit by remember(topicId) { mutableStateOf<UnitModel?>(null) }
     var objectiveDraft by remember(topicId) { mutableStateOf("") }
-    var saveMessage by remember { mutableStateOf<String?>(null) }
+    var saveMessage by remember(topicId) { mutableStateOf<String?>(null) }
 
     LaunchedEffect(topicId) {
         topic = topicRepository.getById(topicId)
         unit = topic?.let { unitRepository.getById(it.unitId) }
         objectiveDraft = topic?.objective.orEmpty()
+        saveMessage = null
     }
 
     Scaffold(
@@ -298,7 +299,7 @@ fun TopicDetailScreen(
                 },
             )
         },
-        containerColor = KbColors.paper,
+        containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
         val current = topic
         if (current == null) {
@@ -308,7 +309,7 @@ fun TopicDetailScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.topic_not_found), color = KbColors.inkMuted)
+                Text(stringResource(R.string.topic_not_found), color = LocalKbColors.current.inkMuted)
             }
             return@Scaffold
         }
@@ -320,10 +321,10 @@ fun TopicDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(unit?.code ?: stringResource(R.string.topic_unit_unknown), style = MaterialTheme.typography.labelLarge, color = KbColors.primary)
-                    Text(current.title, style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
+                    Text(unit?.code ?: stringResource(R.string.topic_unit_unknown), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.primary)
+                    Text(current.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
                     Text(
                         text = stringResource(
                             R.string.topic_weight_label,
@@ -331,15 +332,18 @@ fun TopicDetailScreen(
                             if (current.objectiveEditedLocally) stringResource(R.string.topic_edited_by_you) else stringResource(R.string.topic_from_pack),
                         ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = KbColors.inkMuted,
+                        color = LocalKbColors.current.inkMuted,
                     )
                 }
             }
 
-            Text(stringResource(R.string.topic_objective_label), style = MaterialTheme.typography.labelLarge, color = KbColors.inkMuted)
+            Text(stringResource(R.string.topic_objective_label), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
             OutlinedTextField(
                 value = objectiveDraft,
-                onValueChange = { objectiveDraft = it },
+                onValueChange = {
+                    objectiveDraft = it
+                    saveMessage = null
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 4,
                 maxLines = 8,
@@ -350,24 +354,24 @@ fun TopicDetailScreen(
             Text(
                 text = stringResource(R.string.topic_retrieval_prompt_label),
                 style = MaterialTheme.typography.labelLarge,
-                color = KbColors.inkMuted,
+                color = LocalKbColors.current.inkMuted,
             )
-            Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(14.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(14.dp)) {
                 Text(
                     text = current.retrievalPrompt.ifBlank { stringResource(R.string.topic_retrieval_prompt_empty) },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = KbColors.ink,
+                    color = LocalKbColors.current.ink,
                     modifier = Modifier.padding(14.dp),
                 )
             }
 
             if (current.resourcePointers.isNotEmpty()) {
-                Text(stringResource(R.string.topic_resources_label), style = MaterialTheme.typography.labelLarge, color = KbColors.inkMuted)
+                Text(stringResource(R.string.topic_resources_label), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
                 current.resourcePointers.forEach { pointer ->
                     Text(
                         text = "• $pointer",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = KbColors.ink,
+                        color = LocalKbColors.current.ink,
                     )
                 }
             }
@@ -385,13 +389,13 @@ fun TopicDetailScreen(
                                 ),
                             )
                             topic = topicRepository.getById(topicId)
-                            saveMessage = null
+                            saveMessage = savedMessageText
                         }
                     }
                 },
             )
             saveMessage?.let {
-                Text(text = it, style = MaterialTheme.typography.bodySmall, color = KbColors.primary)
+                Text(text = it, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary)
             }
         }
     }
@@ -452,7 +456,7 @@ fun ImportPackScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = KbColors.paper,
+        containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
         if (showDiff && parsedPack != null && diff != null) {
             PackDiffScreen(
@@ -508,21 +512,22 @@ fun ImportPackScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(innerPadding)
+                .imePadding(),
+            contentPadding = PaddingValues(KbSpacing.x2),
+            verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
         ) {
             item {
                 Text(
                     text = stringResource(R.string.import_pack_step_0),
                     style = MaterialTheme.typography.titleMedium,
-                    color = KbColors.ink,
+                    color = LocalKbColors.current.ink,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(KbSpacing.x1 / 2))
                 Text(
                     text = stringResource(R.string.import_pack_step_0_body),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = KbColors.inkMuted,
+                    color = LocalKbColors.current.inkMuted,
                 )
             }
             item {
@@ -585,7 +590,7 @@ fun ImportPackScreen(
             }
             parseError?.let {
                 item {
-                    InfoBanner(text = it, accent = KbColors.accent)
+                    InfoBanner(text = it, accent = LocalKbColors.current.accent)
                 }
             }
             if (parsedPack != null && preview != null) {
@@ -593,7 +598,7 @@ fun ImportPackScreen(
                     Text(
                         text = stringResource(R.string.import_pack_step_1),
                         style = MaterialTheme.typography.titleMedium,
-                        color = KbColors.ink,
+                        color = LocalKbColors.current.ink,
                     )
                 }
                 item {
@@ -615,13 +620,13 @@ fun ImportPackScreen(
 
 @Composable
 private fun ImportPreviewCard(preview: PackImportPreview, pack: CoursePack) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(pack.unit.title, style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
+            Text(pack.unit.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
             Text(
                 text = stringResource(R.string.import_pack_metadata, preview.packId, preview.packVersion),
                 style = MaterialTheme.typography.bodySmall,
-                color = KbColors.inkMuted,
+                color = LocalKbColors.current.inkMuted,
             )
             CountRow(label = stringResource(R.string.import_added_topics), value = preview.topicsToAdd)
             CountRow(label = stringResource(R.string.import_changed_topics), value = preview.topicsToUpdate)
@@ -633,7 +638,7 @@ private fun ImportPreviewCard(preview: PackImportPreview, pack: CoursePack) {
             Text(
                 text = stringResource(R.string.import_preview_note),
                 style = MaterialTheme.typography.bodySmall,
-                color = KbColors.inkFaint,
+                color = LocalKbColors.current.inkFaint,
             )
         }
     }
@@ -642,14 +647,14 @@ private fun ImportPreviewCard(preview: PackImportPreview, pack: CoursePack) {
 @Composable
 private fun CountRow(label: String, value: Int) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
-        Text(value.toString(), style = MaterialTheme.typography.bodyMedium, color = KbColors.ink)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+        Text(value.toString(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink)
     }
 }
 
 @Composable
 private fun InfoBanner(text: String, accent: androidx.compose.ui.graphics.Color) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.warningTint), shape = RoundedCornerShape(14.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.warningTint), shape = RoundedCornerShape(14.dp)) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
@@ -685,7 +690,7 @@ fun ExportPackScreen(
                 },
             )
         },
-        containerColor = KbColors.paper,
+        containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
         val result = exportState
         when {
@@ -693,13 +698,13 @@ fun ExportPackScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.export_loading), color = KbColors.inkMuted)
+                Text(stringResource(R.string.export_loading), color = LocalKbColors.current.inkMuted)
             }
             result.isFailure -> Box(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(result.exceptionOrNull()?.message ?: stringResource(R.string.export_failed), color = KbColors.accent)
+                Text(result.exceptionOrNull()?.message ?: stringResource(R.string.export_failed), color = LocalKbColors.current.accent)
             }
             else -> {
                 val raw = result.getOrNull().orEmpty()
@@ -707,10 +712,11 @@ fun ExportPackScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(KbSpacing.x2)
+                        .imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
                 ) {
-                    Text(stringResource(R.string.export_body), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+                    Text(stringResource(R.string.export_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
                     OutlinedTextField(
                         value = raw,
                         onValueChange = {},

@@ -34,7 +34,8 @@ import dev.kumbuka.app.data.repository.TopicConflictChoice
 import dev.kumbuka.app.data.repository.TopicField
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbSecondaryButton
-import dev.kumbuka.app.ui.theme.KbColors
+import dev.kumbuka.app.ui.theme.LocalKbColors
+import dev.kumbuka.app.ui.theme.KbSpacing
 
 @Composable
 fun PackDiffScreen(
@@ -50,22 +51,22 @@ fun PackDiffScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(KbSpacing.x2),
+        verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
     ) {
         item {
             ImportSummaryCard(diff)
         }
         item {
-            InfoBanner(text = bannerText(diff), accent = KbColors.primary)
+            InfoBanner(text = bannerText(diff), accent = LocalKbColors.current.primary)
         }
         if (diff.topicDiffs.isEmpty() && diff.deadlineDiffs.isEmpty()) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+                Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
                     Text(
                         text = stringResource(R.string.diff_no_changes),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = KbColors.inkMuted,
+                        color = LocalKbColors.current.inkMuted,
                         modifier = Modifier.padding(16.dp),
                     )
                 }
@@ -117,13 +118,13 @@ fun PackDiffScreen(
 
 @Composable
 private fun ImportSummaryCard(diff: PackDiff) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(diff.unitTitle, style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
+            Text(diff.unitTitle, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
             Text(
                 text = stringResource(R.string.import_pack_metadata, diff.packId, diff.packVersion),
                 style = MaterialTheme.typography.bodySmall,
-                color = KbColors.inkMuted,
+                color = LocalKbColors.current.inkMuted,
             )
             CountRow(label = stringResource(R.string.import_added_topics), value = diff.preview.topicsToAdd)
             CountRow(label = stringResource(R.string.import_changed_topics), value = diff.preview.topicsToUpdate)
@@ -139,14 +140,14 @@ private fun ImportSummaryCard(diff: PackDiff) {
 @Composable
 private fun CountRow(label: String, value: Int) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
-        Text(value.toString(), style = MaterialTheme.typography.bodyMedium, color = KbColors.ink)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+        Text(value.toString(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink)
     }
 }
 
 @Composable
 private fun InfoBanner(text: String, accent: androidx.compose.ui.graphics.Color) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.warningTint), shape = RoundedCornerShape(14.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.warningTint), shape = RoundedCornerShape(14.dp)) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
@@ -158,7 +159,7 @@ private fun InfoBanner(text: String, accent: androidx.compose.ui.graphics.Color)
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(title, style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
+    Text(title, style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
 }
 
 @Composable
@@ -169,16 +170,16 @@ private fun TopicDiffCard(
     selectedRemovalChoice: RemovalChoice,
     onRemovalChoice: (topicId: String, choice: RemovalChoice) -> Unit,
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(diff.title, style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
+                Text(diff.title, style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
                 AssistChip(onClick = {}, enabled = false, label = { Text(diff.kind.topicLabel()) })
             }
             when (diff.kind) {
                 PackChangeKind.ADDED -> {
-                    Text(stringResource(R.string.diff_pack_value), style = MaterialTheme.typography.labelMedium, color = KbColors.primary)
-                    diff.imported?.let { Text(topicSnapshot(it), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted) }
+                    Text(stringResource(R.string.diff_pack_value), style = MaterialTheme.typography.labelMedium, color = LocalKbColors.current.primary)
+                    diff.imported?.let { Text(topicSnapshot(it), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted) }
                 }
                 PackChangeKind.UPDATED -> {
                     FieldTags(diff.changedFields)
@@ -189,7 +190,7 @@ private fun TopicDiffCard(
                 }
                 PackChangeKind.CONFLICTED -> {
                     FieldTags(diff.changedFields)
-                    Text(stringResource(R.string.diff_conflict_note), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+                    Text(stringResource(R.string.diff_conflict_note), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
                     ValueRows(
                         local = diff.local?.let(::topicSnapshot).orEmpty(),
                         pack = diff.imported?.let(::topicSnapshot).orEmpty(),
@@ -210,8 +211,8 @@ private fun TopicDiffCard(
                     }
                 }
                 PackChangeKind.REMOVED -> {
-                    Text(stringResource(R.string.diff_removed_note), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
-                    Text(diff.local?.let(::topicSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = KbColors.ink)
+                    Text(stringResource(R.string.diff_removed_note), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    Text(diff.local?.let(::topicSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         FilterChip(
                             selected = selectedRemovalChoice == RemovalChoice.KEEP,
@@ -239,15 +240,15 @@ private fun DeadlineDiffCard(
     onRemovalChoice: (deadlineId: String, choice: RemovalChoice) -> Unit,
 ) {
     val title = diff.imported?.title ?: diff.local?.title.orEmpty()
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
                 AssistChip(onClick = {}, enabled = false, label = { Text(diff.kind.deadlineLabel()) })
             }
             when (diff.kind) {
                 PackChangeKind.ADDED -> {
-                    Text(diff.imported?.let(::deadlineSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+                    Text(diff.imported?.let(::deadlineSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
                 }
                 PackChangeKind.UPDATED -> {
                     DeadlineFieldTags(diff.changedFields.map { deadlineFieldLabel(it) }.toSet())
@@ -257,8 +258,8 @@ private fun DeadlineDiffCard(
                     )
                 }
                 PackChangeKind.REMOVED -> {
-                    Text(stringResource(R.string.diff_removed_note), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
-                    Text(diff.local?.let(::deadlineSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = KbColors.ink)
+                    Text(stringResource(R.string.diff_removed_note), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    Text(diff.local?.let(::deadlineSnapshot).orEmpty(), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         FilterChip(
                             selected = selectedRemovalChoice == RemovalChoice.KEEP,
@@ -283,7 +284,7 @@ private fun DeadlineDiffCard(
 @Composable
 private fun FieldTags(fields: Set<TopicField>) {
     if (fields.isEmpty()) return
-    Text(stringResource(R.string.diff_changed_fields), style = MaterialTheme.typography.labelMedium, color = KbColors.inkMuted)
+    Text(stringResource(R.string.diff_changed_fields), style = MaterialTheme.typography.labelMedium, color = LocalKbColors.current.inkMuted)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         fields.take(3).forEach { field ->
             AssistChip(onClick = {}, enabled = false, label = { Text(field.label()) })
@@ -294,7 +295,7 @@ private fun FieldTags(fields: Set<TopicField>) {
 @Composable
 private fun DeadlineFieldTags(fields: Set<String>) {
     if (fields.isEmpty()) return
-    Text(stringResource(R.string.diff_changed_fields), style = MaterialTheme.typography.labelMedium, color = KbColors.inkMuted)
+    Text(stringResource(R.string.diff_changed_fields), style = MaterialTheme.typography.labelMedium, color = LocalKbColors.current.inkMuted)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         fields.take(3).forEach { field ->
             AssistChip(onClick = {}, enabled = false, label = { Text(field) })
@@ -304,10 +305,10 @@ private fun DeadlineFieldTags(fields: Set<String>) {
 
 @Composable
 private fun ValueRows(local: String, pack: String) {
-    Text(stringResource(R.string.diff_local_value), style = MaterialTheme.typography.labelMedium, color = KbColors.inkMuted)
-    Text(local, style = MaterialTheme.typography.bodySmall, color = KbColors.ink)
-    Text(stringResource(R.string.diff_pack_value), style = MaterialTheme.typography.labelMedium, color = KbColors.primary, fontWeight = FontWeight.Medium)
-    Text(pack, style = MaterialTheme.typography.bodySmall, color = KbColors.ink)
+    Text(stringResource(R.string.diff_local_value), style = MaterialTheme.typography.labelMedium, color = LocalKbColors.current.inkMuted)
+    Text(local, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
+    Text(stringResource(R.string.diff_pack_value), style = MaterialTheme.typography.labelMedium, color = LocalKbColors.current.primary, fontWeight = FontWeight.Medium)
+    Text(pack, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
 }
 
 @Composable
