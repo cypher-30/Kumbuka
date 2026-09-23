@@ -1,54 +1,77 @@
 package dev.kumbuka.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 private val LightColors = lightColorScheme(
-    primary = KbColors.primary,
-    onPrimary = KbColors.surface,
-    primaryContainer = KbColors.primaryTint,
-    onPrimaryContainer = KbColors.primary,
-    background = KbColors.paper,
-    onBackground = KbColors.ink,
-    surface = KbColors.surface,
-    onSurface = KbColors.ink,
-    surfaceVariant = KbColors.paper2,
-    onSurfaceVariant = KbColors.inkMuted,
-    outline = KbColors.border,
-    error = KbColors.accent,
+    primary = KbLightPalette.primary,
+    onPrimary = KbLightPalette.surface,
+    primaryContainer = KbLightPalette.primaryTint,
+    onPrimaryContainer = KbLightPalette.primary,
+    secondary = KbLightPalette.primary,
+    onSecondary = KbLightPalette.surface,
+    secondaryContainer = KbLightPalette.primaryTint,
+    onSecondaryContainer = KbLightPalette.primary,
+    tertiary = KbLightPalette.accent,
+    onTertiary = KbLightPalette.surface,
+    background = KbLightPalette.paper,
+    onBackground = KbLightPalette.ink,
+    surface = KbLightPalette.surface,
+    onSurface = KbLightPalette.ink,
+    surfaceVariant = KbLightPalette.paper2,
+    onSurfaceVariant = KbLightPalette.inkMuted,
+    outline = KbLightPalette.border,
+    error = KbLightPalette.accent,
 )
 
-// Dark palette not specified in Figma yet; derived by keeping the same
-// relationships (dark ground, light ink, same primary) until a real dark
-// spec exists.
 private val DarkColors = darkColorScheme(
-    primary = KbColors.primaryTint,
-    onPrimary = KbColors.ink,
-    primaryContainer = KbColors.primary,
-    onPrimaryContainer = KbColors.primaryTint,
-    background = Color(0xFF0F1D20),
-    onBackground = KbColors.paper,
-    surface = Color(0xFF16282B),
-    onSurface = KbColors.paper,
-    surfaceVariant = Color(0xFF223235),
-    onSurfaceVariant = KbColors.border,
-    outline = KbColors.inkMuted,
-    error = KbColors.accent,
+    primary = KbDarkPalette.primary,
+    onPrimary = KbDarkPalette.paper,
+    primaryContainer = KbDarkPalette.primaryTint,
+    onPrimaryContainer = KbDarkPalette.primary,
+    secondary = KbDarkPalette.primary,
+    onSecondary = KbDarkPalette.paper,
+    secondaryContainer = KbDarkPalette.primaryTint,
+    onSecondaryContainer = KbDarkPalette.primary,
+    tertiary = KbDarkPalette.accent,
+    onTertiary = KbDarkPalette.paper,
+    background = KbDarkPalette.paper,
+    onBackground = KbDarkPalette.ink,
+    surface = KbDarkPalette.surface,
+    onSurface = KbDarkPalette.ink,
+    surfaceVariant = KbDarkPalette.paper2,
+    onSurfaceVariant = KbDarkPalette.inkMuted,
+    outline = KbDarkPalette.border,
+    error = KbDarkPalette.accent,
+)
+
+private val KumbukaShapes = Shapes(
+    extraSmall = RoundedCornerShape(10.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
 @Composable
 fun KumbukaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColors else LightColors
-    MaterialTheme(
-        colorScheme = colors,
-        typography = KumbukaTypography,
-        content = content,
-    )
+    val kbPalette = if (darkTheme) KbDarkPalette else KbLightPalette
+    CompositionLocalProvider(LocalKbColors provides kbPalette) {
+        MaterialTheme(
+            colorScheme = colors,
+            typography = KumbukaTypography,
+            shapes = KumbukaShapes,
+            content = content,
+        )
+    }
 }
