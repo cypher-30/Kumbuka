@@ -1,6 +1,9 @@
 package dev.kumbuka.app.ui.screens.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,185 +12,178 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Bedtime
-import androidx.compose.material.icons.outlined.Insights
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
+import dev.kumbuka.app.ui.components.AppMarkGlyph
 import dev.kumbuka.app.ui.components.KbPrimaryButton
-import dev.kumbuka.app.ui.components.KbSecondaryButton
-import dev.kumbuka.app.ui.components.PagerDots
-import dev.kumbuka.app.ui.theme.LocalKbColors
 import dev.kumbuka.app.ui.theme.KbSpacing
+import dev.kumbuka.app.ui.theme.LocalKbColors
 import kotlinx.coroutines.launch
 
-private val OnboardingMaxWidth = 640.dp
+private val OnboardingMaxWidth = 480.dp
 
-private data class OnboardingPage(val icon: ImageVector, val titleRes: Int, val bodyRes: Int)
-
-private val pages = listOf(
-    OnboardingPage(Icons.Outlined.Bedtime, R.string.onboarding_1_title, R.string.onboarding_1_body),
-    OnboardingPage(Icons.Outlined.Insights, R.string.onboarding_2_title, R.string.onboarding_2_body),
-    OnboardingPage(Icons.Outlined.MenuBook, R.string.onboarding_3_title, R.string.onboarding_3_body),
-)
-
-/** Figma nodes 1:5635 / 1:5654 / 1:5674, "04-06 Onboarding {1,2,3}". */
+/**
+ * The entire first-run experience is this one page: language, honest
+ * local/offline copy, an explicit privacy acknowledgement and a single
+ * "Get started" action - Consent and the old three-page pager have been
+ * merged into it (DESIGN.md: shortest first run, no login). [onSave] must
+ * persist consent + onboarding completion atomically; on failure this
+ * screen stays put with a retry affordance rather than silently continuing
+ * or getting stuck.
+ */
 @Composable
-fun OnboardingScreen(onFinished: () -> Unit) {
-    val pagerState = rememberPagerState(pageCount = { pages.size })
+fun OnboardingScreen(
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    onSave: suspend () -> Result<Unit>,
+    onFinished: () -> Unit,
+) {
+    var checked by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    fun save() {
+        scope.launch {
+            saving = true
+            saveError = false
+            val result = onSave()
+            saving = false
+            if (result.isSuccess) {
+                onFinished()
+            } else {
+                saveError = true
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(LocalKbColors.current.paper)
             .systemBarsPadding()
-            .background(LocalKbColors.current.paper),
+            .imePadding(),
     ) {
-        val availableWidth = screenWidth
-        val compact = availableWidth < 360.dp
-        val horizontalInset = if (compact) KbSpacing.x2 else KbSpacing.x3
-        val iconBoxSize = if (compact) 72.dp else if (availableWidth >= 600.dp) 96.dp else 88.dp
-        val iconSize = if (compact) 30.dp else if (availableWidth >= 600.dp) 42.dp else 38.dp
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = OnboardingMaxWidth)
                 .align(Alignment.Center)
-                .padding(horizontal = horizontalInset)
+                .padding(horizontal = KbSpacing.x3)
                 .padding(top = KbSpacing.x4, bottom = KbSpacing.x3),
         ) {
-            HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
-                AnimatedContent(
-                    targetState = page,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(160))
-                    },
-                    label = "onboardingPageTransition",
-                ) { activePage ->
-                    OnboardingPageContent(
-                        page = pages[activePage],
-                        iconBoxSize = iconBoxSize,
-                        iconSize = iconSize,
-                    )
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(LocalKbColors.current.primary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    AppMarkGlyph(size = 40.dp)
                 }
+                Spacer(Modifier.height(KbSpacing.x2))
+                Text(
+                    text = stringResource(R.string.onboarding_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = LocalKbColors.current.ink,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(KbSpacing.x1))
+                Text(
+                    text = stringResource(R.string.onboarding_body),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = LocalKbColors.current.inkMuted,
+                    textAlign = TextAlign.Center,
+                )
             }
-            PagerDots(
-                count = pages.size,
-                activeIndex = pagerState.currentPage,
-                modifier = Modifier.fillMaxWidth().padding(vertical = KbSpacing.x1 / 2),
-            )
+
+            Spacer(Modifier.height(KbSpacing.x3))
+            Text(stringResource(R.string.onboarding_language_label), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
+            Spacer(Modifier.height(KbSpacing.x1 / 2))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = currentLanguage == "en", onClick = { onLanguageSelected("en") }, label = { Text("English") })
+                FilterChip(selected = currentLanguage == "sw", onClick = { onLanguageSelected("sw") }, label = { Text("Kiswahili") })
+            }
+
+            Spacer(Modifier.height(KbSpacing.x3))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(1.dp, LocalKbColors.current.border, RoundedCornerShape(10.dp))
+                    .background(LocalKbColors.current.surface)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { checked = !checked }
+                    .padding(14.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                PrivacyCheckbox(checked)
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    stringResource(R.string.onboarding_privacy_checkbox),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LocalKbColors.current.ink,
+                )
+            }
+
+            if (saveError) {
+                Spacer(Modifier.height(KbSpacing.x1))
+                Text(
+                    stringResource(R.string.onboarding_save_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
             Spacer(Modifier.height(KbSpacing.x2))
-            if (compact) {
-                Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
-                    KbPrimaryButton(
-                        text = stringResource(
-                            if (pagerState.currentPage == pages.lastIndex) R.string.onboarding_get_started else R.string.onboarding_continue,
-                        ),
-                        onClick = {
-                            if (pagerState.currentPage == pages.lastIndex) {
-                                onFinished()
-                            } else {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(
-                                        page = pagerState.currentPage + 1,
-                                        animationSpec = tween(durationMillis = 280),
-                                    )
-                                }
-                            }
-                        },
-                    )
-                    KbSecondaryButton(
-                        text = stringResource(R.string.onboarding_skip),
-                        onClick = onFinished,
-                    )
-                }
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(KbSpacing.x1), modifier = Modifier.fillMaxWidth()) {
-                    KbSecondaryButton(
-                        text = stringResource(R.string.onboarding_skip),
-                        onClick = onFinished,
-                        modifier = Modifier.weight(1f),
-                    )
-                    KbPrimaryButton(
-                        text = stringResource(
-                            if (pagerState.currentPage == pages.lastIndex) R.string.onboarding_get_started else R.string.onboarding_continue,
-                        ),
-                        onClick = {
-                            if (pagerState.currentPage == pages.lastIndex) {
-                                onFinished()
-                            } else {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(
-                                        page = pagerState.currentPage + 1,
-                                        animationSpec = tween(durationMillis = 280),
-                                    )
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            KbPrimaryButton(
+                text = stringResource(if (saveError) R.string.onboarding_retry else R.string.onboarding_get_started),
+                onClick = ::save,
+                enabled = checked && !saving,
+            )
         }
     }
 }
 
 @Composable
-private fun OnboardingPageContent(page: OnboardingPage, iconBoxSize: androidx.compose.ui.unit.Dp, iconSize: androidx.compose.ui.unit.Dp) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+private fun PrivacyCheckbox(checked: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(18.dp)
+            .clip(RoundedCornerShape(5.dp))
+            .background(if (checked) LocalKbColors.current.primary else LocalKbColors.current.surface)
+            .border(1.5.dp, if (checked) LocalKbColors.current.primary else LocalKbColors.current.border, RoundedCornerShape(5.dp)),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(iconBoxSize)
-                .clip(MaterialTheme.shapes.extraLarge)
-                .background(LocalKbColors.current.primaryTint),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(page.icon, contentDescription = null, tint = LocalKbColors.current.primary, modifier = Modifier.size(iconSize))
+        if (checked) {
+            Icon(Icons.Filled.Check, contentDescription = null, tint = LocalKbColors.current.surface, modifier = Modifier.size(13.dp))
         }
-        Spacer(Modifier.height(KbSpacing.x3))
-        Text(
-            text = stringResource(page.titleRes),
-            style = MaterialTheme.typography.headlineSmall,
-            color = LocalKbColors.current.ink,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
-        Spacer(Modifier.height(KbSpacing.x1))
-        Text(
-            text = stringResource(page.bodyRes),
-            style = MaterialTheme.typography.bodyLarge,
-            color = LocalKbColors.current.inkMuted,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.padding(horizontal = KbSpacing.x2),
-        )
     }
 }

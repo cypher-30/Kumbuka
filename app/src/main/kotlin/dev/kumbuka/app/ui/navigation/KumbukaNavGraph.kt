@@ -1,7 +1,6 @@
 package dev.kumbuka.app.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -12,7 +11,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.kumbuka.app.KumbukaApplication
-import dev.kumbuka.app.ui.screens.consent.ConsentScreen
 import dev.kumbuka.app.ui.screens.home.HomePlaceholderScreen
 import dev.kumbuka.app.ui.screens.onboarding.OnboardingScreen
 import dev.kumbuka.app.ui.screens.session.SessionFlowScreen
@@ -21,12 +19,9 @@ import dev.kumbuka.app.ui.screens.packs.ExportPackScreen
 import dev.kumbuka.app.ui.screens.packs.ImportPackScreen
 import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
 import dev.kumbuka.app.ui.screens.packs.UnitsListScreen
-import dev.kumbuka.app.ui.screens.splash.SplashScreen
 import kotlinx.coroutines.launch
 
 object KbRoute {
-    const val SPLASH = "splash"
-    const val CONSENT = "consent"
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val UNITS = "units"
@@ -42,42 +37,32 @@ object KbRoute {
 }
 
 /**
- * Entry flow: Splash -> Consent (local-only privacy notice) -> Onboarding
- * (1-3) -> Home. Login was removed entirely - there is no account, no
- * backend, and nothing to sign into, so the shortest possible first run
- * goes straight from the privacy notice into onboarding. Preferences decide
- * whether a returning user skips straight to Home.
+ * Entry flow: MainActivity resolves the real onboardingComplete value while
+ * the native splash is still on screen, then hands this graph a
+ * [startDestination] of either [KbRoute.ONBOARDING] (fresh) or [KbRoute.HOME]
+ * (returning). There is no Splash route/screen here - the native
+ * SplashScreen API owns the entire launch sequence. Login was removed
+ * entirely - there is no account, no backend, and nothing to sign into.
  */
 @Composable
-fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = rememberNavController()) {
+fun KumbukaNavGraph(
+    app: KumbukaApplication,
+    startDestination: String,
+    navController: NavHostController = rememberNavController(),
+) {
     val preferences = app.preferences
-    val onboardingComplete by preferences.onboardingComplete.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
 
-    NavHost(navController = navController, startDestination = KbRoute.SPLASH) {
-        composable(KbRoute.SPLASH) {
-            // Waits for onboardingComplete's real value (not a fixed timer) before
-            // deciding where to go, so a slow first DataStore read never races a
-            // returning user back into onboarding they already finished.
-            LaunchedEffect(onboardingComplete) {
-                val resolved = onboardingComplete ?: return@LaunchedEffect
-                val destination = if (resolved) KbRoute.HOME else KbRoute.CONSENT
-                navController.navigate(destination) { popUpTo(KbRoute.SPLASH) { inclusive = true } }
-            }
-            SplashScreen()
-        }
-        composable(KbRoute.CONSENT) {
-            ConsentScreen(
-                onAccept = {
-                    scope.launch { preferences.setConsentAccepted(true) }
-                    navController.navigate(KbRoute.ONBOARDING) { popUpTo(KbRoute.CONSENT) { inclusive = true } }
-                },
-            )
-        }
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(KbRoute.ONBOARDING) {
+            val language by preferences.language.collectAsState(initial = "en")
             OnboardingScreen(
+                currentLanguage = language,
+                onLanguageSelected = { code ->
+                    scope.launch { preferences.setLanguage(code) }
+                },
+                onSave = { runCatching { preferences.completeOnboarding() } },
                 onFinished = {
-                    scope.launch { preferences.setOnboardingComplete(true) }
                     navController.navigate(KbRoute.HOME) { popUpTo(KbRoute.ONBOARDING) { inclusive = true } }
                 },
             )
