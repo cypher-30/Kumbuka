@@ -18,6 +18,9 @@ class SessionRepository(private val sessionDao: SessionDao) {
     suspend fun getLatestForTopic(topicId: String): Session? =
         sessionDao.getLatestForTopic(topicId)?.toDomain()
 
+    suspend fun getLatestActiveForTopic(topicId: String): Session? =
+        sessionDao.getLatestActiveForTopic(topicId)?.toDomain()
+
     suspend fun countDeferralsForTopic(topicId: String): Int =
         sessionDao.countDeferralsForTopic(topicId)
 

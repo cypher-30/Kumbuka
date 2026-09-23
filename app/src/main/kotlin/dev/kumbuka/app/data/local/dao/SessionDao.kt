@@ -25,6 +25,9 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE topicId = :topicId ORDER BY startedAt DESC LIMIT 1")
     suspend fun getLatestForTopic(topicId: String): SessionEntity?
 
+    @Query("SELECT * FROM sessions WHERE topicId = :topicId AND endedAt IS NULL ORDER BY startedAt DESC LIMIT 1")
+    suspend fun getLatestActiveForTopic(topicId: String): SessionEntity?
+
     @Query("SELECT COUNT(*) FROM sessions WHERE topicId = :topicId AND wasDeferred = 1")
     suspend fun countDeferralsForTopic(topicId: String): Int
 
