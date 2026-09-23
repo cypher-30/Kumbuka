@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -22,9 +22,9 @@ import dev.kumbuka.app.R
 import dev.kumbuka.app.ui.theme.LocalKbColors
 
 enum class KbNavTab {
-    TONIGHT,
-    PROGRESS,
-    EXAMS,
+    TODAY,
+    UNITS,
+    MARKS,
     SETTINGS,
 }
 
@@ -34,9 +34,9 @@ fun KbBottomNavBar(active: KbNavTab, onSelect: (KbNavTab) -> Unit) {
     Column {
         HorizontalDivider(color = LocalKbColors.current.border)
         NavigationBar(containerColor = LocalKbColors.current.surface, modifier = Modifier.navigationBarsPadding()) {
-            KbNavItem(KbNavTab.TONIGHT, Icons.Outlined.Home, active, onSelect)
-            KbNavItem(KbNavTab.PROGRESS, Icons.Outlined.BarChart, active, onSelect)
-            KbNavItem(KbNavTab.EXAMS, Icons.Outlined.CalendarMonth, active, onSelect)
+            KbNavItem(KbNavTab.TODAY, Icons.Outlined.Home, active, onSelect)
+            KbNavItem(KbNavTab.UNITS, Icons.Outlined.MenuBook, active, onSelect)
+            KbNavItem(KbNavTab.MARKS, Icons.Outlined.CalendarMonth, active, onSelect)
             KbNavItem(KbNavTab.SETTINGS, Icons.Outlined.Tune, active, onSelect)
         }
     }
@@ -50,9 +50,9 @@ private fun RowScope.KbNavItem(
     onSelect: (KbNavTab) -> Unit,
 ) {
     val label = when (tab) {
-        KbNavTab.TONIGHT -> stringResource(R.string.nav_tonight)
-        KbNavTab.PROGRESS -> stringResource(R.string.nav_progress)
-        KbNavTab.EXAMS -> stringResource(R.string.nav_exams)
+        KbNavTab.TODAY -> stringResource(R.string.nav_today)
+        KbNavTab.UNITS -> stringResource(R.string.nav_units)
+        KbNavTab.MARKS -> stringResource(R.string.nav_marks)
         KbNavTab.SETTINGS -> stringResource(R.string.nav_settings)
     }
 

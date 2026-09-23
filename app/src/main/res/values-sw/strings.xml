@@ -16,6 +16,9 @@
 
     <!-- Bottom nav -->
     <string name="nav_tonight">Leo usiku</string>
+    <string name="nav_today">Leo</string>
+    <string name="nav_units">Vitengo</string>
+    <string name="nav_marks">Alama</string>
     <string name="nav_progress">Maendeleo</string>
     <string name="nav_exams">Mitihani</string>
     <string name="nav_settings">Mipangilio</string>
@@ -69,6 +72,8 @@
     <string name="search_hint">Utafutaji hubaki hapa kifaa. Hakuna kinachoondoka kwenye kifaa hiki.</string>
     <string name="search_no_results">Hakuna mada iliyolingana na utafutaji wako bado.</string>
     <string name="search_start_session">Anza %1$d dk</string>
+    <string name="search_results_title">Matokeo</string>
+    <string name="search_results_count">Mada %1$d zimelingana</string>
 
     <!-- Phase 3: packs -->
     <string name="generic_back">Rudi</string>
@@ -82,6 +87,7 @@
     <string name="unit_export_pack">Hamisha</string>
     <string name="unit_no_topics">Bado hakuna mada zilizoingizwa kwa kitengo hiki.</string>
     <string name="unit_more_topics">+mada %1$d zaidi</string>
+    <string name="unit_show_less_topics">Onyesha mada chache</string>
     <string name="topic_detail_cta">Fungua</string>
     <string name="topic_detail_title">Maelezo ya mada</string>
     <string name="topic_not_found">Mada hiyo haikupatikana.</string>
@@ -218,6 +224,8 @@
     <string name="today_avoidance">Uepukaji</string>
     <string name="today_start_session">Anza kipindi</string>
     <string name="generic_ok">SAWA</string>
+    <string name="insights_title">Maarifa</string>
+    <string name="insights_placeholder_body">Maarifa yanahamia kwenye skrini yake ili tabo za nyumbani zibaki zenye mwelekeo.</string>
 
     <!-- Phase 8: Exams and marks -->
     <string name="exams_title">Mitihani</string>

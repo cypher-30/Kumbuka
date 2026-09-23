@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,21 +118,16 @@ fun UnitsListScreen(
         snackbarHost = { SnackbarHost(hostState = SnackbarHostState()) },
         containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
-        if (units.isEmpty()) {
-            EmptyUnitsState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                onImportPack = onImportPack,
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(KbSpacing.x2),
-                verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
-            ) {
+        UnitsListBody(
+            units = units,
+            topicRepository = topicRepository,
+            onImportPack = onImportPack,
+            onOpenTopic = onOpenTopic,
+            onExportUnit = onExportUnit,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            headerContent = {
                 item {
                     Text(
                         text = stringResource(R.string.units_list_subtitle),
@@ -139,14 +136,37 @@ fun UnitsListScreen(
                         modifier = Modifier.padding(bottom = 4.dp),
                     )
                 }
-                items(units, key = { it.id }) { unit ->
-                    UnitCard(
-                        unit = unit,
-                        topicRepository = topicRepository,
-                        onOpenTopic = onOpenTopic,
-                        onExportUnit = onExportUnit,
-                    )
-                }
+            },
+        )
+    }
+}
+
+@Composable
+fun UnitsListBody(
+    units: List<UnitModel>,
+    topicRepository: TopicRepository,
+    onImportPack: () -> Unit,
+    onOpenTopic: (String) -> Unit,
+    onExportUnit: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    headerContent: (LazyListScope.() -> Unit)? = null,
+) {
+    if (units.isEmpty()) {
+        EmptyUnitsState(modifier = modifier.fillMaxSize(), onImportPack = onImportPack)
+    } else {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(KbSpacing.x2),
+            verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
+        ) {
+            headerContent?.invoke(this)
+            items(units, key = { it.id }) { unit ->
+                UnitCard(
+                    unit = unit,
+                    topicRepository = topicRepository,
+                    onOpenTopic = onOpenTopic,
+                    onExportUnit = onExportUnit,
+                )
             }
         }
     }
@@ -189,6 +209,8 @@ private fun UnitCard(
     onExportUnit: (String) -> Unit,
 ) {
     val topics by topicRepository.observeByUnit(unit.id).collectAsState(initial = emptyList())
+    var showAll by remember(unit.id) { mutableStateOf(false) }
+    val visibleTopics = if (showAll) topics else topics.take(4)
     Card(
         colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface),
         shape = RoundedCornerShape(16.dp),
@@ -222,15 +244,19 @@ private fun UnitCard(
                 )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    topics.take(4).forEach { topic ->
+                    visibleTopics.forEach { topic ->
                         TopicRow(topic = topic, onClick = { onOpenTopic(topic.id) })
                     }
                     if (topics.size > 4) {
-                        Text(
-                            text = stringResource(R.string.unit_more_topics, topics.size - 4),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalKbColors.current.inkFaint,
-                        )
+                        TextButton(onClick = { showAll = !showAll }) {
+                            Text(
+                                text = if (showAll) {
+                                    stringResource(R.string.unit_show_less_topics)
+                                } else {
+                                    stringResource(R.string.unit_more_topics, topics.size - 4)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -774,6 +800,4 @@ private suspend fun readTextFromUri(context: Context, uri: Uri): String {
         } ?: error("Unable to open file")
     }
 }
-
-
 
