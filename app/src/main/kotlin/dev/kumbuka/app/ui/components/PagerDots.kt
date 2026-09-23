@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.kumbuka.app.ui.theme.KbColors
+import dev.kumbuka.app.ui.theme.LocalKbColors
 
 /** Figma "dots" component from the onboarding screens: active dot widens to 20dp. */
 @Composable
@@ -21,7 +21,7 @@ fun PagerDots(count: Int, activeIndex: Int, modifier: Modifier = Modifier) {
                     .height(8.dp)
                     .width(if (isActive) 20.dp else 8.dp)
                     .background(
-                        color = if (isActive) KbColors.primary else KbColors.border,
+                        color = if (isActive) LocalKbColors.current.primary else LocalKbColors.current.border,
                         shape = RoundedCornerShape(4.dp),
                     ),
             )
