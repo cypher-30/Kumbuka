@@ -119,9 +119,6 @@
     <string name="import_pack_title">Import Course Pack</string>
     <string name="import_pack_intro">Choose a Course Pack file first. If it arrived in chat or email as plain text, you can paste the JSON instead.</string>
     <string name="import_choose_file">Choose file</string>
-    <string name="import_pick_file">File</string>
-    <string name="import_pack_step_0">Step 0 - add a pack file or paste the JSON</string>
-    <string name="import_pack_step_0_body">WhatsApp and email often deliver packs as text, so the importer accepts both a file and pasted JSON.</string>
     <string name="import_try_sample_title">No pack yet?</string>
     <string name="import_try_sample_body">Try a sample pack to see how Kumbuka works. It\'s clearly marked as a sample and never counts toward your real Insights.</string>
     <string name="import_try_sample_cta">Try a sample pack</string>
@@ -134,7 +131,6 @@
     <string name="import_pick_cancelled">No file was selected.</string>
     <string name="import_file_permission_denied">Kumbuka no longer has permission to read that file.</string>
     <string name="import_file_read_failed">Could not read that file.</string>
-    <string name="import_pack_step_1">Step 1 - preview the merge</string>
     <string name="import_pack_metadata">Pack %1$s • version %2$d</string>
     <string name="import_added_topics">Topics to add</string>
     <string name="import_changed_topics">Topics to update</string>
