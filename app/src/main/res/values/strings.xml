@@ -46,11 +46,53 @@
 
     <!-- Home placeholder (real Today screen lands in a later phase) -->
     <string name="home_placeholder_title">Today\'s review list lands here</string>
-    <string name="home_browse_units">Browse units</string>
+    <string name="home_browse_units">Units</string>
     <string name="home_progress_placeholder_title">Progress is landing soon</string>
     <string name="home_progress_placeholder_body">Phase 8 focuses on exams and marks first. Progress analytics come next.</string>
     <string name="home_settings_placeholder_title">Settings are landing soon</string>
     <string name="home_settings_placeholder_body">Language and profile controls will appear here in a later phase.</string>
+
+    <!-- Phase 9: Progress + Comparison -->
+    <string name="progress_title">Progress</string>
+    <string name="progress_body">Your study history stays fully on-device and powers these baseline analytics.</string>
+    <string name="progress_summary">%1$d sessions • %2$d study minutes • %3$d/%4$d topics reviewed</string>
+    <string name="progress_empty">No completed sessions yet. Start a session to see trends.</string>
+    <string name="progress_confidence_title">Confidence trend</string>
+    <string name="progress_confidence_before">Average before-restudy confidence: %1$d%%</string>
+    <string name="progress_confidence_after">Average after-restudy confidence: %1$d%%</string>
+    <string name="progress_unit_breakdown_title">Sessions by unit</string>
+    <string name="progress_weekly_title">Last 7 days</string>
+    <string name="progress_weekly_row">%1$s • %2$d sessions</string>
+    <string name="comparison_title">Comparison</string>
+    <string name="comparison_active_arm">Active scheduler arm: %1$s</string>
+    <string name="comparison_no_model">No trained model is loaded yet. Kumbuka currently runs the baseline formula for all ranking.</string>
+    <string name="comparison_predictor_state">Predictor state — baseline: %1$s, learned: %2$s</string>
+
+    <!-- Phase 10: Settings + Reminders + Search -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_body">Local preferences only - no account sync, no cloud copy.</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_session_length_title">Default session length</string>
+    <string name="settings_scheduler_arm_title">Scheduler arm</string>
+    <string name="settings_scheduler_baseline">Baseline</string>
+    <string name="settings_scheduler_learned">Learned</string>
+    <string name="settings_theme_title">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_minutes_short">%1$d min</string>
+    <string name="reminders_title">Daily reminder</string>
+    <string name="reminders_time_summary">Reminder time: %1$s</string>
+    <string name="reminders_pick_hour">Pick a reminder time (24-hour clock)</string>
+    <string name="reminders_permission_denied">Notification permission is required to send reminders on Android 13+.</string>
+    <string name="reminders_notification_title">Kumbuka reminder</string>
+    <string name="reminders_notification_body">Open Kumbuka and run today\'s revision session.</string>
+    <string name="search_title">Search</string>
+    <string name="search_query_label">Find topic</string>
+    <string name="search_placeholder">Try unit code, topic title, or objective</string>
+    <string name="search_hint">Search stays local. Nothing leaves this device.</string>
+    <string name="search_no_results">No topics matched your search yet.</string>
+    <string name="search_start_session">Start %1$d min</string>
 
     <!-- Phase 3: packs -->
     <string name="generic_back">Back</string>
@@ -61,7 +103,7 @@
     <string name="import_pack_cta">Import pack</string>
     <string name="unit_pack_version">Pack version %1$d • %2$s</string>
     <string name="unit_pack_id_missing">unassigned pack id</string>
-    <string name="unit_export_pack">Export pack</string>
+    <string name="unit_export_pack">Export</string>
     <string name="unit_no_topics">No topics have been imported for this unit yet.</string>
     <string name="unit_more_topics">+%1$d more topics</string>
     <string name="topic_detail_cta">Open</string>
@@ -76,8 +118,9 @@
     <string name="topic_retrieval_prompt_empty">No retrieval prompt in this pack yet.</string>
     <string name="topic_resources_label">Resource pointers</string>
     <string name="topic_save_objective">Save objective</string>
+    <string name="topic_saved_objective">Saved objective.</string>
     <string name="import_pack_title">Import Course Pack</string>
-    <string name="import_pick_file">Pick file</string>
+    <string name="import_pick_file">File</string>
     <string name="import_pack_step_0">Step 0 - add a pack file or paste the JSON</string>
     <string name="import_pack_step_0_body">WhatsApp and email often deliver packs as text, so the importer accepts both a file and pasted JSON.</string>
     <string name="import_paste_label">Pack JSON</string>
@@ -93,7 +136,7 @@
     <string name="import_changed_deadlines">Deadlines to update</string>
     <string name="import_removed_deadlines">Deadlines missing from pack</string>
     <string name="import_preview_note">Review the detailed diff before importing so Kumbuka can surface local-edit conflicts and missing topics explicitly.</string>
-    <string name="import_review_diff">Review diff</string>
+    <string name="import_review_diff">View diff</string>
     <string name="import_apply">Import now</string>
     <string name="import_complete_message">Imported %1$d topics, updated %2$d, with %3$d local conflicts preserved.</string>
     <string name="export_pack_title">Export Course Pack</string>
@@ -101,7 +144,7 @@
     <string name="export_failed">Could not build an export file.</string>
     <string name="export_body">Copy the JSON below and share it as a `.coursepack` file or as pasted text.</string>
     <string name="export_json_label">Course Pack JSON</string>
-    <string name="export_copy">Copy JSON</string>
+    <string name="export_copy">Copy</string>
 
     <!-- Phase 6: Re-import diff -->
     <string name="diff_title">Pack diff</string>
@@ -142,7 +185,7 @@
     <string name="author_unit_code">Unit code</string>
     <string name="author_unit_title">Unit title</string>
     <string name="author_pack_version">Pack version</string>
-    <string name="author_continue_step_2">Continue to topics</string>
+    <string name="author_continue_step_2">Next: topics</string>
     <string name="author_topic_title">Topic title</string>
     <string name="author_topic_objective">Topic objective</string>
     <string name="author_topic_prompt">Retrieval prompt</string>
@@ -151,7 +194,7 @@
     <string name="author_add_choice_body">Add resource-pointer labels like "Lecture 6 slides" or "Textbook ch. 9".</string>
     <string name="author_pointer_label">Resource pointer label</string>
     <string name="author_add_choice_button">Add choice</string>
-    <string name="author_add_topic_clear">Clear draft</string>
+    <string name="author_add_topic_clear">Clear</string>
     <string name="author_add_topic">Add topic</string>
     <string name="author_topics_added">Topics added: %1$d</string>
     <string name="author_deadline_title">Add deadlines</string>
@@ -161,12 +204,12 @@
     <string name="author_deadline_date_hint">Use YYYY-MM-DD</string>
     <string name="author_deadline_topics">Covered topics</string>
     <string name="author_deadline_topics_empty">Add at least one topic first so deadlines can be linked.</string>
-    <string name="author_add_deadline_clear">Clear deadline</string>
+    <string name="author_add_deadline_clear">Clear</string>
     <string name="author_add_deadline">Add deadline</string>
     <string name="author_deadlines_added">Deadlines added: %1$d</string>
-    <string name="author_continue_step_3">Continue to review</string>
+    <string name="author_continue_step_3">Next: review</string>
     <string name="author_review_counts">%1$d topics • %2$d deadlines • version %3$s</string>
-    <string name="author_save_and_export">Save unit and export pack</string>
+    <string name="author_save_and_export">Save and export</string>
     <string name="author_error_weight">Exam weight must be a valid number.</string>
     <string name="author_error_weight_range">Exam weight must be between 0.0 and 1.0.</string>
     <string name="author_error_topic_duplicate">That topic title is already in this pack draft.</string>
@@ -179,7 +222,7 @@
     <string name="author_discard_cancel">Keep editing</string>
 
     <!-- Phase 4: Today -->
-    <string name="today_session_length">%1$d min baseline session</string>
+    <string name="today_session_length">%1$d min session</string>
     <string name="today_no_units_body">Import a Course Pack before Kumbuka can rank tonight\'s revision list.</string>
     <string name="today_keep_going_title">Fresh topics, no history yet</string>
     <string name="today_keep_going_body">The scheduler is ready to rank your topics by exam weight and urgency as soon as you start reviewing them.</string>
@@ -205,15 +248,15 @@
     <string name="exams_bucket_this_week">Due this week</string>
     <string name="exams_bucket_this_month">Due this month</string>
     <string name="exams_bucket_later">Later</string>
-    <string name="exams_add_result">Add exam result</string>
-    <string name="exams_hide_entry">Hide entry</string>
+    <string name="exams_add_result">Add result</string>
+    <string name="exams_hide_entry">Hide form</string>
     <string name="exams_empty_title">No exam deadlines yet</string>
     <string name="exams_empty_body">Import a pack with exam dates, then log your exam results to anchor the model with objective marks.</string>
     <string name="exams_deadline_date">%1$s (%2$d days left)</string>
-    <string name="exams_urgency_high">high urgency</string>
-    <string name="exams_urgency_medium">medium urgency</string>
-    <string name="exams_urgency_low">low urgency</string>
-    <string name="exams_urgency_chip">%1$s • %2$d%%</string>
+    <string name="exams_urgency_high">High</string>
+    <string name="exams_urgency_medium">Medium</string>
+    <string name="exams_urgency_low">Low</string>
+    <string name="exams_urgency_chip">%1$s %2$d%%</string>
     <string name="exams_result_score">Score %1$.1f / %2$.1f</string>
     <string name="exams_entry_title">Exam result entry</string>
     <string name="exams_entry_pick_unit">Unit</string>
@@ -222,7 +265,7 @@
     <string name="exams_entry_date">Date</string>
     <string name="exams_entry_topics">Covered topics</string>
     <string name="exams_entry_topics_empty">This unit has no topics yet.</string>
-    <string name="exams_save_result">Save exam result</string>
+    <string name="exams_save_result">Save result</string>
     <string name="exams_update_result">Update result</string>
     <string name="exams_edit_title">Edit exam result</string>
     <string name="exams_cancel_edit">Cancel edit</string>
