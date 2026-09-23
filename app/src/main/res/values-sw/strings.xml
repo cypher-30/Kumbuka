@@ -1,11 +1,319 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Kiswahili translation is a work in progress (DESIGN.md §5). The language
-  toggle itself is real - only this file's content is a stub. Any string
-  not yet listed here falls back to values/strings.xml (English) through
-  Android's normal resource resolution, so the toggle never shows blank
-  text, only untranslated text, while translation continues.
--->
 <resources>
+    <string name="app_name">Kumbuka</string>
+
+    <!-- Splash -->
     <string name="splash_tagline">kumbuka, kwa ratiba</string>
+
+    <!-- Login -->
+    <string name="login_welcome_back">Karibu tena</string>
+    <string name="login_subtitle">Ingia ili uendelee na marudio ya usiku wa leo.</string>
+    <string name="login_not_wired_note">Dokezo la prototaipu: akaunti hazijaunganishwa bado - kuingia ni nafasi ya muda kwa v2.</string>
+    <string name="login_tab_signin">Ingia</string>
+    <string name="login_tab_signup">Fungua akaunti</string>
+    <string name="login_email_label">Barua pepe</string>
+    <string name="login_email_placeholder">you@strathmore.edu</string>
+    <string name="login_password_label">Nenosiri</string>
+    <string name="login_confirm_password_label">Thibitisha nenosiri</string>
+    <string name="login_submit_signin">Ingia</string>
+    <string name="login_submit_signup">Fungua akaunti</string>
+    <string name="login_or">au</string>
+    <string name="login_continue_guest">Endelea kama mgeni</string>
+    <string name="login_switch_language">Badili hadi Kiingereza</string>
+
+    <!-- Consent -->
+    <string name="consent_title">Kabla ya kuanza</string>
+    <string name="consent_body">Kumbuka huhifadhi historia yako ya marudio kwenye kifaa hiki ili kuunda ratiba yako binafsi ya kujifunza. Haishiriki taarifa hii na mtu mwingine yeyote.</string>
+    <string name="consent_checkbox_label">Ninaelewa jinsi historia yangu ya marudio inavyotumika.</string>
+    <string name="consent_continue">Endelea</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_1_title">Orodha moja, kila siku</string>
+    <string name="onboarding_1_body">Kumbuka huangalia vitengo vyako vyote na kukuambia ujifunze nini leo, kwa mpangilio unaofaa zaidi.</string>
+    <string name="onboarding_2_title">Imefundishwa jinsi unavyosahau</string>
+    <string name="onboarding_2_body">Mfano hujifunza mkunjo wako binafsi wa kusahau kwa kila mada, badala ya fomula moja ya wote.</string>
+    <string name="onboarding_3_title">Imejengwa juu ya nyenzo zako</string>
+    <string name="onboarding_3_body">Kila mada inaweza kurejelea mhadhara, slaidi, au sura ilikotoka ili kujisomea tena kusiwe kubahatisha.</string>
+    <string name="onboarding_skip">Ruka</string>
+    <string name="onboarding_continue">Endelea</string>
+    <string name="onboarding_get_started">Anza</string>
+
+    <!-- Bottom nav -->
+    <string name="nav_tonight">Leo usiku</string>
+    <string name="nav_progress">Maendeleo</string>
+    <string name="nav_exams">Mitihani</string>
+    <string name="nav_settings">Mipangilio</string>
+
+    <!-- Home placeholder (real Today screen lands in a later phase) -->
+    <string name="home_placeholder_title">Orodha ya marudio ya leo itaonekana hapa</string>
+    <string name="home_browse_units">Vitengo</string>
+    <string name="home_progress_placeholder_title">Maendeleo yanakuja hivi karibuni</string>
+    <string name="home_progress_placeholder_body">Awamu ya 8 inalenga mitihani na alama kwanza. Takwimu za maendeleo zinafuata.</string>
+    <string name="home_settings_placeholder_title">Mipangilio inakuja hivi karibuni</string>
+    <string name="home_settings_placeholder_body">Vidhibiti vya lugha na wasifu vitaonekana hapa katika awamu inayofuata.</string>
+
+    <!-- Phase 9: Progress + Comparison -->
+    <string name="progress_title">Maendeleo</string>
+    <string name="progress_body">Historia yako ya kujifunza inabaki kwenye kifaa na ndiyo msingi wa uchanganuzi huu wa awali.</string>
+    <string name="progress_summary">Vipindi %1$d • dakika za kusoma %2$d • mada zilizopitiwa %3$d/%4$d</string>
+    <string name="progress_empty">Bado hakuna vipindi vilivyokamilika. Anza kipindi kuona mwenendo.</string>
+    <string name="progress_confidence_title">Mwenendo wa kujiamini</string>
+    <string name="progress_confidence_before">Wastani wa kujiamini kabla ya kujisomea tena: %1$d%%</string>
+    <string name="progress_confidence_after">Wastani wa kujiamini baada ya kujisomea tena: %1$d%%</string>
+    <string name="progress_unit_breakdown_title">Vipindi kwa kitengo</string>
+    <string name="progress_weekly_title">Siku 7 zilizopita</string>
+    <string name="progress_weekly_row">%1$s • vipindi %2$d</string>
+    <string name="comparison_title">Ulinganisho</string>
+    <string name="comparison_active_arm">Tawi la ratiba linalotumika: %1$s</string>
+    <string name="comparison_no_model">Bado hakuna mfano uliofunzwa uliopakiwa. Kwa sasa Kumbuka inatumia fomula ya msingi kupanga mada zote.</string>
+    <string name="comparison_predictor_state">Hali ya mtabiri - msingi: %1$s, uliojifunza: %2$s</string>
+
+    <!-- Phase 10: Settings + Reminders + Search -->
+    <string name="settings_title">Mipangilio</string>
+    <string name="settings_body">Mapendeleo ya hapa kifaa pekee - hakuna usawazishaji wa akaunti, hakuna nakala ya wingu.</string>
+    <string name="settings_language_title">Lugha</string>
+    <string name="settings_session_length_title">Muda wa kawaida wa kipindi</string>
+    <string name="settings_scheduler_arm_title">Tawi la ratiba</string>
+    <string name="settings_scheduler_baseline">Msingi</string>
+    <string name="settings_scheduler_learned">Iliyojifunza</string>
+    <string name="settings_theme_title">Muonekano</string>
+    <string name="settings_theme_system">Mfumo</string>
+    <string name="settings_theme_light">Mwangaza</string>
+    <string name="settings_theme_dark">Giza</string>
+    <string name="settings_minutes_short">dak %1$d</string>
+    <string name="reminders_title">Kikumbusho cha kila siku</string>
+    <string name="reminders_time_summary">Muda wa kikumbusho: %1$s</string>
+    <string name="reminders_pick_hour">Chagua muda wa kikumbusho (saa 24)</string>
+    <string name="reminders_permission_denied">Ruhusa ya arifa inahitajika kutuma vikumbusho kwenye Android 13+.</string>
+    <string name="reminders_notification_title">Kikumbusho cha Kumbuka</string>
+    <string name="reminders_notification_body">Fungua Kumbuka na uendeshe kipindi cha marudio cha leo.</string>
+    <string name="search_title">Tafuta</string>
+    <string name="search_query_label">Tafuta mada</string>
+    <string name="search_placeholder">Jaribu msimbo wa kitengo, jina la mada, au lengo</string>
+    <string name="search_hint">Utafutaji hubaki hapa kifaa. Hakuna kinachoondoka kwenye kifaa hiki.</string>
+    <string name="search_no_results">Hakuna mada iliyolingana na utafutaji wako bado.</string>
+    <string name="search_start_session">Anza %1$d dk</string>
+
+    <!-- Phase 3: packs -->
+    <string name="generic_back">Rudi</string>
+    <string name="units_list_title">Vitengo</string>
+    <string name="units_list_subtitle">Pakiti zilizoingizwa huonekana hapa pamoja na mada zake.</string>
+    <string name="units_empty_title">Bado hakuna vitengo</string>
+    <string name="units_empty_body">Ingiza Course Pack au anza kuunda moja kutoka orodha ya vitengo.</string>
+    <string name="import_pack_cta">Ingiza pakiti</string>
+    <string name="unit_pack_version">Toleo la pakiti %1$d • %2$s</string>
+    <string name="unit_pack_id_missing">kitambulisho cha pakiti hakijapewa</string>
+    <string name="unit_export_pack">Hamisha</string>
+    <string name="unit_no_topics">Bado hakuna mada zilizoingizwa kwa kitengo hiki.</string>
+    <string name="unit_more_topics">+mada %1$d zaidi</string>
+    <string name="topic_detail_cta">Fungua</string>
+    <string name="topic_detail_title">Maelezo ya mada</string>
+    <string name="topic_not_found">Mada hiyo haikupatikana.</string>
+    <string name="topic_unit_unknown">Kitengo kisichojulikana</string>
+    <string name="topic_weight_label">Uzito %1$.2f • %2$s</string>
+    <string name="topic_edited_by_you">imehaririwa na wewe</string>
+    <string name="topic_from_pack">kutoka pakiti</string>
+    <string name="topic_objective_label">Lengo</string>
+    <string name="topic_retrieval_prompt_label">Swali la ukumbusho</string>
+    <string name="topic_retrieval_prompt_empty">Bado hakuna swali la ukumbusho kwenye pakiti hii.</string>
+    <string name="topic_resources_label">Marejeleo ya nyenzo</string>
+    <string name="topic_save_objective">Hifadhi lengo</string>
+    <string name="topic_saved_objective">Lengo limehifadhiwa.</string>
+    <string name="import_pack_title">Ingiza Course Pack</string>
+    <string name="import_pick_file">Faili</string>
+    <string name="import_pack_step_0">Hatua ya 0 - ongeza faili ya pakiti au bandika JSON</string>
+    <string name="import_pack_step_0_body">WhatsApp na barua pepe mara nyingi huleta pakiti kama maandishi, hivyo kiingizaji kinakubali faili na JSON iliyobandikwa.</string>
+    <string name="import_paste_label">JSON ya pakiti</string>
+    <string name="import_parse">Kagua awali</string>
+    <string name="import_parse_failed">Haikuwezekana kuchanganua Course Pack hiyo.</string>
+    <string name="import_pack_step_1">Hatua ya 1 - kagua muunganisho</string>
+    <string name="import_pack_metadata">Pakiti %1$s • toleo %2$d</string>
+    <string name="import_added_topics">Mada za kuongeza</string>
+    <string name="import_changed_topics">Mada za kusasisha</string>
+    <string name="import_conflicted_topics">Mada zenye mabadiliko ya hapa</string>
+    <string name="import_removed_topics">Mada zinazokosekana kwenye pakiti</string>
+    <string name="import_added_deadlines">Muda wa mwisho wa kuongeza</string>
+    <string name="import_changed_deadlines">Muda wa mwisho wa kusasisha</string>
+    <string name="import_removed_deadlines">Muda wa mwisho unaokosekana kwenye pakiti</string>
+    <string name="import_preview_note">Kagua tofauti kwa undani kabla ya kuingiza ili Kumbuka iweze kuonyesha migongano ya uhariri wa hapa na mada zinazokosekana kwa uwazi.</string>
+    <string name="import_review_diff">Ona tofauti</string>
+    <string name="import_apply">Ingiza sasa</string>
+    <string name="import_complete_message">Mada %1$d zimeingizwa, %2$d zimesasishwa, na migongano %3$d ya hapa imehifadhiwa.</string>
+    <string name="export_pack_title">Hamisha Course Pack</string>
+    <string name="export_loading">Inatayarisha uhamisho…</string>
+    <string name="export_failed">Haikuwezekana kuunda faili la kuhamisha.</string>
+    <string name="export_body">Nakili JSON hapa chini na ushiriki kama faili ya `.coursepack` au kama maandishi yaliyobandikwa.</string>
+    <string name="export_json_label">JSON ya Course Pack</string>
+    <string name="export_copy">Nakili</string>
+
+    <!-- Phase 6: Re-import diff -->
+    <string name="diff_title">Tofauti ya pakiti</string>
+    <string name="diff_loading">Inajenga tofauti…</string>
+    <string name="diff_failed">Haikuwezekana kuunda tofauti ya pakiti.</string>
+    <string name="diff_summary_title">Muhtasari wa uingizaji</string>
+    <string name="diff_conflict_note">Chagua kama Kumbuka ihifadhi uhariri wako wa hapa au itumie thamani ya pakiti inayoingia.</string>
+    <string name="diff_removed_note">Safu hii haipo kwenye pakiti inayoingia. Chagua kuihifadhi (historia ya kipindi hubaki salama) au kuifuta.</string>
+    <string name="diff_keep_local">Hifadhi ya hapa</string>
+    <string name="diff_use_pack">Tumia pakiti</string>
+    <string name="diff_keep_row">Hifadhi</string>
+    <string name="diff_delete_row">Futa</string>
+    <string name="diff_back_to_preview">Rudi kwenye ukaguzi wa awali</string>
+    <string name="diff_apply">Tekeleza uingizaji</string>
+    <string name="diff_no_changes">Hakuna mabadiliko yaliyogunduliwa kwenye pakiti hii.</string>
+    <string name="diff_changed_fields">Sehemu zilizobadilika</string>
+    <string name="diff_local_value">Ya hapa</string>
+    <string name="diff_pack_value">Ya pakiti</string>
+    <string name="diff_conflict_value">Mgongano</string>
+    <string name="diff_field_title">Kichwa</string>
+    <string name="diff_field_objective">Lengo</string>
+    <string name="diff_field_retrieval_prompt">Swali la ukumbusho</string>
+    <string name="diff_field_exam_weight">Uzito wa mtihani</string>
+    <string name="diff_field_order_index">Mpangilio</string>
+    <string name="diff_field_resource_pointers">Marejeleo ya nyenzo</string>
+    <string name="diff_field_date">Tarehe</string>
+    <string name="diff_field_kind">Aina</string>
+    <string name="diff_field_topic_ids">Vitambulisho vya mada</string>
+
+    <!-- Phase 7: Pack authoring scaffold -->
+    <string name="author_start_cta">Unda kitengo</string>
+    <string name="author_step_1_title">Ongeza Kitengo - Hatua ya 1</string>
+    <string name="author_step_1_body">Weka msimbo wa kitengo, jina, na toleo la pakiti kwa Course Pack hii unayoandika.</string>
+    <string name="author_step_2_title">Ongeza Kitengo - Hatua ya 2</string>
+    <string name="author_step_2_body">Ongeza mada na malengo. Tumia Add Choice kwa lebo za marejeleo ya nyenzo.</string>
+    <string name="author_step_3_title">Ongeza Kitengo - Hatua ya 3</string>
+    <string name="author_step_3_body">Kagua ulichoandika, kihifadhi kwenye kifaa hiki, kisha hamisha JSON ya `.coursepack`.</string>
+    <string name="author_unit_code">Msimbo wa kitengo</string>
+    <string name="author_unit_title">Jina la kitengo</string>
+    <string name="author_pack_version">Toleo la pakiti</string>
+    <string name="author_continue_step_2">Endelea: mada</string>
+    <string name="author_topic_title">Jina la mada</string>
+    <string name="author_topic_objective">Lengo la mada</string>
+    <string name="author_topic_prompt">Swali la ukumbusho</string>
+    <string name="author_topic_weight">Uzito wa mtihani (0.0 - 1.0)</string>
+    <string name="author_add_choice_title">Ongeza Chaguo</string>
+    <string name="author_add_choice_body">Ongeza lebo za marejeleo ya nyenzo kama "Slaidi za mhadhara 6" au "Kitabu sura ya 9".</string>
+    <string name="author_pointer_label">Lebo ya rejeleo la nyenzo</string>
+    <string name="author_add_choice_button">Ongeza chaguo</string>
+    <string name="author_add_topic_clear">Futa</string>
+    <string name="author_add_topic">Ongeza mada</string>
+    <string name="author_topics_added">Mada zilizoongezwa: %1$d</string>
+    <string name="author_deadline_title">Ongeza muda wa mwisho</string>
+    <string name="author_deadline_body">Weka tarehe za CAT/kazi/mtihani na unganisha kila moja na mada husika.</string>
+    <string name="author_deadline_name">Kichwa cha muda wa mwisho</string>
+    <string name="author_deadline_date">Tarehe ya muda wa mwisho</string>
+    <string name="author_deadline_date_hint">Tumia YYYY-MM-DD</string>
+    <string name="author_deadline_topics">Mada zinazohusika</string>
+    <string name="author_deadline_topics_empty">Ongeza angalau mada moja kwanza ili muda wa mwisho uweze kuunganishwa.</string>
+    <string name="author_add_deadline_clear">Futa</string>
+    <string name="author_add_deadline">Ongeza tarehe</string>
+    <string name="author_deadlines_added">Muda wa mwisho ulioongezwa: %1$d</string>
+    <string name="author_continue_step_3">Endelea: ukaguzi</string>
+    <string name="author_review_counts">mada %1$d • muda wa mwisho %2$d • toleo %3$s</string>
+    <string name="author_save_and_export">Hifadhi na hamisha</string>
+    <string name="author_error_weight">Uzito wa mtihani lazima uwe nambari halali.</string>
+    <string name="author_error_weight_range">Uzito wa mtihani lazima uwe kati ya 0.0 na 1.0.</string>
+    <string name="author_error_topic_duplicate">Jina hilo la mada tayari lipo kwenye rasimu hii ya pakiti.</string>
+    <string name="author_error_deadline_date">Tarehe ya muda wa mwisho lazima iwe halali na katika muundo wa YYYY-MM-DD.</string>
+    <string name="author_error_deadline_topics">Chagua angalau mada moja inayohusika kwa muda huu wa mwisho.</string>
+    <string name="author_save_failed">Haikuwezekana kuhifadhi kitengo hiki kilichoandikwa.</string>
+    <string name="author_discard_title">Tupa rasimu hii?</string>
+    <string name="author_discard_body">Ukirudi sasa utapoteza maelezo ya kitengo, mada, na muda wa mwisho ulioingiza hadi sasa.</string>
+    <string name="author_discard_confirm">Tupa</string>
+    <string name="author_discard_cancel">Endelea kuhariri</string>
+
+    <!-- Phase 4: Today -->
+    <string name="today_session_length">Kipindi %1$d dk</string>
+    <string name="today_no_units_body">Ingiza Course Pack kabla Kumbuka haijapanga orodha ya marudio ya usiku wa leo.</string>
+    <string name="today_keep_going_title">Mada mpya, bado hakuna historia</string>
+    <string name="today_keep_going_body">Ratiba iko tayari kupanga mada zako kwa uzito wa mtihani na uharaka mara tu unapoanza kuzipitia.</string>
+    <string name="today_all_caught_up_title">Kila kitu kiko sawa</string>
+    <string name="today_all_caught_up_body">Kila mada inayofuatiliwa sasa iko chini ya kizingiti cha msingi. Rudi baadaye au vinjari vitengo kuongeza kazi zaidi.</string>
+    <string name="today_why_this">Kwa nini hii?</string>
+    <string name="today_score_label">Alama %1$.2f</string>
+    <string name="today_gap">Pengo</string>
+    <string name="today_staleness">Uchakavu</string>
+    <string name="today_urgency">Uharaka</string>
+    <string name="today_avoidance">Uepukaji</string>
+    <string name="today_start_session">Anza kipindi</string>
+    <string name="generic_ok">SAWA</string>
+
+    <!-- Phase 8: Exams and marks -->
+    <string name="exams_title">Mitihani</string>
+    <string name="exams_body">Fuatilia tarehe za mitihani zijazo na hifadhi matokeo halisi ya mitihani yanayohusishwa na mada.</string>
+    <string name="exams_upcoming">Tarehe za mitihani zijazo</string>
+    <string name="exams_recent_results">Matokeo ya hivi karibuni ya mitihani</string>
+    <string name="exams_no_results_yet">Bado hakuna matokeo ya mtihani yaliyohifadhiwa.</string>
+    <string name="exams_unit_bucket_title">%1$s</string>
+    <string name="exams_bucket_today">Inadaiwa leo</string>
+    <string name="exams_bucket_this_week">Inadaiwa wiki hii</string>
+    <string name="exams_bucket_this_month">Inadaiwa mwezi huu</string>
+    <string name="exams_bucket_later">Baadaye</string>
+    <string name="exams_add_result">Ongeza matokeo</string>
+    <string name="exams_hide_entry">Ficha fomu</string>
+    <string name="exams_empty_title">Bado hakuna tarehe za mitihani</string>
+    <string name="exams_empty_body">Ingiza pakiti yenye tarehe za mitihani, kisha hifadhi matokeo yako ili kuimarisha mfano kwa alama halisi.</string>
+    <string name="exams_deadline_date">%1$s (siku %2$d zimebaki)</string>
+    <string name="exams_urgency_high">Juu</string>
+    <string name="exams_urgency_medium">Kati</string>
+    <string name="exams_urgency_low">Chini</string>
+    <string name="exams_urgency_chip">%1$s %2$d%%</string>
+    <string name="exams_result_score">Alama %1$.1f / %2$.1f</string>
+    <string name="exams_entry_title">Ingizo la matokeo ya mtihani</string>
+    <string name="exams_entry_pick_unit">Kitengo</string>
+    <string name="exams_entry_score">Alama</string>
+    <string name="exams_entry_out_of">Kati ya</string>
+    <string name="exams_entry_date">Tarehe</string>
+    <string name="exams_entry_topics">Mada zinazohusika</string>
+    <string name="exams_entry_topics_empty">Kitengo hiki bado hakina mada.</string>
+    <string name="exams_save_result">Hifadhi matokeo</string>
+    <string name="exams_update_result">Sasisha matokeo</string>
+    <string name="exams_edit_title">Hariri matokeo ya mtihani</string>
+    <string name="exams_cancel_edit">Ghairi uhariri</string>
+    <string name="exams_edit_result">Hariri</string>
+    <string name="exams_delete_result">Futa</string>
+    <string name="exams_saved_result">Matokeo ya mtihani yamehifadhiwa.</string>
+    <string name="exams_updated_result">Matokeo yamesasishwa.</string>
+    <string name="exams_deleted_result">Matokeo yamefutwa.</string>
+    <string name="exams_save_failed">Haikuwezekana kuhifadhi matokeo ya mtihani.</string>
+    <string name="exams_delete_failed">Haikuwezekana kufuta matokeo ya mtihani.</string>
+    <string name="exams_delete_title">Futa matokeo ya mtihani?</string>
+    <string name="exams_delete_body">Hii itaondoa alama halisi kwenye historia yako na ishara za ratiba.</string>
+    <string name="exams_delete_confirm">Futa</string>
+    <string name="exams_delete_cancel">Hifadhi</string>
+    <string name="exams_entry_error_unit">Chagua kitengo kwanza.</string>
+    <string name="exams_entry_error_number">Alama na "kati ya" lazima ziwe nambari halali.</string>
+    <string name="exams_entry_error_range">Alama lazima iwe kati ya 0 na "kati ya", na "kati ya" lazima iwe zaidi ya 0.</string>
+    <string name="exams_entry_error_topics">Chagua angalau mada moja inayohusika.</string>
+
+    <!-- Phase 5: Session flow -->
+    <string name="session_title">Kipindi</string>
+    <string name="session_loading">Inapakia kipindi…</string>
+    <string name="session_not_found">Mada hiyo haikupatikana.</string>
+    <string name="session_unit_unknown">Kitengo kisichojulikana</string>
+    <string name="session_planned_minutes">dakika %1$d zilizopangwa</string>
+    <string name="session_time_remaining">%1$s zimebaki</string>
+    <string name="session_recall_title">Kumbuka kwanza</string>
+    <string name="session_recall_body">Funga madokezo yako na toa kila unachokumbuka kabla ya kujipima.</string>
+    <string name="session_done_recalling">Nimemaliza kukumbuka</string>
+    <string name="session_defer">Ahirisha mada hii</string>
+    <string name="session_defer_title">Ahirisha mada?</string>
+    <string name="session_defer_body">Hii itaweka mada kama iliyoahirishwa na kuhesabiwa kwenye uepukaji.</string>
+    <string name="session_defer_confirm">Ahirisha</string>
+    <string name="session_defer_cancel">Endelea kusoma</string>
+    <string name="session_rate_before_title">Pima ulichokumbuka</string>
+    <string name="session_rate_before_body">Kuwa mkweli kuhusu jaribio kabla ya kujisomea tena.</string>
+    <string name="session_continue_after_rate">Endelea</string>
+    <string name="session_restudy_title">Jisomee tena</string>
+    <string name="session_restudy_body">Tumia madokezo au slaidi zako kuziba pengo, kisha rudi kwa kipimo cha mwisho.</string>
+    <string name="session_restudy_done">Muda wa kujisomea tena umeisha.</string>
+    <string name="session_continue_after_restudy">Pima tena</string>
+    <string name="session_rate_after_title">Pima kiwango ulicofikia</string>
+    <string name="session_rate_after_body">Baada ya kujisomea tena, pima jinsi ilivyo imara sasa.</string>
+    <string name="session_finish">Maliza kipindi</string>
+    <string name="session_complete_title">Kipindi kimehifadhiwa</string>
+    <string name="session_complete_body">Mada hii sasa itarudishwa kwenye ratiba.</string>
+    <string name="confidence_blank">Sifuri</string>
+    <string name="confidence_shaky">Dhaifu</string>
+    <string name="confidence_ok">Sawa</string>
+    <string name="confidence_solid">Imara</string>
 </resources>
