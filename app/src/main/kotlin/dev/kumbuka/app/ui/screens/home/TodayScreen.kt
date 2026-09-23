@@ -2,31 +2,41 @@
 
 package dev.kumbuka.app.ui.screens.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -43,11 +53,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import dev.kumbuka.app.R
+import dev.kumbuka.app.data.prefs.AppPreferences
+import dev.kumbuka.app.data.reminders.ReminderScheduler
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
 import dev.kumbuka.app.data.repository.SessionRepository
@@ -62,6 +78,8 @@ import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.domain.scheduler.TodayCard
 import dev.kumbuka.app.domain.scheduler.TodayPlan
 import dev.kumbuka.app.domain.scheduler.TodayState
+import dev.kumbuka.app.domain.scheduler.BaselineRecallPredictor
+import dev.kumbuka.app.domain.scheduler.LearnedRecallPredictor
 import dev.kumbuka.app.domain.scheduler.buildTodayPlan
 import dev.kumbuka.app.domain.scheduler.daysUntilDeadline
 import dev.kumbuka.app.domain.scheduler.schedulerUrgency
@@ -69,17 +87,19 @@ import dev.kumbuka.app.ui.components.KbBottomNavBar
 import dev.kumbuka.app.ui.components.KbNavTab
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbSecondaryButton
-import dev.kumbuka.app.ui.theme.KbColors
+import dev.kumbuka.app.ui.theme.LocalKbColors
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.UUID
 import kotlinx.coroutines.launch
 
 @Composable
 fun TodayScreen(
+    preferences: AppPreferences,
     unitRepository: UnitRepository,
     topicRepository: TopicRepository,
     sessionRepository: SessionRepository,
@@ -89,14 +109,28 @@ fun TodayScreen(
     onImportPack: () -> Unit,
     onStartSession: (String, Int) -> Unit,
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val units by unitRepository.observeAll().collectAsState(initial = emptyList())
     val topics by topicRepository.observeAll().collectAsState(initial = emptyList())
     val sessions by sessionRepository.observeAll().collectAsState(initial = emptyList())
     val deadlines by deadlineRepository.observeAll().collectAsState(initial = emptyList())
     val marks by assessmentMarkRepository.observeAll().collectAsState(initial = emptyList())
-    val plan = remember(units, topics, sessions, deadlines) {
-        buildTodayPlan(units = units, topics = topics, sessions = sessions, deadlines = deadlines)
+    val language by preferences.language.collectAsState(initial = "en")
+    val themeMode by preferences.themeMode.collectAsState(initial = "system")
+    val sessionLengthMinutes by preferences.sessionLengthMinutes.collectAsState(initial = 60)
+    val schedulerArm by preferences.schedulerArm.collectAsState(initial = "baseline")
+    val reminderEnabled by preferences.reminderEnabled.collectAsState(initial = false)
+    val reminderHour by preferences.reminderHour.collectAsState(initial = 20)
+    val reminderMinute by preferences.reminderMinute.collectAsState(initial = 0)
+    val plan = remember(units, topics, sessions, deadlines, sessionLengthMinutes) {
+        buildTodayPlan(
+            units = units,
+            topics = topics,
+            sessions = sessions,
+            deadlines = deadlines,
+            sessionLengthMinutes = sessionLengthMinutes,
+        )
     }
 
     val savedResultText = stringResource(R.string.exams_saved_result)
@@ -112,7 +146,24 @@ fun TodayScreen(
     var pendingDeleteMark by remember { mutableStateOf<AssessmentMark?>(null) }
     var savingExamResult by remember { mutableStateOf(false) }
     var examFormFeedback by remember { mutableStateOf<String?>(null) }
+    var showSearchOverlay by rememberSaveable { mutableStateOf(false) }
+    var pendingReminderEnable by remember { mutableStateOf(false) }
+    var reminderPermissionDenied by remember { mutableStateOf(false) }
     val whySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val reminderPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted && pendingReminderEnable) {
+            scope.launch {
+                preferences.setReminderEnabled(true)
+                ReminderScheduler.scheduleDaily(context.applicationContext, reminderHour, reminderMinute)
+            }
+            reminderPermissionDenied = false
+        } else if (pendingReminderEnable) {
+            reminderPermissionDenied = true
+        }
+        pendingReminderEnable = false
+    }
 
     val hideEntry = {
         showExamEntry = false
@@ -143,13 +194,18 @@ fun TodayScreen(
                         KbNavTab.EXAMS -> TextButton(onClick = toggleEntry) {
                             Text(if (showExamEntry) stringResource(R.string.exams_hide_entry) else stringResource(R.string.exams_add_result))
                         }
+                        KbNavTab.SETTINGS -> TextButton(onClick = { showSearchOverlay = true }) {
+                            Icon(Icons.Outlined.Search, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(R.string.search_title))
+                        }
                         else -> Unit
                     }
                 },
             )
         },
         bottomBar = { KbBottomNavBar(active = activeTab, onSelect = { activeTab = it }) },
-        containerColor = KbColors.paper,
+        containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
         when (activeTab) {
             KbNavTab.TONIGHT -> TonightTabContent(
@@ -196,14 +252,67 @@ fun TodayScreen(
 
             KbNavTab.PROGRESS -> PlaceholderTab(
                 innerPadding = innerPadding,
-                title = stringResource(R.string.home_progress_placeholder_title),
-                body = stringResource(R.string.home_progress_placeholder_body),
+                content = {
+                    ProgressTabContent(
+                        units = units,
+                        topics = topics,
+                        sessions = sessions,
+                        schedulerArm = schedulerArm,
+                    )
+                },
             )
 
             KbNavTab.SETTINGS -> PlaceholderTab(
                 innerPadding = innerPadding,
-                title = stringResource(R.string.home_settings_placeholder_title),
-                body = stringResource(R.string.home_settings_placeholder_body),
+                content = {
+                    SettingsTabContent(
+                        language = language,
+                        themeMode = themeMode,
+                        sessionLengthMinutes = sessionLengthMinutes,
+                        schedulerArm = schedulerArm,
+                        reminderEnabled = reminderEnabled,
+                        reminderHour = reminderHour,
+                        reminderMinute = reminderMinute,
+                        reminderPermissionDenied = reminderPermissionDenied,
+                        onLanguageSelected = { code -> scope.launch { preferences.setLanguage(code) } },
+                        onThemeModeSelected = { mode -> scope.launch { preferences.setThemeMode(mode) } },
+                        onSessionLengthSelected = { minutes -> scope.launch { preferences.setSessionLengthMinutes(minutes) } },
+                        onSchedulerArmSelected = { arm -> scope.launch { preferences.setSchedulerArm(arm) } },
+                        onReminderTimeSelected = { hour, minute ->
+                            scope.launch {
+                                preferences.setReminderTime(hour, minute)
+                                if (reminderEnabled) {
+                                    ReminderScheduler.scheduleDaily(context.applicationContext, hour, minute)
+                                }
+                            }
+                        },
+                        onReminderEnabledChanged = { enabled ->
+                            if (!enabled) {
+                                scope.launch {
+                                    preferences.setReminderEnabled(false)
+                                    ReminderScheduler.cancel(context.applicationContext)
+                                }
+                                reminderPermissionDenied = false
+                            } else {
+                                val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS,
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                if (needsPermission) {
+                                    pendingReminderEnable = true
+                                    reminderPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    scope.launch {
+                                        preferences.setReminderEnabled(true)
+                                        ReminderScheduler.scheduleDaily(context.applicationContext, reminderHour, reminderMinute)
+                                    }
+                                    reminderPermissionDenied = false
+                                }
+                            }
+                        },
+                    )
+                },
             )
         }
     }
@@ -238,6 +347,16 @@ fun TodayScreen(
                 }) { Text(stringResource(R.string.exams_delete_confirm)) }
             },
             dismissButton = { TextButton(onClick = { pendingDeleteMark = null }) { Text(stringResource(R.string.exams_delete_cancel)) } },
+        )
+    }
+
+    if (showSearchOverlay) {
+        SearchOverlaySheet(
+            units = units,
+            topics = topics,
+            sessionLengthMinutes = sessionLengthMinutes,
+            onDismiss = { showSearchOverlay = false },
+            onStartSession = onStartSession,
         )
     }
 }
@@ -310,10 +429,10 @@ private fun ExamsTabContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.exams_title), style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
-                    Text(stringResource(R.string.exams_body), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+                    Text(stringResource(R.string.exams_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+                    Text(stringResource(R.string.exams_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         KbPrimaryButton(text = stringResource(R.string.exams_add_result), onClick = onToggleEntry, modifier = Modifier.weight(1f))
                         KbSecondaryButton(text = stringResource(R.string.home_browse_units), onClick = onBrowseUnits, modifier = Modifier.weight(1f))
@@ -337,8 +456,8 @@ private fun ExamsTabContent(
 
         feedback?.let { message ->
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = KbColors.warningTint), shape = RoundedCornerShape(14.dp)) {
-                    Text(message, style = MaterialTheme.typography.bodySmall, color = KbColors.accent, modifier = Modifier.padding(12.dp))
+                Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.warningTint), shape = RoundedCornerShape(14.dp)) {
+                    Text(message, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.accent, modifier = Modifier.padding(12.dp))
                 }
             }
         }
@@ -348,11 +467,11 @@ private fun ExamsTabContent(
         } else {
             groupedDeadlines.forEach { group ->
                 item(key = "unit-${group.unitId}") {
-                    Text(group.unitCode, style = MaterialTheme.typography.titleSmall, color = KbColors.primary)
+                    Text(group.unitCode, style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.primary)
                 }
                 group.buckets.forEach { bucket ->
                     item(key = "bucket-${group.unitId}-${bucket.bucket.name}") {
-                        Text(bucketLabel(bucket.bucket), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+                        Text(bucketLabel(bucket.bucket), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
                     }
                     items(bucket.deadlines, key = { it.id }) { deadline ->
                         ExamDeadlineCard(
@@ -366,11 +485,11 @@ private fun ExamsTabContent(
         }
 
         item {
-            Text(stringResource(R.string.exams_recent_results), style = MaterialTheme.typography.titleSmall, color = KbColors.ink)
+            Text(stringResource(R.string.exams_recent_results), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
         }
         if (examMarks.isEmpty()) {
             item {
-                Text(stringResource(R.string.exams_no_results_yet), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+                Text(stringResource(R.string.exams_no_results_yet), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
             }
         } else {
             items(examMarks.take(8), key = { it.id }) { mark ->
@@ -388,10 +507,10 @@ private fun ExamsTabContent(
 
 @Composable
 private fun EmptyExamsState(onRecordResult: () -> Unit, onBrowseUnits: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.exams_empty_title), style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
-            Text(stringResource(R.string.exams_empty_body), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+            Text(stringResource(R.string.exams_empty_title), style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
+            Text(stringResource(R.string.exams_empty_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             KbPrimaryButton(text = stringResource(R.string.exams_add_result), onClick = onRecordResult)
             KbSecondaryButton(text = stringResource(R.string.home_browse_units), onClick = onBrowseUnits)
         }
@@ -409,13 +528,13 @@ private fun ExamDeadlineCard(deadline: Deadline, unitCode: String, topicTitles: 
         else -> stringResource(R.string.exams_urgency_low)
     }
 
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(14.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(14.dp)) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = KbColors.primary)
+                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = LocalKbColors.current.primary)
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(deadline.title, style = MaterialTheme.typography.titleSmall, color = KbColors.ink)
-                    Text(unitCode, style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+                    Text(deadline.title, style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    Text(unitCode, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
                 }
                 AssistChip(
                     onClick = {},
@@ -423,9 +542,9 @@ private fun ExamDeadlineCard(deadline: Deadline, unitCode: String, topicTitles: 
                     label = { Text(stringResource(R.string.exams_urgency_chip, urgencyLabel, (urgency * 100).toInt())) },
                 )
             }
-            Text(stringResource(R.string.exams_deadline_date, formatEpochDate(deadline.date), days), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+            Text(stringResource(R.string.exams_deadline_date, formatEpochDate(deadline.date), days), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
             if (topicTitles.isNotEmpty()) {
-                Text(topicTitles.joinToString(), style = MaterialTheme.typography.bodySmall, color = KbColors.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(topicTitles.joinToString(), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -439,12 +558,12 @@ private fun ExamResultCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(14.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(14.dp)) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.exams_result_score, mark.score, mark.outOf), style = MaterialTheme.typography.titleSmall, color = KbColors.ink)
-            Text("$unitCode • ${formatEpochDate(mark.date)}", style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+            Text(stringResource(R.string.exams_result_score, mark.score, mark.outOf), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+            Text("$unitCode • ${formatEpochDate(mark.date)}", style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
             if (topicTitles.isNotEmpty()) {
-                Text(topicTitles.joinToString(), style = MaterialTheme.typography.bodySmall, color = KbColors.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(topicTitles.joinToString(), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onEdit) { Text(stringResource(R.string.exams_edit_result)) }
@@ -487,14 +606,14 @@ private fun ExamResultEntryCard(
         errorText = null
     }
 
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 if (existingMark == null) stringResource(R.string.exams_entry_title) else stringResource(R.string.exams_edit_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = KbColors.ink,
+                color = LocalKbColors.current.ink,
             )
-            Text(stringResource(R.string.exams_entry_pick_unit), style = MaterialTheme.typography.labelLarge, color = KbColors.inkMuted)
+            Text(stringResource(R.string.exams_entry_pick_unit), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 units.forEach { unit ->
                     FilterChip(
@@ -528,9 +647,9 @@ private fun ExamResultEntryCard(
                 label = { Text(stringResource(R.string.exams_entry_date)) },
                 supportingText = { Text(stringResource(R.string.author_deadline_date_hint)) },
             )
-            Text(stringResource(R.string.exams_entry_topics), style = MaterialTheme.typography.labelLarge, color = KbColors.inkMuted)
+            Text(stringResource(R.string.exams_entry_topics), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
             if (unitTopics.isEmpty()) {
-                Text(stringResource(R.string.exams_entry_topics_empty), style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
+                Text(stringResource(R.string.exams_entry_topics_empty), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
             } else {
                 unitTopics.forEach { topic ->
                     FilterChip(
@@ -543,7 +662,7 @@ private fun ExamResultEntryCard(
                 }
             }
 
-            errorText?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = KbColors.accent) }
+            errorText?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.accent) }
 
             KbPrimaryButton(
                 text = if (existingMark == null) stringResource(R.string.exams_save_result) else stringResource(R.string.exams_update_result),
@@ -589,26 +708,337 @@ private fun ExamResultEntryCard(
 }
 
 @Composable
-private fun PlaceholderTab(innerPadding: PaddingValues, title: String, body: String) {
+private fun PlaceholderTab(innerPadding: PaddingValues, content: @Composable () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = RoundedCornerShape(16.dp)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
-                Text(body, style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+        content()
+    }
+}
+
+private data class ProgressMetrics(
+    val totalSessions: Int,
+    val studiedMinutes: Int,
+    val averageBefore: Float,
+    val averageAfter: Float,
+    val reviewedTopicCount: Int,
+    val sessionsByUnit: List<Pair<String, Int>>,
+    val lastSevenDays: List<Pair<String, Int>>,
+)
+
+@Composable
+private fun ProgressTabContent(
+    units: List<UnitModel>,
+    topics: List<Topic>,
+    sessions: List<dev.kumbuka.app.domain.model.Session>,
+    schedulerArm: String,
+) {
+    val unitCodes = remember(units) { units.associateBy({ it.id }, { it.code }) }
+    val metrics = remember(topics, sessions, unitCodes) { buildProgressMetrics(topics, sessions, unitCodes) }
+
+    LazyColumn(
+        contentPadding = PaddingValues(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stringResource(R.string.progress_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+                    Text(stringResource(R.string.progress_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+                    Text(
+                        stringResource(
+                            R.string.progress_summary,
+                            metrics.totalSessions,
+                            metrics.studiedMinutes,
+                            metrics.reviewedTopicCount,
+                            topics.size,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalKbColors.current.primary,
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.progress_confidence_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    Text(stringResource(R.string.progress_confidence_before, (metrics.averageBefore * 100).toInt()), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    LinearProgressIndicator(progress = { metrics.averageBefore }, modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(R.string.progress_confidence_after, (metrics.averageAfter * 100).toInt()), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    LinearProgressIndicator(progress = { metrics.averageAfter }, modifier = Modifier.fillMaxWidth(), color = LocalKbColors.current.primary)
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.progress_unit_breakdown_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    if (metrics.sessionsByUnit.isEmpty()) {
+                        Text(stringResource(R.string.progress_empty), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    } else {
+                        val max = metrics.sessionsByUnit.maxOf { it.second }.coerceAtLeast(1)
+                        metrics.sessionsByUnit.take(6).forEach { (unitCode, count) ->
+                            val ratio = count / max.toFloat()
+                            Text("$unitCode - $count", style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
+                            LinearProgressIndicator(progress = { ratio }, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.progress_weekly_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    val max = metrics.lastSevenDays.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
+                    metrics.lastSevenDays.forEach { (day, count) ->
+                        Text(stringResource(R.string.progress_weekly_row, day, count), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                        LinearProgressIndicator(progress = { count / max.toFloat() }, modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        }
+
+        item {
+            ComparisonCard(schedulerArm = schedulerArm)
+        }
+    }
+}
+
+@Composable
+private fun ComparisonCard(schedulerArm: String) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.comparison_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+            Text(stringResource(R.string.comparison_active_arm, schedulerArm), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary)
+            Text(stringResource(R.string.comparison_no_model), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+
+            val baselineReady = remember { runCatching { BaselineRecallPredictor }.isSuccess }
+            val learnedReady = remember { runCatching { LearnedRecallPredictor }.isSuccess }
+            Text(
+                stringResource(
+                    R.string.comparison_predictor_state,
+                    if (baselineReady) "baseline-ready" else "missing",
+                    if (learnedReady) "model-not-loaded" else "missing",
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = LocalKbColors.current.inkMuted,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsTabContent(
+    language: String,
+    themeMode: String,
+    sessionLengthMinutes: Int,
+    schedulerArm: String,
+    reminderEnabled: Boolean,
+    reminderHour: Int,
+    reminderMinute: Int,
+    reminderPermissionDenied: Boolean,
+    onLanguageSelected: (String) -> Unit,
+    onThemeModeSelected: (String) -> Unit,
+    onSessionLengthSelected: (Int) -> Unit,
+    onSchedulerArmSelected: (String) -> Unit,
+    onReminderEnabledChanged: (Boolean) -> Unit,
+    onReminderTimeSelected: (Int, Int) -> Unit,
+) {
+    val minuteOptions = listOf(0, 15, 30, 45)
+
+    LazyColumn(
+        contentPadding = PaddingValues(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+                    Text(stringResource(R.string.settings_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.settings_language_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        FilterChip(selected = language == "en", onClick = { onLanguageSelected("en") }, label = { Text("English") })
+                        FilterChip(selected = language == "sw", onClick = { onLanguageSelected("sw") }, label = { Text("Kiswahili") })
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.settings_theme_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        FilterChip(selected = themeMode == "system", onClick = { onThemeModeSelected("system") }, label = { Text(stringResource(R.string.settings_theme_system)) })
+                        FilterChip(selected = themeMode == "light", onClick = { onThemeModeSelected("light") }, label = { Text(stringResource(R.string.settings_theme_light)) })
+                        FilterChip(selected = themeMode == "dark", onClick = { onThemeModeSelected("dark") }, label = { Text(stringResource(R.string.settings_theme_dark)) })
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.settings_session_length_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        listOf(30, 45, 60, 90).forEach { option ->
+                            FilterChip(
+                                selected = sessionLengthMinutes == option,
+                                onClick = { onSessionLengthSelected(option) },
+                                label = { Text(stringResource(R.string.settings_minutes_short, option)) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.settings_scheduler_arm_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        FilterChip(selected = schedulerArm == "baseline", onClick = { onSchedulerArmSelected("baseline") }, label = { Text(stringResource(R.string.settings_scheduler_baseline)) })
+                        FilterChip(selected = schedulerArm == "learned", onClick = { onSchedulerArmSelected("learned") }, label = { Text(stringResource(R.string.settings_scheduler_learned)) })
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.reminders_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                            Text(
+                                stringResource(R.string.reminders_time_summary, formatReminderTime(reminderHour, reminderMinute)),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalKbColors.current.inkMuted,
+                            )
+                        }
+                        Switch(checked = reminderEnabled, onCheckedChange = onReminderEnabledChanged)
+                    }
+
+                    Text(stringResource(R.string.reminders_pick_hour), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        listOf(18, 19, 20, 21).forEach { hour ->
+                            FilterChip(
+                                selected = reminderHour == hour,
+                                onClick = { onReminderTimeSelected(hour, reminderMinute) },
+                                label = { Text(String.format(Locale.US, "%02d:00", hour)) },
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        minuteOptions.forEach { minute ->
+                            FilterChip(
+                                selected = reminderMinute == minute,
+                                onClick = { onReminderTimeSelected(reminderHour, minute) },
+                                label = { Text(String.format(Locale.US, ":%02d", minute)) },
+                            )
+                        }
+                    }
+                    if (reminderPermissionDenied) {
+                        Text(stringResource(R.string.reminders_permission_denied), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.accent)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
+private fun SearchOverlaySheet(
+    units: List<UnitModel>,
+    topics: List<Topic>,
+    sessionLengthMinutes: Int,
+    onDismiss: () -> Unit,
+    onStartSession: (String, Int) -> Unit,
+) {
+    val unitCodes = remember(units) { units.associateBy({ it.id }, { it.code }) }
+    var query by rememberSaveable { mutableStateOf("") }
+    val trimmed = query.trim().lowercase()
+    val results = remember(trimmed, topics, unitCodes) {
+        if (trimmed.isBlank()) {
+            emptyList()
+        } else {
+            topics.filter { topic ->
+                val haystack = listOf(
+                    topic.title,
+                    topic.objective,
+                    topic.retrievalPrompt,
+                    unitCodes[topic.unitId].orEmpty(),
+                ).joinToString(" ").lowercase()
+                haystack.contains(trimmed)
+            }.take(30)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = LocalKbColors.current.surface,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(stringResource(R.string.search_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.search_query_label)) },
+                placeholder = { Text(stringResource(R.string.search_placeholder)) },
+            )
+            if (trimmed.isBlank()) {
+                Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+            } else if (results.isEmpty()) {
+                Text(stringResource(R.string.search_no_results), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+            } else {
+                results.forEach { topic ->
+                    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.paper), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(topic.title, style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                            Text(unitCodes[topic.unitId] ?: topic.unitId, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary)
+                            Text(topic.objective, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            KbPrimaryButton(
+                                text = stringResource(R.string.search_start_session, sessionLengthMinutes),
+                                onClick = {
+                                    onDismiss()
+                                    onStartSession(topic.id, sessionLengthMinutes)
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
 private fun SummaryCard(plan: TodayPlan, onBrowseUnits: () -> Unit, onImportPack: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = MaterialTheme.shapes.large) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = MaterialTheme.shapes.large) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(plan.headline, style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
-            Text(plan.body, style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+            Text(plan.headline, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+            Text(plan.body, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             AssistChip(onClick = onBrowseUnits, label = { Text(stringResource(R.string.today_session_length, plan.sessionLengthMinutes)) })
             KbPrimaryButton(text = stringResource(R.string.import_pack_cta), onClick = onImportPack)
             KbSecondaryButton(text = stringResource(R.string.home_browse_units), onClick = onBrowseUnits)
@@ -618,15 +1048,15 @@ private fun SummaryCard(plan: TodayPlan, onBrowseUnits: () -> Unit, onImportPack
 
 @Composable
 private fun StatePreamble(text: String) {
-    Text(text = text, style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+    Text(text = text, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
 }
 
 @Composable
 private fun NoUnitsState(onBrowseUnits: () -> Unit, onImportPack: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = MaterialTheme.shapes.large) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = MaterialTheme.shapes.large) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.units_empty_title), style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
-            Text(stringResource(R.string.today_no_units_body), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+            Text(stringResource(R.string.units_empty_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+            Text(stringResource(R.string.today_no_units_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             KbPrimaryButton(text = stringResource(R.string.import_pack_cta), onClick = onImportPack)
             KbSecondaryButton(text = stringResource(R.string.home_browse_units), onClick = onBrowseUnits)
         }
@@ -635,10 +1065,10 @@ private fun NoUnitsState(onBrowseUnits: () -> Unit, onImportPack: () -> Unit) {
 
 @Composable
 private fun BrowseUnitsPrompt(onBrowseUnits: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = MaterialTheme.shapes.large) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = MaterialTheme.shapes.large) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.today_keep_going_title), style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
-            Text(stringResource(R.string.today_keep_going_body), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+            Text(stringResource(R.string.today_keep_going_title), style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
+            Text(stringResource(R.string.today_keep_going_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             KbSecondaryButton(text = stringResource(R.string.home_browse_units), onClick = onBrowseUnits)
         }
     }
@@ -646,10 +1076,10 @@ private fun BrowseUnitsPrompt(onBrowseUnits: () -> Unit) {
 
 @Composable
 private fun AllCaughtUpState(onBrowseUnits: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = MaterialTheme.shapes.large) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = MaterialTheme.shapes.large) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.today_all_caught_up_title), style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
-            Text(stringResource(R.string.today_all_caught_up_body), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+            Text(stringResource(R.string.today_all_caught_up_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+            Text(stringResource(R.string.today_all_caught_up_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             KbSecondaryButton(text = stringResource(R.string.home_browse_units), onClick = onBrowseUnits)
         }
     }
@@ -657,22 +1087,22 @@ private fun AllCaughtUpState(onBrowseUnits: () -> Unit) {
 
 @Composable
 private fun TodayTopicCard(card: TodayCard, onWhyThis: () -> Unit, onStartSession: (String, Int) -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = KbColors.surface), shape = MaterialTheme.shapes.large) {
+    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = MaterialTheme.shapes.large) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.padding(end = 8.dp)) {
-                    Text(card.unitCode, style = MaterialTheme.typography.labelLarge, color = KbColors.primary)
-                    Text(card.title, style = MaterialTheme.typography.titleMedium, color = KbColors.ink)
+                    Text(card.unitCode, style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.primary)
+                    Text(card.title, style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
                 }
                 AssistChip(onClick = onWhyThis, label = { Text("${card.minutes} min") })
             }
-            Text(card.objective, style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(card.objective, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 AssistChip(onClick = onWhyThis, label = { Text(stringResource(R.string.today_why_this)) }, leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = null) })
                 Text(
                     text = stringResource(R.string.today_score_label, card.score),
                     style = MaterialTheme.typography.bodySmall,
-                    color = KbColors.inkMuted,
+                    color = LocalKbColors.current.inkMuted,
                     fontWeight = FontWeight.Medium,
                 )
             }
@@ -683,17 +1113,17 @@ private fun TodayTopicCard(card: TodayCard, onWhyThis: () -> Unit, onStartSessio
 
 @Composable
 private fun WhyThisSheet(card: TodayCard, onDismiss: () -> Unit, sheetState: androidx.compose.material3.SheetState) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = KbColors.surface) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = LocalKbColors.current.surface) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.Info, contentDescription = null, tint = KbColors.primary)
-                Text(stringResource(R.string.today_why_this), style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
+                Icon(Icons.Outlined.Info, contentDescription = null, tint = LocalKbColors.current.primary)
+                Text(stringResource(R.string.today_why_this), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
             }
-            Text(card.breakdown.formulaSummary(), style = MaterialTheme.typography.bodyMedium, color = KbColors.ink)
-            Text(card.breakdown.plainLanguageSummary(), style = MaterialTheme.typography.bodyMedium, color = KbColors.inkMuted)
+            Text(card.breakdown.formulaSummary(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink)
+            Text(card.breakdown.plainLanguageSummary(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             BreakdownLine(label = stringResource(R.string.today_gap), value = "${(card.breakdown.gap * 100).toInt()}%")
             BreakdownLine(label = stringResource(R.string.today_staleness), value = "${(card.breakdown.staleness * 100).toInt()}%")
             BreakdownLine(label = stringResource(R.string.today_urgency), value = "${(card.breakdown.urgency * 100).toInt()}%")
@@ -715,6 +1145,50 @@ private fun todayIsoDate(): String = LocalDate.now().toString()
 private fun parseIsoDateMillis(raw: String): Long? = runCatching {
     LocalDate.parse(raw).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
 }.getOrNull()
+
+private fun formatReminderTime(hour: Int, minute: Int): String = String.format(Locale.US, "%02d:%02d", hour, minute)
+
+private fun buildProgressMetrics(
+    topics: List<Topic>,
+    sessions: List<dev.kumbuka.app.domain.model.Session>,
+    unitCodes: Map<String, String>,
+): ProgressMetrics {
+    val topicIds = topics.map { it.id }.toSet()
+    val unitByTopic = topics.associateBy({ it.id }, { it.unitId })
+    val completedSessions = sessions.filter { it.endedAt != null }
+    val studiedMinutes = completedSessions.sumOf { session ->
+        val seconds = if (session.actualSeconds > 0) session.actualSeconds else session.plannedMinutes * 60
+        (seconds / 60).coerceAtLeast(0)
+    }
+    val beforeScores = completedSessions.mapNotNull { it.confidenceBefore?.score }
+    val afterScores = completedSessions.mapNotNull { it.confidenceAfter?.score }
+    val averageBefore = if (beforeScores.isEmpty()) 0f else beforeScores.average().toFloat() / 3f
+    val averageAfter = if (afterScores.isEmpty()) 0f else afterScores.average().toFloat() / 3f
+    val reviewedTopicCount = completedSessions.map { it.topicId }.toSet().intersect(topicIds).size
+
+    val sessionsByUnit = completedSessions
+        .groupBy { session -> unitByTopic[session.topicId] ?: "unmapped" }
+        .map { (unitId, unitSessions) -> (unitCodes[unitId] ?: unitId) to unitSessions.size }
+        .sortedByDescending { it.second }
+
+    val lastSevenDays = (6 downTo 0).map { offset ->
+        val date = LocalDate.now().minusDays(offset.toLong())
+        val count = completedSessions.count { session ->
+            Instant.ofEpochMilli(session.startedAt).atZone(ZoneId.systemDefault()).toLocalDate() == date
+        }
+        date.dayOfWeek.name.take(3) to count
+    }
+
+    return ProgressMetrics(
+        totalSessions = completedSessions.size,
+        studiedMinutes = studiedMinutes,
+        averageBefore = averageBefore,
+        averageAfter = averageAfter,
+        reviewedTopicCount = reviewedTopicCount,
+        sessionsByUnit = sessionsByUnit,
+        lastSevenDays = lastSevenDays,
+    )
+}
 
 private enum class ExamDateBucket { TODAY, THIS_WEEK, THIS_MONTH, LATER }
 
@@ -741,7 +1215,7 @@ private fun buildUnitDeadlineBuckets(
         .sortedBy { (unitId, _) -> unitCodes[unitId] ?: unitId }
         .map { (unitId, rows) ->
             val grouped = rows.groupBy { deadline ->
-                when (val days = daysUntilDeadline(deadline.date, nowMillis)) {
+                when (daysUntilDeadline(deadline.date, nowMillis)) {
                     0 -> ExamDateBucket.TODAY
                     in 1..7 -> ExamDateBucket.THIS_WEEK
                     in 8..30 -> ExamDateBucket.THIS_MONTH
@@ -770,8 +1244,8 @@ private fun bucketLabel(bucket: ExamDateBucket): String =
 @Composable
 private fun BreakdownLine(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = KbColors.inkMuted)
-        Text(value, style = MaterialTheme.typography.bodySmall, color = KbColors.ink)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+        Text(value, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.ink)
     }
 }
 

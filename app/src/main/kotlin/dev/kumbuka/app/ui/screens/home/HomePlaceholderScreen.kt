@@ -1,6 +1,7 @@
 package dev.kumbuka.app.ui.screens.home
 
 import androidx.compose.runtime.Composable
+import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
 import dev.kumbuka.app.data.repository.SessionRepository
@@ -13,6 +14,7 @@ import dev.kumbuka.app.data.repository.UnitRepository
  */
 @Composable
 fun HomePlaceholderScreen(
+    preferences: AppPreferences,
     unitRepository: UnitRepository,
     topicRepository: TopicRepository,
     sessionRepository: SessionRepository,
@@ -23,13 +25,14 @@ fun HomePlaceholderScreen(
     onStartSession: (String, Int) -> Unit,
 ) {
     TodayScreen(
-        unitRepository = unitRepository,
-        topicRepository = topicRepository,
-        sessionRepository = sessionRepository,
-        deadlineRepository = deadlineRepository,
-        assessmentMarkRepository = assessmentMarkRepository,
-        onBrowseUnits = onBrowseUnits,
-        onImportPack = onImportPack,
-        onStartSession = onStartSession,
+        preferences,
+        unitRepository,
+        topicRepository,
+        sessionRepository,
+        deadlineRepository,
+        assessmentMarkRepository,
+        onBrowseUnits,
+        onImportPack,
+        onStartSession,
     )
 }

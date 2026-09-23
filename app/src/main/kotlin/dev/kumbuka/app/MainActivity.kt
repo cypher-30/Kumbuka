@@ -7,13 +7,20 @@ import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import dev.kumbuka.app.ui.navigation.KbRoute
 import dev.kumbuka.app.ui.navigation.KumbukaNavGraph
 import dev.kumbuka.app.ui.theme.KumbukaTheme
 import java.util.Locale
@@ -25,9 +32,28 @@ class MainActivity : ComponentActivity() {
         val app = application as KumbukaApplication
         setContent {
             val language by app.preferences.language.collectAsState(initial = "en")
-            KumbukaTheme {
+            val themeMode by app.preferences.themeMode.collectAsState(initial = "system")
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (themeMode) {
+                "dark" -> true
+                "light" -> false
+                else -> systemDark
+            }
+
+            val navController = rememberNavController()
+            val backStackEntry by navController.currentBackStackEntryAsState()
+            // The splash's background is always the dark brand teal regardless of
+            // light/dark theme, so it always needs light (white) status bar icons;
+            // every other screen follows the resolved theme.
+            val isSplashRoute = backStackEntry?.destination?.route == KbRoute.SPLASH
+            val view = LocalView.current
+            SideEffect {
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !(isSplashRoute || darkTheme)
+            }
+
+            KumbukaTheme(darkTheme = darkTheme) {
                 Localized(languageCode = language) {
-                    KumbukaNavGraph(app = app)
+                    KumbukaNavGraph(app = app, navController = navController)
                 }
             }
         }
