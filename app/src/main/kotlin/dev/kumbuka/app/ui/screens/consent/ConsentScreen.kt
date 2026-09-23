@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,7 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.ui.components.KbPrimaryButton
-import dev.kumbuka.app.ui.theme.KbColors
+import dev.kumbuka.app.ui.theme.LocalKbColors
+import dev.kumbuka.app.ui.theme.KbSpacing
 
 /** Figma node 58:241 "23 Consent" - a local-storage privacy notice, not research consent. */
 @Composable
@@ -41,16 +44,18 @@ fun ConsentScreen(onAccept: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(KbColors.paper)
+            .background(LocalKbColors.current.paper)
+            .systemBarsPadding()
+            .imePadding()
             .padding(horizontal = 26.dp)
-            .padding(top = 36.dp, bottom = 28.dp),
+            .padding(top = KbSpacing.x4, bottom = KbSpacing.x3),
     ) {
-        Text(stringResource(R.string.consent_title), style = MaterialTheme.typography.titleLarge, color = KbColors.ink)
-        Spacer(Modifier.height(10.dp))
+        Text(stringResource(R.string.consent_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
+        Spacer(Modifier.height(KbSpacing.x1))
         Text(
             stringResource(R.string.consent_body),
             style = MaterialTheme.typography.bodyMedium,
-            color = KbColors.inkMuted,
+            color = LocalKbColors.current.inkMuted,
         )
         Spacer(Modifier.weight(1f))
 
@@ -58,8 +63,8 @@ fun ConsentScreen(onAccept: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .border(1.dp, KbColors.border, RoundedCornerShape(10.dp))
-                .background(KbColors.surface)
+                .border(1.dp, LocalKbColors.current.border, RoundedCornerShape(10.dp))
+                .background(LocalKbColors.current.surface)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -72,10 +77,10 @@ fun ConsentScreen(onAccept: () -> Unit) {
             Text(
                 stringResource(R.string.consent_checkbox_label),
                 style = MaterialTheme.typography.bodyMedium,
-                color = KbColors.ink,
+                color = LocalKbColors.current.ink,
             )
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(KbSpacing.x1))
         KbPrimaryButton(
             text = stringResource(R.string.consent_continue),
             onClick = onAccept,
@@ -90,12 +95,12 @@ private fun ConsentCheckbox(checked: Boolean) {
         modifier = Modifier
             .size(18.dp)
             .clip(RoundedCornerShape(5.dp))
-            .background(if (checked) KbColors.primary else KbColors.surface)
-            .border(1.5.dp, if (checked) KbColors.primary else KbColors.border, RoundedCornerShape(5.dp)),
+            .background(if (checked) LocalKbColors.current.primary else LocalKbColors.current.surface)
+            .border(1.5.dp, if (checked) LocalKbColors.current.primary else LocalKbColors.current.border, RoundedCornerShape(5.dp)),
         contentAlignment = Alignment.Center,
     ) {
         if (checked) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = KbColors.surface, modifier = Modifier.size(13.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = LocalKbColors.current.surface, modifier = Modifier.size(13.dp))
         }
     }
 }
