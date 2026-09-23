@@ -64,7 +64,7 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
             // returning user back into onboarding they already finished.
             LaunchedEffect(onboardingComplete) {
                 val resolved = onboardingComplete ?: return@LaunchedEffect
-                delay(900) // minimum time to show the brand moment
+                delay(1600) // lets the splash's pop-in/curve-draw/fade-up entrance finish (~1.4s) before leaving
                 val destination = if (resolved) KbRoute.HOME else KbRoute.LOGIN
                 navController.navigate(destination) { popUpTo(KbRoute.SPLASH) { inclusive = true } }
             }
@@ -100,6 +100,7 @@ fun KumbukaNavGraph(app: KumbukaApplication, navController: NavHostController = 
         }
         composable(KbRoute.HOME) {
             HomePlaceholderScreen(
+                preferences = app.preferences,
                 unitRepository = app.unitRepository,
                 topicRepository = app.topicRepository,
                 sessionRepository = app.sessionRepository,
