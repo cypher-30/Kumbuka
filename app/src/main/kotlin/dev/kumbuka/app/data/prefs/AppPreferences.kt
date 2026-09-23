@@ -70,6 +70,16 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { it[Keys.CONSENT_ACCEPTED] = value }
     }
 
+    /** Saves consent + onboarding completion in a single DataStore transaction, so a
+     * partial write (e.g. process death mid-write) can never leave a user stuck in a
+     * "half onboarded" state that neither shows onboarding again nor reaches Home cleanly. */
+    suspend fun completeOnboarding() {
+        dataStore.edit {
+            it[Keys.CONSENT_ACCEPTED] = true
+            it[Keys.ONBOARDING_COMPLETE] = true
+        }
+    }
+
     suspend fun setLanguage(code: String) {
         dataStore.edit { it[Keys.LANGUAGE] = code }
     }

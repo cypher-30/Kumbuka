@@ -2,27 +2,16 @@
 <resources>
     <string name="app_name">Kumbuka</string>
 
-    <!-- Splash -->
-    <string name="splash_tagline">remember, on schedule</string>
-
-    <!-- Login -->
-
-    <!-- Consent -->
-    <string name="consent_title">Before we start</string>
-    <string name="consent_body">Kumbuka keeps your review history on this device to build your personal study schedule. It does not share this with anyone else.</string>
-    <string name="consent_checkbox_label">I understand how my review history is used.</string>
-    <string name="consent_continue">Continue</string>
-
-    <!-- Onboarding -->
-    <string name="onboarding_1_title">One list, every day</string>
-    <string name="onboarding_1_body">Kumbuka looks across all your units and tells you what to study today, in the order that matters most.</string>
-    <string name="onboarding_2_title">Trained on how you forget</string>
-    <string name="onboarding_2_body">A model learns your personal forgetting curve per topic, instead of a fixed formula everyone shares.</string>
-    <string name="onboarding_3_title">Grounded in your own material</string>
-    <string name="onboarding_3_body">Every topic can point back to the lecture, slide, or chapter it came from, so restudying never means guessing.</string>
-    <string name="onboarding_skip">Skip</string>
-    <string name="onboarding_continue">Continue</string>
+    <!-- Onboarding: one merged page (language + honest local/offline copy + privacy
+         acknowledgement + a single "Get started" action). No login, no consent as a
+         separate screen, no trained-model claims. -->
+    <string name="onboarding_language_label">Language</string>
+    <string name="onboarding_title">Welcome to Kumbuka</string>
+    <string name="onboarding_body">Kumbuka works fully offline. It ranks what to study today from your own imported units, and keeps your review history only on this device - nothing is uploaded or shared.</string>
+    <string name="onboarding_privacy_checkbox">I understand my review history stays on this device.</string>
     <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_save_failed">Couldn\'t save that just now. Try again.</string>
+    <string name="onboarding_retry">Retry</string>
 
     <!-- Bottom nav -->
     <string name="nav_tonight">Tonight</string>

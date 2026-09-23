@@ -2,27 +2,17 @@
 <resources>
     <string name="app_name">Kumbuka</string>
 
-    <!-- Splash -->
-    <string name="splash_tagline">kumbuka, kwa ratiba</string>
-
-    <!-- Login -->
-
-    <!-- Consent -->
-    <string name="consent_title">Kabla ya kuanza</string>
-    <string name="consent_body">Kumbuka huhifadhi historia yako ya marudio kwenye kifaa hiki ili kuunda ratiba yako binafsi ya kujifunza. Haishiriki taarifa hii na mtu mwingine yeyote.</string>
-    <string name="consent_checkbox_label">Ninaelewa jinsi historia yangu ya marudio inavyotumika.</string>
-    <string name="consent_continue">Endelea</string>
-
-    <!-- Onboarding -->
-    <string name="onboarding_1_title">Orodha moja, kila siku</string>
-    <string name="onboarding_1_body">Kumbuka huangalia vitengo vyako vyote na kukuambia ujifunze nini leo, kwa mpangilio unaofaa zaidi.</string>
-    <string name="onboarding_2_title">Imefundishwa jinsi unavyosahau</string>
-    <string name="onboarding_2_body">Mfano hujifunza mkunjo wako binafsi wa kusahau kwa kila mada, badala ya fomula moja ya wote.</string>
-    <string name="onboarding_3_title">Imejengwa juu ya nyenzo zako</string>
-    <string name="onboarding_3_body">Kila mada inaweza kurejelea mhadhara, slaidi, au sura ilikotoka ili kujisomea tena kusiwe kubahatisha.</string>
-    <string name="onboarding_skip">Ruka</string>
-    <string name="onboarding_continue">Endelea</string>
+    <!-- Onboarding: ukurasa mmoja ulioungana (lugha + maelezo ya kweli ya
+         nje-mtandao + kukiri faragha + kitendo kimoja "Anza"). Hakuna
+         kuingia, hakuna skrini tofauti ya idhini, hakuna dai la mfano
+         uliofunzwa. -->
+    <string name="onboarding_language_label">Lugha</string>
+    <string name="onboarding_title">Karibu Kumbuka</string>
+    <string name="onboarding_body">Kumbuka inafanya kazi bila mtandao kabisa. Inapanga la kujifunza leo kutoka kwenye vitengo ulivyoingiza mwenyewe, na kuhifadhi historia yako ya marudio kwenye kifaa hiki tu - hakuna kinachopakiwa au kushirikiwa.</string>
+    <string name="onboarding_privacy_checkbox">Ninaelewa historia yangu ya marudio inabaki kwenye kifaa hiki.</string>
     <string name="onboarding_get_started">Anza</string>
+    <string name="onboarding_save_failed">Imeshindwa kuhifadhi hivi punde. Jaribu tena.</string>
+    <string name="onboarding_retry">Jaribu tena</string>
 
     <!-- Bottom nav -->
     <string name="nav_tonight">Leo usiku</string>
