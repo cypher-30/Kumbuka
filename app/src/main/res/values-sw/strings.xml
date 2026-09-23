@@ -120,9 +120,6 @@
     <string name="import_pack_title">Ingiza Course Pack</string>
     <string name="import_pack_intro">Chagua kwanza faili la Course Pack. Kama limefika kupitia gumzo au barua pepe kama maandishi ya kawaida, unaweza kubandika JSON badala yake.</string>
     <string name="import_choose_file">Chagua faili</string>
-    <string name="import_pick_file">Faili</string>
-    <string name="import_pack_step_0">Hatua ya 0 - ongeza faili ya pakiti au bandika JSON</string>
-    <string name="import_pack_step_0_body">WhatsApp na barua pepe mara nyingi huleta pakiti kama maandishi, hivyo kiingizaji kinakubali faili na JSON iliyobandikwa.</string>
     <string name="import_try_sample_title">Huna pakiti bado?</string>
     <string name="import_try_sample_body">Jaribu pakiti ya mfano kuona jinsi Kumbuka inavyofanya kazi. Imewekwa alama wazi kama mfano na haijumuishwi kwenye Maarifa yako halisi.</string>
     <string name="import_try_sample_cta">Jaribu pakiti ya mfano</string>
@@ -135,7 +132,6 @@
     <string name="import_pick_cancelled">Hakuna faili lililochaguliwa.</string>
     <string name="import_file_permission_denied">Kumbuka haina tena ruhusa ya kusoma faili hilo.</string>
     <string name="import_file_read_failed">Haikuwezekana kusoma faili hilo.</string>
-    <string name="import_pack_step_1">Hatua ya 1 - kagua muunganisho</string>
     <string name="import_pack_metadata">Pakiti %1$s • toleo %2$d</string>
     <string name="import_added_topics">Mada za kuongeza</string>
     <string name="import_changed_topics">Mada za kusasisha</string>
