@@ -18,6 +18,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,10 +29,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -50,8 +54,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
@@ -101,6 +107,7 @@ fun SessionFlowScreen(
     var afterSelectionName by rememberSaveable(topicId) { mutableStateOf<String?>(null) }
     var showDeferSheet by rememberSaveable(topicId) { mutableStateOf(false) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var savingWrite by remember { mutableStateOf(false) }
     val deferSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val currentTopic = topic
@@ -128,35 +135,51 @@ fun SessionFlowScreen(
         val loadedTopic = topicRepository.getById(topicId)
         val loadedUnit = loadedTopic?.let { unitRepository.getById(it.unitId) }
         val activeSession = sessionRepository.getLatestActiveForTopic(topicId)
-        val current = activeSession ?: Session(
-            id = UUID.randomUUID().toString(),
-            topicId = topicId,
-            startedAt = System.currentTimeMillis(),
-            endedAt = null,
-            plannedMinutes = plannedMinutes,
-            actualSeconds = 0,
-            confidenceBefore = null,
-            confidenceAfter = null,
-            wasDeferred = false,
-            updatedAt = System.currentTimeMillis(),
-        )
-        if (activeSession == null) {
-            sessionRepository.upsert(current)
-        }
+        when {
+            loadedTopic == null -> {
+                loadError = context.getString(R.string.session_not_found)
+                loading = false
+            }
+            activeSession == null && loadedTopic.archived -> {
+                // A brand-new session must not be started against an archived topic; an
+                // already-active session on a topic archived mid-session is preserved below.
+                loadError = context.getString(R.string.session_topic_archived)
+                topic = loadedTopic
+                unit = loadedUnit
+                loading = false
+            }
+            else -> {
+                val current = activeSession ?: Session(
+                    id = UUID.randomUUID().toString(),
+                    topicId = topicId,
+                    startedAt = System.currentTimeMillis(),
+                    endedAt = null,
+                    plannedMinutes = plannedMinutes,
+                    actualSeconds = 0,
+                    confidenceBefore = null,
+                    confidenceAfter = null,
+                    wasDeferred = false,
+                    updatedAt = System.currentTimeMillis(),
+                )
+                if (activeSession == null) {
+                    sessionRepository.upsert(current)
+                }
 
-        topic = loadedTopic
-        unit = loadedUnit
-        session = current
-        beforeSelectionName = current.confidenceBefore?.name
-        afterSelectionName = current.confidenceAfter?.name
-        stageName = when {
-            current.confidenceBefore == null -> SessionStage.Recall.name
-            current.confidenceAfter == null && sessionRemainingMillis(current.startedAt, current.plannedMinutes, System.currentTimeMillis()) > 0L -> SessionStage.Restudy.name
-            current.confidenceAfter == null -> SessionStage.RateAfter.name
-            else -> SessionStage.Restudy.name
+                topic = loadedTopic
+                unit = loadedUnit
+                session = current
+                beforeSelectionName = current.confidenceBefore?.name
+                afterSelectionName = current.confidenceAfter?.name
+                stageName = when {
+                    current.confidenceBefore == null -> SessionStage.Recall.name
+                    current.confidenceAfter == null && sessionRemainingMillis(current.startedAt, current.plannedMinutes, System.currentTimeMillis()) > 0L -> SessionStage.Restudy.name
+                    current.confidenceAfter == null -> SessionStage.RateAfter.name
+                    else -> SessionStage.Restudy.name
+                }
+                loadError = null
+                loading = false
+            }
         }
-        loadError = if (loadedTopic == null) context.getString(R.string.session_not_found) else null
-        loading = false
     }
 
     LaunchedEffect(currentSession?.id, currentSession?.endedAt) {
@@ -250,18 +273,21 @@ fun SessionFlowScreen(
                                     )
                                     SessionStage.RateBefore -> RateBeforeStepCard(
                                         selected = beforeSelectionName?.let(Confidence::valueOf),
+                                        saving = savingWrite,
                                         onSelect = { beforeSelectionName = it.name },
                                         onContinue = {
                                             val selection = beforeSelectionName?.let(Confidence::valueOf)
-                                            if (selection != null) {
+                                            if (selection != null && !savingWrite) {
                                                 val updated = currentSession.copy(
                                                     confidenceBefore = selection,
                                                     updatedAt = System.currentTimeMillis(),
                                                 )
+                                                savingWrite = true
                                                 scope.launch {
                                                     sessionRepository.upsert(updated)
                                                     session = updated
                                                     stageName = SessionStage.Restudy.name
+                                                    savingWrite = false
                                                 }
                                             }
                                         },
@@ -272,10 +298,11 @@ fun SessionFlowScreen(
                                     )
                                     SessionStage.RateAfter -> RateAfterStepCard(
                                         selected = afterSelectionName?.let(Confidence::valueOf),
+                                        saving = savingWrite,
                                         onSelect = { afterSelectionName = it.name },
                                         onFinish = {
                                             val selection = afterSelectionName?.let(Confidence::valueOf)
-                                            if (selection != null) {
+                                            if (selection != null && !savingWrite) {
                                                 val now = System.currentTimeMillis()
                                                 val updated = currentSession.copy(
                                                     confidenceAfter = selection,
@@ -283,6 +310,7 @@ fun SessionFlowScreen(
                                                     actualSeconds = ((now - currentSession.startedAt) / 1000L).toInt().coerceAtLeast(0),
                                                     updatedAt = now,
                                                 )
+                                                savingWrite = true
                                                 scope.launch {
                                                     sessionRepository.upsert(updated)
                                                     session = updated
@@ -326,6 +354,7 @@ fun SessionFlowScreen(
             sheetState = deferSheetState,
             onDismiss = { showDeferSheet = false },
             onConfirm = {
+                if (savingWrite) return@DeferSessionSheet
                 val now = System.currentTimeMillis()
                 val updated = currentSession.copy(
                     endedAt = now,
@@ -333,6 +362,7 @@ fun SessionFlowScreen(
                     wasDeferred = true,
                     updatedAt = now,
                 )
+                savingWrite = true
                 scope.launch {
                     sessionRepository.upsert(updated)
                     session = updated
@@ -429,6 +459,7 @@ private fun RecallStepCard(
 @Composable
 private fun RateBeforeStepCard(
     selected: Confidence?,
+    saving: Boolean,
     onSelect: (Confidence) -> Unit,
     onContinue: () -> Unit,
 ) {
@@ -436,8 +467,8 @@ private fun RateBeforeStepCard(
         Column(modifier = Modifier.padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
             Text(stringResource(R.string.session_rate_before_title), style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
             Text(stringResource(R.string.session_rate_before_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-            ConfidencePicker(selected = selected, onSelect = onSelect)
-            KbPrimaryButton(text = stringResource(R.string.session_continue_after_rate), onClick = onContinue, enabled = selected != null)
+            ConfidencePicker(selected = selected, enabled = !saving, onSelect = onSelect)
+            KbPrimaryButton(text = stringResource(R.string.session_continue_after_rate), onClick = onContinue, enabled = selected != null && !saving)
         }
     }
 }
@@ -468,6 +499,7 @@ private fun RestudyStepCard(
 @Composable
 private fun RateAfterStepCard(
     selected: Confidence?,
+    saving: Boolean,
     onSelect: (Confidence) -> Unit,
     onFinish: () -> Unit,
 ) {
@@ -475,57 +507,66 @@ private fun RateAfterStepCard(
         Column(modifier = Modifier.padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
             Text(stringResource(R.string.session_rate_after_title), style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
             Text(stringResource(R.string.session_rate_after_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-            ConfidencePicker(selected = selected, onSelect = onSelect)
-            KbPrimaryButton(text = stringResource(R.string.session_finish), onClick = onFinish, enabled = selected != null)
+            ConfidencePicker(selected = selected, enabled = !saving, onSelect = onSelect)
+            KbPrimaryButton(text = stringResource(R.string.session_finish), onClick = onFinish, enabled = selected != null && !saving)
         }
     }
 }
 
+/** Four large, accessible, single-select choices (min 56dp tall) - not small FilterChips. */
 @Composable
-private fun ConfidencePicker(selected: Confidence?, onSelect: (Confidence) -> Unit) {
+private fun ConfidencePicker(selected: Confidence?, enabled: Boolean, onSelect: (Confidence) -> Unit) {
     val blankLabel = stringResource(R.string.confidence_blank)
     val shakyLabel = stringResource(R.string.confidence_shaky)
     val okLabel = stringResource(R.string.confidence_ok)
     val solidLabel = stringResource(R.string.confidence_solid)
 
-    BoxWithConstraints {
-        val compact = maxWidth < 340.dp
-        if (compact) {
-            Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
-                ConfidenceChip(confidence = Confidence.BLANK, label = blankLabel, selected = selected, onSelect = onSelect, modifier = Modifier.fillMaxWidth())
-                ConfidenceChip(confidence = Confidence.SHAKY, label = shakyLabel, selected = selected, onSelect = onSelect, modifier = Modifier.fillMaxWidth())
-                ConfidenceChip(confidence = Confidence.OK, label = okLabel, selected = selected, onSelect = onSelect, modifier = Modifier.fillMaxWidth())
-                ConfidenceChip(confidence = Confidence.SOLID, label = solidLabel, selected = selected, onSelect = onSelect, modifier = Modifier.fillMaxWidth())
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(KbSpacing.x1), modifier = Modifier.fillMaxWidth()) {
-                    ConfidenceChip(confidence = Confidence.BLANK, label = blankLabel, selected = selected, onSelect = onSelect, modifier = Modifier.weight(1f))
-                    ConfidenceChip(confidence = Confidence.SHAKY, label = shakyLabel, selected = selected, onSelect = onSelect, modifier = Modifier.weight(1f))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(KbSpacing.x1), modifier = Modifier.fillMaxWidth()) {
-                    ConfidenceChip(confidence = Confidence.OK, label = okLabel, selected = selected, onSelect = onSelect, modifier = Modifier.weight(1f))
-                    ConfidenceChip(confidence = Confidence.SOLID, label = solidLabel, selected = selected, onSelect = onSelect, modifier = Modifier.weight(1f))
-                }
-            }
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
+        ConfidenceChoice(confidence = Confidence.BLANK, label = blankLabel, selected = selected == Confidence.BLANK, enabled = enabled, onSelect = onSelect)
+        ConfidenceChoice(confidence = Confidence.SHAKY, label = shakyLabel, selected = selected == Confidence.SHAKY, enabled = enabled, onSelect = onSelect)
+        ConfidenceChoice(confidence = Confidence.OK, label = okLabel, selected = selected == Confidence.OK, enabled = enabled, onSelect = onSelect)
+        ConfidenceChoice(confidence = Confidence.SOLID, label = solidLabel, selected = selected == Confidence.SOLID, enabled = enabled, onSelect = onSelect)
     }
 }
 
 @Composable
-private fun ConfidenceChip(
+private fun ConfidenceChoice(
     confidence: Confidence,
     label: String,
-    selected: Confidence?,
+    selected: Boolean,
+    enabled: Boolean,
     onSelect: (Confidence) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    FilterChip(
-        selected = selected == confidence,
-        onClick = { onSelect(confidence) },
-        label = { Text(label) },
-        modifier = modifier,
-    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(if (selected) LocalKbColors.current.primary.copy(alpha = 0.12f) else LocalKbColors.current.surface)
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) LocalKbColors.current.primary else LocalKbColors.current.border,
+                shape = MaterialTheme.shapes.medium,
+            )
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                role = Role.RadioButton,
+                onClick = { onSelect(confidence) },
+            )
+            .padding(horizontal = KbSpacing.x2, vertical = KbSpacing.x1),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (selected) LocalKbColors.current.primary else LocalKbColors.current.ink,
+        )
+        if (selected) {
+            Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = LocalKbColors.current.primary)
+        }
+    }
 }
 
 private fun sessionRemainingMillis(startedAt: Long, plannedMinutes: Int, nowMillis: Long): Long =

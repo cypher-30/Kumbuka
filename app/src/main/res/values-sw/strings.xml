@@ -367,6 +367,7 @@
     <string name="session_title">Kipindi</string>
     <string name="session_loading">Inapakia kipindi…</string>
     <string name="session_not_found">Mada hiyo haikupatikana.</string>
+    <string name="session_topic_archived">Mada hii imehifadhiwa kumbukumbu na haiwezi kuanzisha kipindi kipya. Ikiwa ulikuwa na kipindi kilichoanza tayari, kitaendelea kama kawaida.</string>
     <string name="session_unit_unknown">Kitengo kisichojulikana</string>
     <string name="session_planned_minutes">dakika %1$d zilizopangwa</string>
     <string name="session_time_remaining">%1$s zimebaki</string>
