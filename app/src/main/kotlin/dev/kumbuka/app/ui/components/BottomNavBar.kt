@@ -2,7 +2,7 @@ package dev.kumbuka.app.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -17,22 +17,23 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import dev.kumbuka.app.ui.theme.KbColors
+import androidx.compose.ui.res.stringResource
+import dev.kumbuka.app.R
+import dev.kumbuka.app.ui.theme.LocalKbColors
 
-enum class KbNavTab(val label: String) {
-    TONIGHT("Tonight"),
-    PROGRESS("Progress"),
-    EXAMS("Exams"),
-    SETTINGS("Settings"),
+enum class KbNavTab {
+    TONIGHT,
+    PROGRESS,
+    EXAMS,
+    SETTINGS,
 }
 
 /** Figma "Bottom Nav" component (node 1:5546): 4 tabs, active tab tinted primary. */
 @Composable
 fun KbBottomNavBar(active: KbNavTab, onSelect: (KbNavTab) -> Unit) {
     Column {
-        HorizontalDivider(color = KbColors.border)
-        NavigationBar(containerColor = KbColors.surface, modifier = Modifier.height(74.dp)) {
+        HorizontalDivider(color = LocalKbColors.current.border)
+        NavigationBar(containerColor = LocalKbColors.current.surface, modifier = Modifier.navigationBarsPadding()) {
             KbNavItem(KbNavTab.TONIGHT, Icons.Outlined.Home, active, onSelect)
             KbNavItem(KbNavTab.PROGRESS, Icons.Outlined.BarChart, active, onSelect)
             KbNavItem(KbNavTab.EXAMS, Icons.Outlined.CalendarMonth, active, onSelect)
@@ -48,17 +49,24 @@ private fun RowScope.KbNavItem(
     active: KbNavTab,
     onSelect: (KbNavTab) -> Unit,
 ) {
+    val label = when (tab) {
+        KbNavTab.TONIGHT -> stringResource(R.string.nav_tonight)
+        KbNavTab.PROGRESS -> stringResource(R.string.nav_progress)
+        KbNavTab.EXAMS -> stringResource(R.string.nav_exams)
+        KbNavTab.SETTINGS -> stringResource(R.string.nav_settings)
+    }
+
     NavigationBarItem(
         selected = active == tab,
         onClick = { onSelect(tab) },
-        icon = { Icon(icon, contentDescription = tab.label) },
-        label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
+        icon = { Icon(icon, contentDescription = label) },
+        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = KbColors.primary,
-            selectedTextColor = KbColors.primary,
-            unselectedIconColor = KbColors.inkFaint,
-            unselectedTextColor = KbColors.inkFaint,
-            indicatorColor = KbColors.surface,
+            selectedIconColor = LocalKbColors.current.primary,
+            selectedTextColor = LocalKbColors.current.primary,
+            unselectedIconColor = LocalKbColors.current.inkFaint,
+            unselectedTextColor = LocalKbColors.current.inkFaint,
+            indicatorColor = LocalKbColors.current.surface,
         ),
     )
 }
