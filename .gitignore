@@ -22,3 +22,6 @@ app/schemas/
 *.keystore
 keystore.properties
 
+
+# Kotlin compiler daemon state / error logs
+.kotlin/
