@@ -233,6 +233,24 @@
     <string name="generic_ok">OK</string>
     <string name="insights_title">Insights</string>
     <string name="insights_placeholder_body">Insights is moving into its own screen so the home tabs can stay focused.</string>
+    <string name="insights_overview_title">Local-only analytics</string>
+    <string name="insights_overview_body">These summaries stay on this device. Sample packs are excluded by default, and sparse data is shown as missing rather than guessed.</string>
+    <string name="insights_sessions_title">Study sessions</string>
+    <string name="insights_sessions_summary">%1$d completed sessions • %2$d non-deferred</string>
+    <string name="insights_sessions_measured">%1$d measured minutes • %2$d completed sessions without measured time</string>
+    <string name="insights_assessments_title">Assessment links</string>
+    <string name="insights_assessments_summary">%1$d saved assessments considered</string>
+    <string name="insights_same_day_note">Same-calendar-day sessions are excluded from the confidence-to-mark comparison because marks are stored as date-only values.</string>
+    <string name="insights_not_enough_data">There is not enough data yet to draw a useful comparison here.</string>
+    <string name="insights_requested_baseline">Requested baseline selections</string>
+    <string name="insights_requested_placeholder">Requested placeholder selections</string>
+    <string name="insights_actual_baseline">Actual baseline-attributed selections</string>
+    <string name="insights_actual_placeholder">Actual placeholder-attributed selections</string>
+    <string name="insights_fallbacks">Placeholder fallbacks</string>
+    <string name="insights_scheduler_note">These counts describe what the app selected and logged. They do not show statistical significance or prove causal effects.</string>
+    <string name="insights_mark_score">Mark: %1$.1f%%</string>
+    <string name="insights_mark_not_enough_data">Not enough linked ratings before this assessment (%1$d/%2$d topics covered).</string>
+    <string name="insights_mark_correlation">Average confidence-before: %1$.2f / 3.0 across %2$d/%3$d linked topics.</string>
 
     <!-- Phase 8: Exams and marks -->
     <string name="exams_title">Exams</string>

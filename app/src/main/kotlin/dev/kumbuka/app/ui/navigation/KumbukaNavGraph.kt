@@ -99,7 +99,14 @@ fun KumbukaNavGraph(
             )
         }
         composable(KbRoute.INSIGHTS) {
-            InsightsScreen(onBack = { navController.popBackStack() })
+            InsightsScreen(
+                unitRepository = app.unitRepository,
+                topicRepository = app.topicRepository,
+                sessionRepository = app.sessionRepository,
+                assessmentMarkRepository = app.assessmentMarkRepository,
+                schedulerLogRepository = app.schedulerLogRepository,
+                onBack = { navController.popBackStack() },
+            )
         }
         composable(KbRoute.AUTHOR_PACK) {
             PackAuthoringScreen(
