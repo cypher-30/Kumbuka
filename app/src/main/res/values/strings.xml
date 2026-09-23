@@ -117,6 +117,8 @@
     <string name="topic_save_objective">Save objective</string>
     <string name="topic_saved_objective">Saved objective.</string>
     <string name="import_pack_title">Import Course Pack</string>
+    <string name="import_pack_intro">Choose a Course Pack file first. If it arrived in chat or email as plain text, you can paste the JSON instead.</string>
+    <string name="import_choose_file">Choose file</string>
     <string name="import_pick_file">File</string>
     <string name="import_pack_step_0">Step 0 - add a pack file or paste the JSON</string>
     <string name="import_pack_step_0_body">WhatsApp and email often deliver packs as text, so the importer accepts both a file and pasted JSON.</string>
@@ -124,9 +126,14 @@
     <string name="import_try_sample_body">Try a sample pack to see how Kumbuka works. It\'s clearly marked as a sample and never counts toward your real Insights.</string>
     <string name="import_try_sample_cta">Try a sample pack</string>
     <string name="import_try_sample_done">Sample packs added - open Units to see them.</string>
+    <string name="import_show_paste">Paste text instead</string>
+    <string name="import_hide_paste">Hide pasted text</string>
     <string name="import_paste_label">Pack JSON</string>
-    <string name="import_parse">Preview</string>
+    <string name="import_parse">Continue</string>
     <string name="import_parse_failed">Could not parse that Course Pack.</string>
+    <string name="import_pick_cancelled">No file was selected.</string>
+    <string name="import_file_permission_denied">Kumbuka no longer has permission to read that file.</string>
+    <string name="import_file_read_failed">Could not read that file.</string>
     <string name="import_pack_step_1">Step 1 - preview the merge</string>
     <string name="import_pack_metadata">Pack %1$s • version %2$d</string>
     <string name="import_added_topics">Topics to add</string>
@@ -140,6 +147,8 @@
     <string name="import_review_diff">View diff</string>
     <string name="import_apply">Import now</string>
     <string name="import_complete_message">Imported %1$d topics, updated %2$d, with %3$d local conflicts preserved.</string>
+    <string name="import_no_changes_message">That pack is already up to date.</string>
+    <string name="import_apply_failed">Could not import that Course Pack.</string>
     <string name="export_pack_title">Export Course Pack</string>
     <string name="export_loading">Preparing export…</string>
     <string name="export_failed">Could not build an export file.</string>

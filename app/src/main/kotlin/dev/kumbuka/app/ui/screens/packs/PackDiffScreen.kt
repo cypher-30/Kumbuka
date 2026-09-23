@@ -104,6 +104,7 @@ fun PackDiffScreen(
                     text = stringResource(R.string.diff_back_to_preview),
                     onClick = onBack,
                     modifier = Modifier.weight(1f),
+                    enabled = !busy,
                 )
                 KbPrimaryButton(
                     text = stringResource(R.string.diff_apply),
@@ -364,7 +365,6 @@ private fun bannerText(diff: PackDiff): String {
     return "${preview.topicsToAdd} new, ${preview.topicsToUpdate} changed, ${preview.topicsWithConflicts} conflicts, ${preview.topicsMissingInPack} missing topics" +
         " | ${preview.deadlinesToAdd} new and ${preview.deadlinesToUpdate} changed deadlines"
 }
-
 
 
 

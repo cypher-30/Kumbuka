@@ -1,6 +1,9 @@
 package dev.kumbuka.app
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import dev.kumbuka.app.data.local.KumbukaDatabase
@@ -39,6 +42,19 @@ class KumbukaApplication : Application() {
     }
 
     val preferences: AppPreferences by lazy { AppPreferences(dataStore) }
+
+    var pendingImportUri by mutableStateOf<String?>(null)
+        private set
+
+    fun queuePendingImportUri(uri: String?) {
+        pendingImportUri = uri
+    }
+
+    fun clearPendingImportUri(expectedUri: String? = null) {
+        if (expectedUri == null || pendingImportUri == expectedUri) {
+            pendingImportUri = null
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
