@@ -59,6 +59,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
+import dev.kumbuka.app.data.bootstrap.DefaultContentSeeder
 import dev.kumbuka.app.data.repository.PackChangeKind
 import dev.kumbuka.app.data.repository.PackDiff
 import dev.kumbuka.app.data.repository.PackImportResolution
@@ -529,6 +530,29 @@ fun ImportPackScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = LocalKbColors.current.inkMuted,
                 )
+            }
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(14.dp)) {
+                    Column(modifier = Modifier.padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.import_try_sample_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                        Text(stringResource(R.string.import_try_sample_body), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                        KbSecondaryButton(
+                            text = stringResource(R.string.import_try_sample_cta),
+                            onClick = {
+                                scope.launch {
+                                    busy = true
+                                    try {
+                                        DefaultContentSeeder.seedSamplePacks(packRepository)
+                                        snackbarHostState.showSnackbar(context.getString(R.string.import_try_sample_done))
+                                        onImported()
+                                    } finally {
+                                        busy = false
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
             }
             item {
                 OutlinedTextField(

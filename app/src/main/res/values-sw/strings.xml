@@ -6,20 +6,6 @@
     <string name="splash_tagline">kumbuka, kwa ratiba</string>
 
     <!-- Login -->
-    <string name="login_welcome_back">Karibu tena</string>
-    <string name="login_subtitle">Ingia ili uendelee na marudio ya usiku wa leo.</string>
-    <string name="login_not_wired_note">Dokezo la prototaipu: akaunti hazijaunganishwa bado - kuingia ni nafasi ya muda kwa v2.</string>
-    <string name="login_tab_signin">Ingia</string>
-    <string name="login_tab_signup">Fungua akaunti</string>
-    <string name="login_email_label">Barua pepe</string>
-    <string name="login_email_placeholder">you@strathmore.edu</string>
-    <string name="login_password_label">Nenosiri</string>
-    <string name="login_confirm_password_label">Thibitisha nenosiri</string>
-    <string name="login_submit_signin">Ingia</string>
-    <string name="login_submit_signup">Fungua akaunti</string>
-    <string name="login_or">au</string>
-    <string name="login_continue_guest">Endelea kama mgeni</string>
-    <string name="login_switch_language">Badili hadi Kiingereza</string>
 
     <!-- Consent -->
     <string name="consent_title">Kabla ya kuanza</string>
@@ -123,6 +109,10 @@
     <string name="import_pick_file">Faili</string>
     <string name="import_pack_step_0">Hatua ya 0 - ongeza faili ya pakiti au bandika JSON</string>
     <string name="import_pack_step_0_body">WhatsApp na barua pepe mara nyingi huleta pakiti kama maandishi, hivyo kiingizaji kinakubali faili na JSON iliyobandikwa.</string>
+    <string name="import_try_sample_title">Huna pakiti bado?</string>
+    <string name="import_try_sample_body">Jaribu pakiti ya mfano kuona jinsi Kumbuka inavyofanya kazi. Imewekwa alama wazi kama mfano na haijumuishwi kwenye Maarifa yako halisi.</string>
+    <string name="import_try_sample_cta">Jaribu pakiti ya mfano</string>
+    <string name="import_try_sample_done">Pakiti za mfano zimeongezwa - fungua Vitengo kuziona.</string>
     <string name="import_paste_label">JSON ya pakiti</string>
     <string name="import_parse">Kagua awali</string>
     <string name="import_parse_failed">Haikuwezekana kuchanganua Course Pack hiyo.</string>
@@ -153,10 +143,12 @@
     <string name="diff_summary_title">Muhtasari wa uingizaji</string>
     <string name="diff_conflict_note">Chagua kama Kumbuka ihifadhi uhariri wako wa hapa au itumie thamani ya pakiti inayoingia.</string>
     <string name="diff_removed_note">Safu hii haipo kwenye pakiti inayoingia. Chagua kuihifadhi (historia ya kipindi hubaki salama) au kuifuta.</string>
+    <string name="diff_removed_note_topic">Mada hii haipo kwenye pakiti inayoingia. Chagua kuihifadhi, au kuiweka kumbukumbu (itatoweka kwenye Leo na Vitengo, lakini vipindi na alama zake vitabaki kwa historia).</string>
     <string name="diff_keep_local">Hifadhi ya hapa</string>
     <string name="diff_use_pack">Tumia pakiti</string>
     <string name="diff_keep_row">Hifadhi</string>
     <string name="diff_delete_row">Futa</string>
+    <string name="diff_archive_row">Weka kumbukumbu</string>
     <string name="diff_back_to_preview">Rudi kwenye ukaguzi wa awali</string>
     <string name="diff_apply">Tekeleza uingizaji</string>
     <string name="diff_no_changes">Hakuna mabadiliko yaliyogunduliwa kwenye pakiti hii.</string>

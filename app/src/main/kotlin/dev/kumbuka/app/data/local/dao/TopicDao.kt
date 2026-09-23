@@ -35,9 +35,18 @@ interface TopicDao {
     @Query("SELECT * FROM topics WHERE unitId = :unitId ORDER BY orderIndex ASC")
     suspend fun getByUnitOnce(unitId: String): List<TopicEntity>
 
+    @Query("SELECT * FROM topics WHERE unitId = :unitId AND archived = 0 ORDER BY orderIndex ASC")
+    suspend fun getActiveByUnitOnce(unitId: String): List<TopicEntity>
+
     @Query("SELECT * FROM topics")
     fun observeAll(): Flow<List<TopicEntity>>
 
+    @Query("SELECT * FROM topics WHERE archived = 0")
+    fun observeActive(): Flow<List<TopicEntity>>
+
     @Query("SELECT * FROM topics")
     suspend fun getAllOnce(): List<TopicEntity>
+
+    @Query("UPDATE topics SET archived = :archived, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun setArchived(id: String, archived: Boolean, updatedAt: Long)
 }

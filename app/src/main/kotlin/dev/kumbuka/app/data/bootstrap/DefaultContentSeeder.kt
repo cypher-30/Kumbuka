@@ -1,26 +1,26 @@
 package dev.kumbuka.app.data.bootstrap
 
 import dev.kumbuka.app.data.repository.PackRepository
-import dev.kumbuka.app.data.repository.UnitRepository
 import dev.kumbuka.app.domain.model.DeadlineKind
 import dev.kumbuka.app.pack.CoursePack
 import dev.kumbuka.app.pack.CoursePackDeadline
 import dev.kumbuka.app.pack.CoursePackTopic
 import dev.kumbuka.app.pack.CoursePackUnit
-import kotlinx.coroutines.flow.first
 
 object DefaultContentSeeder {
     private const val DAY_MILLIS = 24L * 60L * 60L * 1000L
 
-    suspend fun seedIfEmpty(
-        unitRepository: UnitRepository,
+    /**
+     * Explicit opt-in only - never called automatically on launch. A first
+     * run must show real empty states, not fabricated sample data
+     * (deliverable: "no fake sample data").
+     */
+    suspend fun seedSamplePacks(
         packRepository: PackRepository,
         nowMillis: Long = System.currentTimeMillis(),
     ) {
-        if (unitRepository.observeAll().first().isNotEmpty()) return
-
         buildSamplePacks(nowMillis).forEach { pack ->
-            packRepository.importPack(pack)
+            packRepository.importPack(pack, isSample = true)
         }
     }
 

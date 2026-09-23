@@ -1,31 +1,27 @@
 package dev.kumbuka.app
 
 import android.app.Application
-import android.util.Log
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
-import dev.kumbuka.app.data.bootstrap.DefaultContentSeeder
 import dev.kumbuka.app.data.local.KumbukaDatabase
 import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.reminders.ReminderWorker
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
 import dev.kumbuka.app.data.repository.PackRepository
+import dev.kumbuka.app.data.repository.SchedulerLogRepository
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 private val android.content.Context.dataStore by preferencesDataStore(name = "kumbuka_prefs")
 
 class KumbukaApplication : Application() {
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: KumbukaDatabase by lazy {
-        Room.databaseBuilder(this, KumbukaDatabase::class.java, KumbukaDatabase.DATABASE_NAME).build()
+        Room.databaseBuilder(this, KumbukaDatabase::class.java, KumbukaDatabase.DATABASE_NAME)
+            .addMigrations(KumbukaDatabase.MIGRATION_1_2)
+            .build()
     }
 
     val unitRepository: UnitRepository by lazy { UnitRepository(database.unitDao()) }
@@ -38,22 +34,14 @@ class KumbukaApplication : Application() {
     val packRepository: PackRepository by lazy {
         PackRepository(database, unitRepository, topicRepository, deadlineRepository)
     }
+    val schedulerLogRepository: SchedulerLogRepository by lazy {
+        SchedulerLogRepository(database.schedulerEvaluationDao())
+    }
 
     val preferences: AppPreferences by lazy { AppPreferences(dataStore) }
 
     override fun onCreate() {
         super.onCreate()
         ReminderWorker.ensureChannel(this)
-        applicationScope.launch {
-            runCatching {
-                DefaultContentSeeder.seedIfEmpty(unitRepository, packRepository)
-            }.onFailure { error ->
-                Log.e(TAG, "Failed to seed default content", error)
-            }
-        }
-    }
-
-    companion object {
-        private const val TAG = "KumbukaApplication"
     }
 }

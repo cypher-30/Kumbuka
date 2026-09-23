@@ -19,6 +19,9 @@ enum class TopicConflictChoice {
 
 enum class RemovalChoice {
     KEEP,
+    /** Topics only: hide from active study while preserving all history (never physically deleted). */
+    ARCHIVE,
+    /** Deadlines only - a removed deadline carries no session history, so it's safe to delete outright. */
     DELETE,
 }
 

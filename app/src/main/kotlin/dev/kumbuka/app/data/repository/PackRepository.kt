@@ -48,7 +48,11 @@ class PackRepository(
 
     suspend fun previewImport(pack: CoursePack): PackImportPreview = buildDiff(pack).preview
 
-    suspend fun importPack(pack: CoursePack, resolution: PackImportResolution = PackImportResolution()): PackImportPreview = database.withTransaction {
+    suspend fun importPack(
+        pack: CoursePack,
+        resolution: PackImportResolution = PackImportResolution(),
+        isSample: Boolean = false,
+    ): PackImportPreview = database.withTransaction {
         val existingUnit = unitRepository.getByPackId(pack.packId)
         val now = System.currentTimeMillis()
         val unitId = existingUnit?.id ?: UUID.randomUUID().toString()
@@ -60,6 +64,7 @@ class PackRepository(
             packVersion = pack.packVersion,
             createdAt = now,
             updatedAt = now,
+            isSample = isSample,
         )).copy(
             id = unitId,
             code = pack.unit.code,
@@ -67,6 +72,7 @@ class PackRepository(
             packId = pack.packId,
             packVersion = pack.packVersion,
             updatedAt = now,
+            isSample = existingUnit?.isSample ?: isSample,
         )
         unitRepository.upsert(unit)
 
@@ -79,9 +85,12 @@ class PackRepository(
         mergedDeadlines.forEach { deadlineRepository.upsert(it) }
 
         val packTopicIds = pack.topics.map { it.id }.toSet()
+        // Never physically delete a topic removed from the pack - archive it so its
+        // sessions/marks survive (DESIGN.md §7 "never touches history"). ARCHIVE is the
+        // only path here; KEEP (the default) leaves the topic active and untouched.
         localTopics.values
-            .filter { it.id !in packTopicIds && resolution.topicRemovalChoices[it.id] == RemovalChoice.DELETE }
-            .forEach { topicRepository.delete(it) }
+            .filter { it.id !in packTopicIds && resolution.topicRemovalChoices[it.id] == RemovalChoice.ARCHIVE }
+            .forEach { topicRepository.archive(it.id, now) }
 
         val packDeadlineIds = pack.deadlines.map { it.id }.toSet()
         localDeadlines.values

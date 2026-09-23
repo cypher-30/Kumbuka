@@ -78,8 +78,7 @@ import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.domain.scheduler.TodayCard
 import dev.kumbuka.app.domain.scheduler.TodayPlan
 import dev.kumbuka.app.domain.scheduler.TodayState
-import dev.kumbuka.app.domain.scheduler.BaselineRecallPredictor
-import dev.kumbuka.app.domain.scheduler.LearnedRecallPredictor
+import dev.kumbuka.app.domain.scheduler.PlaceholderRecallPredictor
 import dev.kumbuka.app.domain.scheduler.buildTodayPlan
 import dev.kumbuka.app.domain.scheduler.daysUntilDeadline
 import dev.kumbuka.app.domain.scheduler.schedulerUrgency
@@ -817,14 +816,11 @@ private fun ComparisonCard(schedulerArm: String) {
             Text(stringResource(R.string.comparison_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
             Text(stringResource(R.string.comparison_active_arm, schedulerArm), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary)
             Text(stringResource(R.string.comparison_no_model), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-
-            val baselineReady = remember { runCatching { BaselineRecallPredictor }.isSuccess }
-            val learnedReady = remember { runCatching { LearnedRecallPredictor }.isSuccess }
             Text(
                 stringResource(
                     R.string.comparison_predictor_state,
-                    if (baselineReady) "baseline-ready" else "missing",
-                    if (learnedReady) "model-not-loaded" else "missing",
+                    "baseline-ready",
+                    "${PlaceholderRecallPredictor.VERSION} (placeholder, not trained)",
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = LocalKbColors.current.inkMuted,
@@ -913,7 +909,7 @@ private fun SettingsTabContent(
                     Text(stringResource(R.string.settings_scheduler_arm_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
                         FilterChip(selected = schedulerArm == "baseline", onClick = { onSchedulerArmSelected("baseline") }, label = { Text(stringResource(R.string.settings_scheduler_baseline)) })
-                        FilterChip(selected = schedulerArm == "learned", onClick = { onSchedulerArmSelected("learned") }, label = { Text(stringResource(R.string.settings_scheduler_learned)) })
+                        FilterChip(selected = schedulerArm == "placeholder", onClick = { onSchedulerArmSelected("placeholder") }, label = { Text(stringResource(R.string.settings_scheduler_learned)) })
                     }
                 }
             }

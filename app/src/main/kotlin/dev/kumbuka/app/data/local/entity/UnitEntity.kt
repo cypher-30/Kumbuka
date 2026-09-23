@@ -12,4 +12,6 @@ data class UnitEntity(
     val packVersion: Int?,
     val createdAt: Long,
     val updatedAt: Long,
+    /** True for the bundled "Try a sample pack" units; excluded from research summaries by default. */
+    val isSample: Boolean = false,
 )

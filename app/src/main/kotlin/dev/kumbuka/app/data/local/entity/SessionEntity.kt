@@ -29,4 +29,8 @@ data class SessionEntity(
     val confidenceAfter: Confidence?,
     val wasDeferred: Boolean,
     val updatedAt: Long,
+    /** Which Today plan (if any) recommended this session - null for a manual/search-started session. */
+    val sourcePlanId: String? = null,
+    /** "baseline", "placeholder", or null for a manually started session; never inferred after the fact. */
+    val sourceArm: String? = null,
 )

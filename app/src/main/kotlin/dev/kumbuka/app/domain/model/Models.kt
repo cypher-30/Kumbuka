@@ -18,6 +18,7 @@ data class Unit(
     val packVersion: Int?,
     val createdAt: Long,
     val updatedAt: Long,
+    val isSample: Boolean = false,
 )
 
 data class Topic(
@@ -34,6 +35,7 @@ data class Topic(
     val weightEditedLocally: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
+    val archived: Boolean = false,
 )
 
 data class Session(
@@ -47,6 +49,8 @@ data class Session(
     val confidenceAfter: Confidence?,
     val wasDeferred: Boolean,
     val updatedAt: Long,
+    val sourcePlanId: String? = null,
+    val sourceArm: String? = null,
 )
 
 data class Deadline(

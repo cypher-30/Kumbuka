@@ -96,6 +96,74 @@ class TodaySchedulerTest {
         assertEquals(0, daysUntilDeadline(now - (2 * day), now))
     }
 
+    @Test
+    fun placeholderPredictor_fallsBackToBaselineBeforeThreeRatedReviews() {
+        val topic = topic()
+        val session = ratedSession("s1", topic.id, now - day, Confidence.SHAKY, Confidence.OK)
+
+        val scored = scoreTopicForArm(topic, listOf(session), emptyList(), SchedulerArmKind.PLACEHOLDER, PlaceholderRecallPredictor, now)
+
+        assertEquals(SchedulerArmKind.PLACEHOLDER, scored.breakdown.arm)
+        assertEquals("baseline_fallback", scored.breakdown.actualSource)
+        assertEquals("cold_start", scored.breakdown.fallbackReason)
+        val baseline = scoreTopic(topic, listOf(session), emptyList(), now)
+        assertEquals(baseline.breakdown.score, scored.breakdown.score, 0.0001f)
+    }
+
+    @Test
+    fun placeholderPredictor_predictsOnceThreeRatedReviewsExist() {
+        val topic = topic()
+        val history = listOf(
+            ratedSession("s1", topic.id, now - (10 * day), Confidence.SHAKY, Confidence.OK),
+            ratedSession("s2", topic.id, now - (6 * day), Confidence.OK, Confidence.SOLID),
+            ratedSession("s3", topic.id, now - (2 * day), Confidence.SOLID, Confidence.SOLID),
+        )
+
+        val scored = scoreTopicForArm(topic, history, emptyList(), SchedulerArmKind.PLACEHOLDER, PlaceholderRecallPredictor, now)
+
+        assertEquals("placeholder", scored.breakdown.actualSource)
+        assertEquals(PlaceholderRecallPredictor.VERSION, scored.breakdown.predictorVersion)
+        assertTrue(scored.breakdown.predictedRecall != null && scored.breakdown.predictedRecall!! in 0f..1f)
+        val expectedScore = 0.60f * (1f - scored.breakdown.predictedRecall!!) + 0.30f * scored.breakdown.urgency + 0.10f * scored.breakdown.avoidance
+        assertEquals(expectedScore, scored.breakdown.score, 0.0001f)
+    }
+
+    @Test
+    fun evaluateBothArms_logsBaselineAndPlaceholderForEveryTopic() {
+        val units = listOf(unit())
+        val topics = listOf(topic(id = "t1"), topic(id = "t2"))
+        val sessions = listOf(ratedSession("s1", "t1", now - day, Confidence.SHAKY, Confidence.OK))
+
+        val (baseline, placeholder) = evaluateBothArms(
+            units = units,
+            topics = topics,
+            sessions = sessions,
+            deadlines = emptyList(),
+            sessionLengthMinutes = 60,
+            nowMillis = now,
+            requestedArm = SchedulerArmKind.BASELINE,
+        )
+
+        assertEquals(SchedulerArmKind.BASELINE, baseline.arm)
+        assertEquals(SchedulerArmKind.PLACEHOLDER, placeholder.arm)
+        assertEquals(2, baseline.rankedTopics.size)
+        assertEquals(2, placeholder.rankedTopics.size)
+        assertTrue(placeholder.rankedTopics.all { it.breakdown.actualSource == "baseline_fallback" })
+    }
+
+    private fun ratedSession(id: String, topicId: String, at: Long, before: Confidence, after: Confidence) = Session(
+        id = id,
+        topicId = topicId,
+        startedAt = at,
+        endedAt = at,
+        plannedMinutes = 10,
+        actualSeconds = 600,
+        confidenceBefore = before,
+        confidenceAfter = after,
+        wasDeferred = false,
+        updatedAt = at,
+    )
+
     private fun unit() = UnitModel(
         id = "u1",
         code = "ICS 3102",

@@ -48,6 +48,7 @@ object PackDiffEngine {
                 weightEditedLocally = false,
                 createdAt = now,
                 updatedAt = now,
+                archived = false,
             )
         } else {
             val usePack = conflictChoices[imported.id] == TopicConflictChoice.USE_PACK
@@ -67,6 +68,9 @@ object PackDiffEngine {
                 objectiveEditedLocally = if (objectiveConflict && usePack) false else local.objectiveEditedLocally,
                 weightEditedLocally = if (weightConflict && usePack) false else local.weightEditedLocally,
                 updatedAt = now,
+                // The topic reappeared in the pack, so restore it to active study
+                // in place, preserving its id and history (DESIGN.md §7).
+                archived = false,
             )
         }
     }
