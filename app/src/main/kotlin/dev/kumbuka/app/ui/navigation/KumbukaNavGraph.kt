@@ -11,7 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.kumbuka.app.KumbukaApplication
-import dev.kumbuka.app.ui.screens.home.HomePlaceholderScreen
+import dev.kumbuka.app.ui.screens.home.HomeScreen
+import dev.kumbuka.app.ui.screens.home.InsightsScreen
 import dev.kumbuka.app.ui.screens.onboarding.OnboardingScreen
 import dev.kumbuka.app.ui.screens.session.SessionFlowScreen
 import dev.kumbuka.app.ui.screens.packs.PackAuthoringScreen
@@ -25,6 +26,7 @@ object KbRoute {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val UNITS = "units"
+    const val INSIGHTS = "insights"
     const val IMPORT_PACK = "import-pack"
     const val AUTHOR_PACK = "author-pack"
     const val TOPIC_DETAIL = "topic/{topicId}"
@@ -68,7 +70,7 @@ fun KumbukaNavGraph(
             )
         }
         composable(KbRoute.HOME) {
-            HomePlaceholderScreen(
+            HomeScreen(
                 preferences = app.preferences,
                 unitRepository = app.unitRepository,
                 topicRepository = app.topicRepository,
@@ -77,7 +79,11 @@ fun KumbukaNavGraph(
                 assessmentMarkRepository = app.assessmentMarkRepository,
                 onBrowseUnits = { navController.navigate(KbRoute.UNITS) },
                 onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
+                onCreateUnit = { navController.navigate(KbRoute.AUTHOR_PACK) },
+                onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
+                onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
                 onStartSession = { topicId, plannedMinutes -> navController.navigate(KbRoute.session(topicId, plannedMinutes)) },
+                onOpenInsights = { navController.navigate(KbRoute.INSIGHTS) },
             )
         }
         composable(KbRoute.UNITS) {
@@ -90,6 +96,9 @@ fun KumbukaNavGraph(
                 onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
                 onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
             )
+        }
+        composable(KbRoute.INSIGHTS) {
+            InsightsScreen(onBack = { navController.popBackStack() })
         }
         composable(KbRoute.AUTHOR_PACK) {
             PackAuthoringScreen(

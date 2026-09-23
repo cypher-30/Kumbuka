@@ -15,6 +15,9 @@
 
     <!-- Bottom nav -->
     <string name="nav_tonight">Tonight</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_units">Units</string>
+    <string name="nav_marks">Marks</string>
     <string name="nav_progress">Progress</string>
     <string name="nav_exams">Exams</string>
     <string name="nav_settings">Settings</string>
@@ -68,6 +71,8 @@
     <string name="search_hint">Search stays local. Nothing leaves this device.</string>
     <string name="search_no_results">No topics matched your search yet.</string>
     <string name="search_start_session">Start %1$d min</string>
+    <string name="search_results_title">Results</string>
+    <string name="search_results_count">%1$d topics matched</string>
 
     <!-- Phase 3: packs -->
     <string name="generic_back">Back</string>
@@ -81,6 +86,7 @@
     <string name="unit_export_pack">Export</string>
     <string name="unit_no_topics">No topics have been imported for this unit yet.</string>
     <string name="unit_more_topics">+%1$d more topics</string>
+    <string name="unit_show_less_topics">Show fewer topics</string>
     <string name="topic_detail_cta">Open</string>
     <string name="topic_detail_title">Topic detail</string>
     <string name="topic_not_found">That topic could not be found.</string>
@@ -217,6 +223,8 @@
     <string name="today_avoidance">Avoidance</string>
     <string name="today_start_session">Start session</string>
     <string name="generic_ok">OK</string>
+    <string name="insights_title">Insights</string>
+    <string name="insights_placeholder_body">Insights is moving into its own screen so the home tabs can stay focused.</string>
 
     <!-- Phase 8: Exams and marks -->
     <string name="exams_title">Exams</string>
