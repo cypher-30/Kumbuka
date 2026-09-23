@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Same geometry as ic_launcher_foreground.xml (Figma node 1:5551 "app-mark"),
-     with named paths so splash_icon_animated.xml can trim/fade them in natively. -->
+     with named paths so an animated-vector wrapper could trim/fade them in
+     natively if ever needed again. Currently unused directly by the splash
+     theme - see splash_icon_static.xml and themes.xml. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"

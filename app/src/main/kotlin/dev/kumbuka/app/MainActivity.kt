@@ -40,8 +40,10 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Must be called before super.onCreate() - installs the native
-        // Android 12+ SplashScreen (androidx compat on 26-30). No Compose
-        // splash route exists anymore; this is the only launch animation.
+        // Android 12+ SplashScreen (androidx compat on 26-30). It owns only
+        // the very first frame while startRoute is resolving; once resolved,
+        // KumbukaNavGraph's own KbRoute.SPLASH plays the fuller icon/wordmark
+        // animation before routing to onboarding/Today (restored by request).
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -79,7 +81,7 @@ class MainActivity : ComponentActivity() {
                 Localized(languageCode = language) {
                     val resolvedRoute = startRoute
                     if (resolvedRoute != null) {
-                        KumbukaNavGraph(app = app, startDestination = resolvedRoute)
+                        KumbukaNavGraph(app = app, postSplashDestination = resolvedRoute)
                     } else {
                         // Covered entirely by the still-visible native splash window;
                         // never itself paints a second logo/intro frame.

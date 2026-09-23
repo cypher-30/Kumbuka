@@ -21,9 +21,13 @@ import dev.kumbuka.app.ui.screens.packs.PackAuthoringScreen
 import dev.kumbuka.app.ui.screens.packs.ExportPackScreen
 import dev.kumbuka.app.ui.screens.packs.ImportPackScreen
 import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
+import dev.kumbuka.app.ui.screens.splash.SplashAnimationDurationMs
+import dev.kumbuka.app.ui.screens.splash.SplashScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object KbRoute {
+    const val SPLASH = "splash"
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val INSIGHTS = "insights"
@@ -40,16 +44,19 @@ object KbRoute {
 
 /**
  * Entry flow: MainActivity resolves the real onboardingComplete value while
- * the native splash is still on screen, then hands this graph a
- * [startDestination] of either [KbRoute.ONBOARDING] (fresh) or [KbRoute.HOME]
- * (returning). There is no Splash route/screen here - the native
- * SplashScreen API owns the entire launch sequence. Login was removed
- * entirely - there is no account, no backend, and nothing to sign into.
+ * the native splash icon is still on screen, then hands this graph a
+ * [postSplashDestination] of either [KbRoute.ONBOARDING] (fresh) or
+ * [KbRoute.HOME] (returning). The graph always starts at [KbRoute.SPLASH],
+ * which plays the fuller icon/wordmark/tagline choreography once before
+ * navigating on to that resolved destination - the native SplashScreen API
+ * still owns the very first frame, this is a deliberate second, brief,
+ * app-authored beat on top of it. Login was removed entirely - there is no
+ * account, no backend, and nothing to sign into.
  */
 @Composable
 fun KumbukaNavGraph(
     app: KumbukaApplication,
-    startDestination: String,
+    postSplashDestination: String,
     navController: NavHostController = rememberNavController(),
 ) {
     val preferences = app.preferences
@@ -59,7 +66,8 @@ fun KumbukaNavGraph(
     val currentRoute = currentBackStackEntry?.destination?.route
 
     LaunchedEffect(currentRoute, pendingImportUri) {
-        if (pendingImportUri == null || currentRoute == null || currentRoute == KbRoute.ONBOARDING) return@LaunchedEffect
+        if (pendingImportUri == null || currentRoute == null) return@LaunchedEffect
+        if (currentRoute == KbRoute.SPLASH || currentRoute == KbRoute.ONBOARDING) return@LaunchedEffect
         if (currentRoute != KbRoute.IMPORT_PACK) {
             navController.navigate(KbRoute.IMPORT_PACK) {
                 launchSingleTop = true
@@ -67,7 +75,16 @@ fun KumbukaNavGraph(
         }
     }
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = KbRoute.SPLASH) {
+        composable(KbRoute.SPLASH) {
+            SplashScreen()
+            LaunchedEffect(postSplashDestination) {
+                delay(SplashAnimationDurationMs)
+                navController.navigate(postSplashDestination) {
+                    popUpTo(KbRoute.SPLASH) { inclusive = true }
+                }
+            }
+        }
         composable(KbRoute.ONBOARDING) {
             val language by preferences.language.collectAsState(initial = "en")
             OnboardingScreen(

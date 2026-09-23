@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static (non-animated) version of splash_icon_base.xml, fully drawn: the
+     native OS splash shows this instantly with no motion of its own, since
+     the sole splash animation is now the Compose SplashScreen composable
+     that plays right after (see ui/screens/splash/SplashScreen.kt). Kept as
+     a separate file so splash_icon_base.xml can stay untouched for anything
+     else that trims/fades it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M32.875,65.375C42.625,65.375 44.25,44.25 54,44.25C63.75,44.25 65.375,65.375 75.125,65.375"
+        android:strokeColor="#DE9C31"
+        android:strokeAlpha="0"
+        android:strokeWidth="4.875"
+        android:strokeLineCap="round" />
+</vector>
+

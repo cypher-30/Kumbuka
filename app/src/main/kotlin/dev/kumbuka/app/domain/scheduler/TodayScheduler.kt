@@ -8,7 +8,6 @@ import dev.kumbuka.app.domain.model.Unit as UnitModel
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 private const val DAY_MILLIS = 86_400_000L
 const val DEFAULT_SESSION_LENGTH_MINUTES = 60
@@ -95,6 +94,8 @@ data class TodayCard(
     val breakdown: ScoreBreakdown,
 )
 
+enum class DominantPressure { GAP, STALENESS, URGENCY, AVOIDANCE }
+
 sealed interface TodayReasonFact {
     data class DueInDays(val days: Int) : TodayReasonFact
     data class LastRated(val confidence: Confidence) : TodayReasonFact
@@ -120,19 +121,20 @@ data class ScoreBreakdown(
     val actualSource: String = "baseline",
     val fallbackReason: String? = null,
 ) {
-    fun plainLanguageSummary(): String = buildString {
-        append("Gap contributes ")
-        append(percent(gap))
-        append("; staleness contributes ")
-        append(percent(staleness))
-        append("; urgency contributes ")
-        append(percent(urgency))
-        append("; avoidance contributes ")
-        append(percent(avoidance))
-        append('.')
+    /**
+     * The single largest scoring pressure behind this ranking, expressed as a category rather
+     * than a raw score/percentage - ordinary UI must localize this into plain language, never
+     * show the underlying numbers (those belong to research controls only).
+     */
+    fun dominantPressure(): DominantPressure {
+        val ranked = listOf(
+            DominantPressure.GAP to gap,
+            DominantPressure.STALENESS to staleness,
+            DominantPressure.URGENCY to urgency,
+            DominantPressure.AVOIDANCE to avoidance,
+        )
+        return ranked.maxByOrNull { it.second }?.first ?: DominantPressure.GAP
     }
-
-    fun formulaSummary(): String = "score = 0.40×gap + 0.20×staleness + 0.30×urgency + 0.10×avoidance"
 
     fun reasonFacts(): List<TodayReasonFact> = buildList {
         daysUntilDeadline?.let { add(TodayReasonFact.DueInDays(it)) }
@@ -141,8 +143,6 @@ data class ScoreBreakdown(
         if (deferralCount > 0) add(TodayReasonFact.DeferredCount(deferralCount))
         if (isEmpty()) add(TodayReasonFact.NoHistory)
     }.take(2)
-
-    private fun percent(value: Float): String = "${(value * 100).roundToInt()}%"
 }
 
 fun buildTodayPlan(
