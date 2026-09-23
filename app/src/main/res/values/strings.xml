@@ -366,6 +366,7 @@
     <string name="session_title">Session</string>
     <string name="session_loading">Loading session…</string>
     <string name="session_not_found">That topic could not be found.</string>
+    <string name="session_topic_archived">This topic has been archived and can\'t start a new session. If you already had one in progress, it will still finish normally.</string>
     <string name="session_unit_unknown">Unknown unit</string>
     <string name="session_planned_minutes">%1$d min planned</string>
     <string name="session_time_remaining">%1$s remaining</string>
