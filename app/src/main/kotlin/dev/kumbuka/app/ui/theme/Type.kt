@@ -39,6 +39,12 @@ val KumbukaTypography = Typography(
         fontSize = 18.sp,
         lineHeight = 24.sp,
     ),
+    titleSmall = TextStyle(
+        fontFamily = IbmPlexSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+    ),
     bodyLarge = TextStyle(
         fontFamily = IbmPlexSans,
         fontWeight = FontWeight.Normal,
