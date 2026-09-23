@@ -72,6 +72,7 @@ fun HomeScreen(
     val sessions by sessionRepository.observeAll().collectAsState(initial = emptyList())
     val deadlines by deadlineRepository.observeAll().collectAsState(initial = emptyList())
     val marks by assessmentMarkRepository.observeAll().collectAsState(initial = emptyList())
+    val schedulerLogs by schedulerLogRepository.observeAll().collectAsState(initial = emptyList())
     val language by preferences.language.collectAsState(initial = "en")
     val themeMode by preferences.themeMode.collectAsState(initial = "system")
     val sessionLengthMinutes by preferences.sessionLengthMinutes.collectAsState(initial = 60)
@@ -97,6 +98,9 @@ fun HomeScreen(
     val sampleTopicIds = remember(units, topics) {
         val sampleUnitIds = units.filter { it.isSample }.map { it.id }.toSet()
         topics.filter { it.unitId in sampleUnitIds }.map { it.id }.toSet()
+    }
+    val latestSelectedLog = remember(schedulerLogs) {
+        schedulerLogs.filter { it.selected }.maxByOrNull { it.evaluatedAt }
     }
 
     var activeTabName by rememberSaveable { mutableStateOf(KbNavTab.TODAY.name) }
@@ -233,10 +237,13 @@ fun HomeScreen(
                 reminderHour = reminderHour,
                 reminderMinute = reminderMinute,
                 reminderPermissionDenied = reminderPermissionDenied,
+                latestSchedulerActualSource = latestSelectedLog?.actualSource,
+                latestSchedulerFallbackReason = latestSelectedLog?.fallbackReason,
                 onLanguageSelected = { code -> scope.launch { preferences.setLanguage(code) } },
                 onThemeModeSelected = { mode -> scope.launch { preferences.setThemeMode(mode) } },
                 onSessionLengthSelected = { minutes -> scope.launch { preferences.setSessionLengthMinutes(minutes) } },
                 onSchedulerArmSelected = { arm -> scope.launch { preferences.setSchedulerArm(arm) } },
+                onOpenInsights = onOpenInsights,
                 onReminderEnabledChanged = { enabled ->
                     if (!enabled) {
                         scope.launch {
