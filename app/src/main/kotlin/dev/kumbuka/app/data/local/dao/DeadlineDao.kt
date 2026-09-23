@@ -5,13 +5,14 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import dev.kumbuka.app.data.local.entity.DeadlineEntity
 import dev.kumbuka.app.data.local.entity.DeadlineTopicCrossRef
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DeadlineDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(deadline: DeadlineEntity)
 
     @Delete
