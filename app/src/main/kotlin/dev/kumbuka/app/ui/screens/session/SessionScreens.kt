@@ -2,6 +2,8 @@
 
 package dev.kumbuka.app.ui.screens.session
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -10,6 +12,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,40 +29,31 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.repository.SessionRepository
@@ -191,14 +186,7 @@ fun SessionFlowScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.session_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
-            )
+            dev.kumbuka.app.ui.components.KbTopBar(title = stringResource(R.string.session_title), onBack = onBack)
         },
         containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
@@ -250,6 +238,7 @@ fun SessionFlowScreen(
                                 session = currentSession,
                                 plannedMinutes = effectivePlannedMinutes,
                                 remainingMillis = remainingMillis,
+                                stage = stage,
                             )
                         }
 
@@ -267,7 +256,6 @@ fun SessionFlowScreen(
                                 when (stageTarget) {
                                     SessionStage.Recall -> RecallStepCard(
                                         topic = currentTopic,
-                                        remainingMillis = remainingMillis,
                                         onRateRecall = { stageName = SessionStage.RateBefore.name },
                                         onDefer = { showDeferSheet = true },
                                     )
@@ -410,20 +398,75 @@ private fun SessionHeaderCard(
     session: Session,
     plannedMinutes: Int,
     remainingMillis: Long,
+    stage: SessionStage?,
 ) {
+    val colors = LocalKbColors.current
     val totalMillis = (plannedMinutes.coerceAtLeast(1) * 60_000L)
     val progress = if (session.endedAt != null) 1f else ((totalMillis - remainingMillis).toFloat() / totalMillis).coerceIn(0f, 1f)
-    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = MaterialTheme.shapes.large) {
-        Column(modifier = Modifier.padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
-            Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x1 / 2)) {
-                Text(unit?.code ?: stringResource(R.string.session_unit_unknown), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.primary)
-                Text(topic.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
-                Text(topic.objective, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+    val stages = listOf(
+        SessionStage.Recall to stringResource(R.string.session_stage_recall),
+        SessionStage.RateBefore to stringResource(R.string.session_stage_rate),
+        SessionStage.Restudy to stringResource(R.string.session_stage_restudy),
+        SessionStage.RateAfter to stringResource(R.string.session_stage_rate_again),
+    )
+    val currentIndex = stages.indexOfFirst { it.first == stage }.let { if (it < 0) stages.size else it }
+    Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x2)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            dev.kumbuka.app.ui.components.KbUnitLabel(
+                unitKey = topic.unitId,
+                unitCode = unit?.code ?: stringResource(R.string.session_unit_unknown),
+                emphasized = true,
+            )
+            Text(topic.title, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+        }
+        Card(colors = CardDefaults.cardColors(containerColor = colors.primaryTint), shape = MaterialTheme.shapes.large) {
+            Column(modifier = Modifier.fillMaxWidth().padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
+                Text(
+                    formatDuration(remainingMillis),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = colors.onPrimaryTint,
+                )
+                Text(
+                    stringResource(R.string.session_timer_caption, plannedMinutes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onPrimaryTint,
+                )
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().height(6.dp),
+                    color = colors.primary,
+                    trackColor = colors.surface,
+                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
+                )
             }
-            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-            Row(horizontalArrangement = Arrangement.spacedBy(KbSpacing.x1), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.session_planned_minutes, plannedMinutes), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted, fontWeight = FontWeight.Medium)
-                Text(stringResource(R.string.session_time_remaining, formatDuration(remainingMillis)), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            stages.forEachIndexed { index, (_, label) ->
+                val done = index < currentIndex
+                val active = index == currentIndex
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .background(
+                                when {
+                                    active -> colors.primary
+                                    done -> colors.primary.copy(alpha = 0.45f)
+                                    else -> colors.border
+                                },
+                                MaterialTheme.shapes.small,
+                            ),
+                    )
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (active) colors.ink else colors.inkMuted,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
@@ -432,7 +475,6 @@ private fun SessionHeaderCard(
 @Composable
 private fun RecallStepCard(
     topic: Topic,
-    remainingMillis: Long,
     onRateRecall: () -> Unit,
     onDefer: () -> Unit,
 ) {
@@ -442,13 +484,13 @@ private fun RecallStepCard(
             Text(stringResource(R.string.session_recall_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
             Text(
                 text = topic.retrievalPrompt.ifBlank { topic.objective },
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalKbColors.current.ink,
-            )
-            Text(
-                text = stringResource(R.string.session_time_remaining, formatDuration(remainingMillis)),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalKbColors.current.primary,
+                style = MaterialTheme.typography.titleMedium,
+                color = LocalKbColors.current.onPrimaryTint,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(LocalKbColors.current.primaryTint, MaterialTheme.shapes.medium)
+                    .padding(KbSpacing.x2),
             )
             KbPrimaryButton(text = stringResource(R.string.session_done_recalling), onClick = onRateRecall)
             KbSecondaryButton(text = stringResource(R.string.session_defer), onClick = onDefer)
@@ -482,15 +524,9 @@ private fun RestudyStepCard(
         Column(modifier = Modifier.padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
             Text(stringResource(R.string.session_restudy_title), style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
             Text(stringResource(R.string.session_restudy_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-            Text(
-                text = if (remainingMillis > 0L) {
-                    stringResource(R.string.session_time_remaining, formatDuration(remainingMillis))
-                } else {
-                    stringResource(R.string.session_restudy_done)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalKbColors.current.primary,
-            )
+            if (remainingMillis <= 0L) {
+                dev.kumbuka.app.ui.components.KbBanner(stringResource(R.string.session_restudy_done), dev.kumbuka.app.ui.components.KbStatus.INFO)
+            }
             KbPrimaryButton(text = stringResource(R.string.session_continue_after_restudy), onClick = onContinue)
         }
     }

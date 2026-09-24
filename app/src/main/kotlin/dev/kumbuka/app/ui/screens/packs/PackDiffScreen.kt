@@ -58,7 +58,7 @@ fun PackDiffScreen(
             ImportSummaryCard(diff)
         }
         item {
-            InfoBanner(text = bannerText(diff), accent = LocalKbColors.current.primary)
+            dev.kumbuka.app.ui.components.KbBanner(text = bannerText(diff), status = dev.kumbuka.app.ui.components.KbStatus.INFO)
         }
         if (diff.topicDiffs.isEmpty() && diff.deadlineDiffs.isEmpty()) {
             item {
@@ -143,18 +143,6 @@ private fun CountRow(label: String, value: Int) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
         Text(value.toString(), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink)
-    }
-}
-
-@Composable
-private fun InfoBanner(text: String, accent: androidx.compose.ui.graphics.Color) {
-    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.warningTint), shape = RoundedCornerShape(14.dp)) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = accent,
-            modifier = Modifier.padding(14.dp),
-        )
     }
 }
 

@@ -1,84 +1,51 @@
+@file:OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+
 package dev.kumbuka.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.kumbuka.app.R
 
-/** Newsreader for headlines (serif, per Figma), IBM Plex Sans for everything else. */
-val Newsreader = FontFamily(
-    Font(R.font.newsreader_regular, FontWeight.Normal),
-    Font(R.font.newsreader_semibold, FontWeight.SemiBold),
+private fun jakarta(weight: FontWeight) = Font(
+    resId = R.font.plus_jakarta_sans,
+    weight = weight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
 )
 
-val IbmPlexSans = FontFamily(
-    Font(R.font.ibm_plex_sans_regular, FontWeight.Normal),
-    Font(R.font.ibm_plex_sans_medium, FontWeight.Medium),
-    Font(R.font.ibm_plex_sans_semibold, FontWeight.SemiBold),
+/** Plus Jakarta Sans (OFL, bundled locally - works fully offline). One family for the whole UI. */
+val PlusJakartaSans = FontFamily(
+    jakarta(FontWeight.Normal),
+    jakarta(FontWeight.Medium),
+    jakarta(FontWeight.SemiBold),
+    jakarta(FontWeight.Bold),
+    jakarta(FontWeight.ExtraBold),
+)
+
+private fun style(size: Int, line: Int, weight: FontWeight, letterSpacing: Float = 0f) = TextStyle(
+    fontFamily = PlusJakartaSans,
+    fontWeight = weight,
+    fontSize = size.sp,
+    lineHeight = line.sp,
+    letterSpacing = letterSpacing.sp,
 )
 
 val KumbukaTypography = Typography(
-    headlineSmall = TextStyle(
-        fontFamily = Newsreader,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp,
-    ),
-    titleLarge = TextStyle(
-        fontFamily = Newsreader,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-    ),
-    titleMedium = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
-    ),
-    titleSmall = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 24.sp,
-    ),
-    bodySmall = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 20.sp,
-    ),
-    labelLarge = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
-    labelMedium = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 12.sp,
-        lineHeight = 20.sp,
-    ),
-    labelSmall = TextStyle(
-        fontFamily = IbmPlexSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-    ),
+    displaySmall = style(28, 34, FontWeight.Bold, -0.4f),
+    headlineLarge = style(26, 32, FontWeight.Bold, -0.3f),
+    headlineMedium = style(24, 30, FontWeight.Bold, -0.2f),
+    headlineSmall = style(20, 26, FontWeight.Bold, -0.1f),
+    titleLarge = style(18, 24, FontWeight.Bold),
+    titleMedium = style(16, 22, FontWeight.SemiBold),
+    titleSmall = style(14, 20, FontWeight.SemiBold),
+    bodyLarge = style(15, 22, FontWeight.Normal),
+    bodyMedium = style(14, 20, FontWeight.Normal),
+    bodySmall = style(12, 17, FontWeight.Normal),
+    labelLarge = style(14, 20, FontWeight.SemiBold),
+    labelMedium = style(12, 16, FontWeight.SemiBold),
+    labelSmall = style(11, 16, FontWeight.SemiBold, 0.2f),
 )
