@@ -2,6 +2,8 @@
 
 package dev.kumbuka.app.ui.screens.packs
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,31 +15,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.repository.DeadlineRepository
 import dev.kumbuka.app.data.repository.TopicRepository
@@ -141,21 +138,13 @@ fun PackAuthoringScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        when (step) {
-                            AuthorStep.UnitBasics -> stringResource(R.string.author_step_1_title)
-                            AuthorStep.TopicsAndDeadlines -> stringResource(R.string.author_step_2_title)
-                            AuthorStep.Review -> stringResource(R.string.author_step_3_title)
-                        },
-                    )
+            dev.kumbuka.app.ui.components.KbTopBar(
+                title = when (step) {
+                    AuthorStep.UnitBasics -> stringResource(R.string.author_step_1_title)
+                    AuthorStep.TopicsAndDeadlines -> stringResource(R.string.author_step_2_title)
+                    AuthorStep.Review -> stringResource(R.string.author_step_3_title)
                 },
-                navigationIcon = {
-                    IconButton(onClick = handleBackPress) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
+                onBack = handleBackPress,
             )
         },
         containerColor = LocalKbColors.current.paper,
@@ -171,7 +160,7 @@ fun PackAuthoringScreen(
                 AuthorStep.UnitBasics -> {
                     item {
                         StepInfoCard(
-                            title = stringResource(R.string.author_step_1_title),
+                            step = 1,
                             body = stringResource(R.string.author_step_1_body),
                         )
                     }
@@ -214,7 +203,7 @@ fun PackAuthoringScreen(
                 AuthorStep.TopicsAndDeadlines -> {
                     item {
                         StepInfoCard(
-                            title = stringResource(R.string.author_step_2_title),
+                            step = 2,
                             body = stringResource(R.string.author_step_2_body),
                         )
                     }
@@ -450,7 +439,7 @@ fun PackAuthoringScreen(
                 AuthorStep.Review -> {
                     item {
                         StepInfoCard(
-                            title = stringResource(R.string.author_step_3_title),
+                            step = 3,
                             body = stringResource(R.string.author_step_3_body),
                         )
                     }
@@ -543,14 +532,7 @@ fun PackAuthoringScreen(
 
             errorText?.let {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.warningTint), shape = RoundedCornerShape(14.dp)) {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = LocalKbColors.current.accent,
-                            modifier = Modifier.padding(14.dp),
-                        )
-                    }
+                    dev.kumbuka.app.ui.components.KbBanner(text = it, status = dev.kumbuka.app.ui.components.KbStatus.ERROR)
                 }
             }
         }
@@ -558,12 +540,23 @@ fun PackAuthoringScreen(
 }
 
 @Composable
-private fun StepInfoCard(title: String, body: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = LocalKbColors.current.ink)
-            Text(body, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
+private fun StepInfoCard(body: String, step: Int? = null, title: String? = null) {
+    val colors = LocalKbColors.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (title != null) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = colors.ink, modifier = Modifier.padding(top = 8.dp))
         }
+        if (step != null) androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            (1..3).forEach { index ->
+                androidx.compose.foundation.layout.Box(
+                    Modifier
+                        .weight(1f)
+                        .height(4.dp)
+                        .background(if (index <= step) colors.primary else colors.border, RoundedCornerShape(2.dp)),
+                )
+            }
+        }
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted)
     }
 }
 

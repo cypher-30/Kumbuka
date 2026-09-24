@@ -1,9 +1,9 @@
 package dev.kumbuka.app.ui.navigation
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -14,7 +14,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.kumbuka.app.KumbukaApplication
 import dev.kumbuka.app.ui.screens.home.HomeScreen
-import dev.kumbuka.app.ui.screens.home.InsightsScreen
+import dev.kumbuka.app.ui.screens.home.MarkEditorScreen
+import dev.kumbuka.app.ui.screens.home.UnitDetailScreen
+import dev.kumbuka.app.ui.screens.home.rememberWorkspaceShellState
+import dev.kumbuka.app.ui.screens.settings.ResearchDiagnosticsScreen
+import dev.kumbuka.app.ui.screens.settings.SettingsScreen
 import dev.kumbuka.app.ui.screens.onboarding.OnboardingScreen
 import dev.kumbuka.app.ui.screens.session.SessionFlowScreen
 import dev.kumbuka.app.ui.screens.packs.PackAuthoringScreen
@@ -30,14 +34,23 @@ object KbRoute {
     const val SPLASH = "splash"
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
-    const val INSIGHTS = "insights"
+    const val SETTINGS = "settings"
+    const val RESEARCH = "research"
     const val IMPORT_PACK = "import-pack"
     const val AUTHOR_PACK = "author-pack"
     const val TOPIC_DETAIL = "topic/{topicId}"
+    const val UNIT_DETAIL = "unit/{unitId}"
+    const val MARK_EDITOR = "mark-edit?markId={markId}&unitId={unitId}"
     const val EXPORT_PACK = "export-pack/{unitId}"
     const val SESSION = "session/{topicId}/{plannedMinutes}"
 
     fun topicDetail(topicId: String) = "topic/$topicId"
+    fun unitDetail(unitId: String) = "unit/$unitId"
+    fun markEditor(markId: String?, unitId: String?) = buildString {
+        append("mark-edit")
+        val params = listOfNotNull(markId?.let { "markId=$it" }, unitId?.let { "unitId=$it" })
+        if (params.isNotEmpty()) append("?").append(params.joinToString("&"))
+    }
     fun exportPack(unitId: String) = "export-pack/$unitId"
     fun session(topicId: String, plannedMinutes: Int) = "session/$topicId/$plannedMinutes"
 }
@@ -64,6 +77,7 @@ fun KumbukaNavGraph(
     val pendingImportUri = app.pendingImportUri
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
+    val shell = rememberWorkspaceShellState()
 
     LaunchedEffect(currentRoute, pendingImportUri) {
         if (pendingImportUri == null || currentRoute == null) return@LaunchedEffect
@@ -100,6 +114,7 @@ fun KumbukaNavGraph(
         }
         composable(KbRoute.HOME) {
             HomeScreen(
+                shell = shell,
                 preferences = app.preferences,
                 unitRepository = app.unitRepository,
                 topicRepository = app.topicRepository,
@@ -110,18 +125,68 @@ fun KumbukaNavGraph(
                 onImportPack = { navController.navigate(KbRoute.IMPORT_PACK) },
                 onCreateUnit = { navController.navigate(KbRoute.AUTHOR_PACK) },
                 onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
-                onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
+                onOpenUnit = { unitId -> navController.navigate(KbRoute.unitDetail(unitId)) },
+                onOpenSettings = { navController.navigate(KbRoute.SETTINGS) { launchSingleTop = true } },
+                onEditMark = { markId, unitId -> navController.navigate(KbRoute.markEditor(markId, unitId)) },
                 onStartSession = { topicId, plannedMinutes -> navController.navigate(KbRoute.session(topicId, plannedMinutes)) },
-                onOpenInsights = { navController.navigate(KbRoute.INSIGHTS) },
             )
         }
-        composable(KbRoute.INSIGHTS) {
-            InsightsScreen(
+        composable(KbRoute.SETTINGS) {
+            SettingsScreen(
+                preferences = app.preferences,
+                onBack = { navController.popBackStack() },
+                onOpenResearch = { navController.navigate(KbRoute.RESEARCH) },
+            )
+        }
+        composable(KbRoute.RESEARCH) {
+            ResearchDiagnosticsScreen(
+                preferences = app.preferences,
                 unitRepository = app.unitRepository,
                 topicRepository = app.topicRepository,
                 sessionRepository = app.sessionRepository,
                 assessmentMarkRepository = app.assessmentMarkRepository,
                 schedulerLogRepository = app.schedulerLogRepository,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = KbRoute.UNIT_DETAIL,
+            arguments = listOf(navArgument("unitId") { type = NavType.StringType }),
+        ) { entry ->
+            UnitDetailScreen(
+                unitId = requireNotNull(entry.arguments?.getString("unitId")),
+                unitRepository = app.unitRepository,
+                topicRepository = app.topicRepository,
+                sessionRepository = app.sessionRepository,
+                deadlineRepository = app.deadlineRepository,
+                assessmentMarkRepository = app.assessmentMarkRepository,
+                onBack = { navController.popBackStack() },
+                onOpenTopic = { topicId -> navController.navigate(KbRoute.topicDetail(topicId)) },
+                onExportUnit = { unitId -> navController.navigate(KbRoute.exportPack(unitId)) },
+                onShowAssessments = { segment, unitId ->
+                    shell.showAssessments(segment, unitId)
+                    navController.popBackStack(KbRoute.HOME, inclusive = false)
+                },
+                onAddMark = { unitId -> navController.navigate(KbRoute.markEditor(null, unitId)) },
+            )
+        }
+        composable(
+            route = KbRoute.MARK_EDITOR,
+            arguments = listOf(
+                navArgument("markId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("unitId") { type = NavType.StringType; nullable = true; defaultValue = null },
+            ),
+        ) { entry ->
+            MarkEditorScreen(
+                markId = entry.arguments?.getString("markId"),
+                initialUnitId = entry.arguments?.getString("unitId"),
+                unitRepository = app.unitRepository,
+                topicRepository = app.topicRepository,
+                assessmentMarkRepository = app.assessmentMarkRepository,
+                onDone = { message ->
+                    shell.pendingMessage = message
+                    navController.popBackStack()
+                },
                 onBack = { navController.popBackStack() },
             )
         }
@@ -140,17 +205,24 @@ fun KumbukaNavGraph(
                 pendingImportUri = pendingImportUri,
                 onPendingImportUriHandled = { handledUri -> app.clearPendingImportUri(handledUri) },
                 onBack = { navController.popBackStack() },
-                onImported = { navController.popBackStack() },
+                onImported = { message ->
+                    shell.pendingMessage = message
+                    navController.popBackStack()
+                },
             )
         }
         composable(
             route = KbRoute.TOPIC_DETAIL,
             arguments = listOf(navArgument("topicId") { type = NavType.StringType }),
         ) { entry ->
+            val sessionLength by preferences.sessionLengthMinutes.collectAsState(initial = 60)
             TopicDetailScreen(
                 topicRepository = app.topicRepository,
                 unitRepository = app.unitRepository,
+                sessionRepository = app.sessionRepository,
                 topicId = requireNotNull(entry.arguments?.getString("topicId")),
+                sessionLengthMinutes = sessionLength,
+                onStartSession = { topicId, minutes -> navController.navigate(KbRoute.session(topicId, minutes)) },
                 onBack = { navController.popBackStack() },
             )
         }

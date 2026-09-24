@@ -91,7 +91,6 @@
     <string name="search_no_results">No topics matched your search yet.</string>
     <string name="search_start_session">Start %1$d min</string>
     <string name="search_results_title">Results</string>
-    <string name="search_results_count">%1$d topics matched</string>
 
     <!-- Phase 3: packs -->
     <string name="generic_back">Back</string>
@@ -123,7 +122,7 @@
     <string name="import_pack_intro">Choose a Course Pack file first. If it arrived in chat or email as plain text, you can paste the JSON instead.</string>
     <string name="import_choose_file">Choose file</string>
     <string name="import_try_sample_title">No pack yet?</string>
-    <string name="import_try_sample_body">Try a sample pack to see how Kumbuka works. It\'s clearly marked as a sample and never counts toward your real Insights.</string>
+    <string name="import_try_sample_body">Try a sample pack to see how Kumbuka works. It\'s clearly marked as a sample and never counts toward your real Progress.</string>
     <string name="import_try_sample_cta">Try a sample pack</string>
     <string name="import_try_sample_done">Sample packs added - open Units to see them.</string>
     <string name="import_show_paste">Paste text instead</string>
@@ -337,7 +336,7 @@
     <string name="marks_delete_confirm">Delete</string>
     <string name="marks_delete_cancel">Keep</string>
     <string name="marks_deadline_date">Due %1$s</string>
-    <string name="marks_result_score">%1$.1f / %2$.1f</string>
+    <string name="marks_result_score">%1$s / %2$s</string>
     <string name="marks_edit_result">Edit mark</string>
     <string name="marks_delete_result">Delete mark</string>
     <string name="marks_edit_title">Edit mark</string>
@@ -401,4 +400,145 @@
     <string name="confidence_shaky">Shaky</string>
     <string name="confidence_ok">OK</string>
     <string name="confidence_solid">Solid</string>
+    <!-- Campus Workspace redesign -->
+    <string name="nav_home">Home</string>
+    <string name="nav_assessments">Assessments</string>
+    <string name="generic_cancel">Cancel</string>
+    <string name="generic_close">Close</string>
+    <string name="generic_loading">Loading your workspace…</string>
+    <string name="generic_view_all">View all</string>
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <plurals name="home_hero_ready">
+        <item quantity="one">%1$d topic ready · %2$d min</item>
+        <item quantity="other">%1$d topics ready · %2$d min</item>
+    </plurals>
+    <string name="home_hero_setup">Let\'s set up your first unit.</string>
+    <string name="home_hero_no_active">No active topics yet</string>
+    <string name="home_hero_caught_up">You\'re all caught up for now.</string>
+    <string name="home_hero_next_date">Next: %1$s · %2$s</string>
+    <string name="home_empty_title">Start with a unit</string>
+    <string name="home_open_units">Open units</string>
+    <string name="home_recommended_next">Recommended next</string>
+    <string name="home_revision_queue">Also in today\'s queue</string>
+    <string name="home_start_revision">Start revision</string>
+    <string name="home_start_revision_minutes">Start %1$d min revision</string>
+    <string name="home_start_topic_cd">Start revision: %1$s</string>
+    <string name="home_coming_up">Coming up</string>
+    <string name="home_coming_up_empty">No upcoming CATs, assignments or exams saved. Dates come from your Course Packs.</string>
+    <string name="home_progress_link_title">Your progress</string>
+    <plurals name="home_progress_link_body">
+        <item quantity="one">%1$d review finished in the last 7 days</item>
+        <item quantity="other">%1$d reviews finished in the last 7 days</item>
+    </plurals>
+    <string name="relative_today">Today</string>
+    <string name="relative_tomorrow">Tomorrow</string>
+    <string name="relative_yesterday">Yesterday</string>
+    <plurals name="relative_in_days">
+        <item quantity="one">In %1$d day</item>
+        <item quantity="other">In %1$d days</item>
+    </plurals>
+    <plurals name="relative_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <string name="date_group_today">Today</string>
+    <string name="date_group_next_7">Next 7 days</string>
+    <string name="date_group_later">Later</string>
+    <string name="date_group_past">Past</string>
+    <string name="units_add_unit">Add unit</string>
+    <string name="units_your_units">Your units</string>
+    <plurals name="units_count">
+        <item quantity="one">%1$d unit</item>
+        <item quantity="other">%1$d units</item>
+    </plurals>
+    <string name="units_only_samples">Only sample units so far. Import or create your own unit with the + button.</string>
+    <string name="units_samples_title">Sample units</string>
+    <string name="units_samples_body">Practice content to explore Kumbuka. Excluded from your progress.</string>
+    <string name="units_sample_pill">Sample</string>
+    <plurals name="unit_topics_count">
+        <item quantity="one">%1$d topic</item>
+        <item quantity="other">%1$d topics</item>
+    </plurals>
+    <plurals name="unit_upcoming_count">
+        <item quantity="one">%1$d upcoming date</item>
+        <item quantity="other">%1$d upcoming dates</item>
+    </plurals>
+    <string name="search_clear">Clear search</string>
+    <string name="unit_detail_title">Unit</string>
+    <string name="unit_not_found">That unit could not be found.</string>
+    <string name="unit_detail_pack_version">Course Pack version %1$d</string>
+    <string name="unit_detail_stat_topics">Topics</string>
+    <string name="unit_detail_stat_reviewed">Reviewed</string>
+    <string name="unit_detail_stat_results">Results</string>
+    <string name="unit_detail_dates_title">Upcoming dates</string>
+    <string name="unit_detail_dates_empty">No upcoming dates for this unit.</string>
+    <string name="unit_detail_results_title">Results</string>
+    <plurals name="unit_detail_results_count">
+        <item quantity="one">%1$d result saved</item>
+        <item quantity="other">%1$d results saved</item>
+    </plurals>
+    <string name="unit_detail_topics_title">Topics</string>
+    <string name="unit_detail_topics_body">Open a topic to read it and start a revision.</string>
+    <string name="unit_detail_last_reviewed">Last reviewed %1$s</string>
+    <string name="unit_detail_not_reviewed">Not reviewed yet</string>
+    <plurals name="unit_detail_show_archived">
+        <item quantity="one">Show %1$d archived topic</item>
+        <item quantity="other">Show %1$d archived topics</item>
+    </plurals>
+    <string name="unit_detail_hide_archived">Hide archived topics</string>
+    <string name="unit_detail_archived_label">Archived</string>
+    <string name="assessments_segment_dates">Dates</string>
+    <string name="assessments_segment_results">Results</string>
+    <string name="assessments_all_units">All units</string>
+    <string name="assessments_dates_empty_title">No dates yet</string>
+    <string name="assessments_dates_empty_body">CAT, assignment and exam dates appear here when a Course Pack includes them.</string>
+    <string name="assessments_past_note">Past dates are kept for reference. Kumbuka doesn\'t track submissions.</string>
+    <string name="assessments_results_empty_body">Add CAT, assignment, past paper and exam marks to see how revision lines up with results.</string>
+    <plurals name="assessments_linked_topics">
+        <item quantity="one">%1$d linked topic</item>
+        <item quantity="other">%1$d linked topics</item>
+    </plurals>
+    <string name="mark_not_found">That result could not be found.</string>
+    <string name="mark_editor_percent">That\'s %1$.1f%%</string>
+    <string name="mark_editor_discard_title">Discard changes?</string>
+    <string name="mark_editor_discard_body">Your unsaved changes to this result will be lost.</string>
+    <string name="progress_tile_reviews">Reviews finished</string>
+    <string name="progress_tile_minutes">Minutes studied</string>
+    <string name="progress_tile_topics">Topics reviewed</string>
+    <string name="progress_tile_results">Results saved</string>
+    <string name="progress_empty_title">Your progress starts here</string>
+    <string name="progress_go_home">Go to Home</string>
+    <string name="progress_week_total">%1$d reviews this week</string>
+    <string name="progress_coverage_title">Coverage by unit</string>
+    <string name="progress_coverage_body">Active topics you have reviewed at least once.</string>
+    <string name="progress_coverage_value">%1$d of %2$d</string>
+    <string name="progress_confidence_body">Your latest rating for each reviewed topic.</string>
+    <string name="progress_marks_title">Results and confidence</string>
+    <string name="settings_group_study">Study</string>
+    <string name="settings_group_appearance">Appearance and language</string>
+    <string name="settings_session_length_body">How long a revision block on Home should be.</string>
+    <string name="settings_about_version_title">Version</string>
+    <string name="settings_privacy_body">Everything stays on this device: no account, no cloud sync and no analytics upload.</string>
+    <string name="settings_font_credit">Typeface: Plus Jakarta Sans, SIL Open Font License 1.1.</string>
+    <string name="research_title">Research diagnostics</string>
+    <string name="research_entry_body">Scheduler arm and logged recommendation counts</string>
+    <string name="research_latest_title">Latest recommendation</string>
+    <string name="research_predictor_value">%1$s (placeholder, not trained)</string>
+    <string name="topic_edit_objective">Edit objective</string>
+    <string name="topic_last_review_rated">Last reviewed %1$s · rated %2$s</string>
+    <string name="topic_weight_line">Exam weight %1$.2f</string>
+    <string name="topic_discard_title">Discard your edit?</string>
+    <string name="topic_discard_body">Your changes to this objective haven\'t been saved.</string>
+    <string name="session_stage_recall">Recall</string>
+    <string name="session_stage_rate">Rate</string>
+    <string name="session_stage_restudy">Restudy</string>
+    <string name="session_stage_rate_again">Rate again</string>
+    <string name="session_timer_caption">of %1$d min planned</string>
+    <string name="progress_empty_sample_only">Sessions on sample units are practice and don\'t count here. Import or create your own unit to start tracking progress.</string>
+    <plurals name="search_results_count">
+        <item quantity="one">%1$d topic matched</item>
+        <item quantity="other">%1$d topics matched</item>
+    </plurals>
 </resources>

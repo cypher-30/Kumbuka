@@ -6,7 +6,7 @@
 
     <!--
       Native Android 12+ SplashScreen (via androidx.core:core-splashscreen for
-      API 26-30 compatibility). Shows the static amber mark on the brand teal
+      API 26-30 compatibility). Shows the static amber mark on the brand indigo
       background with no motion of its own - it only owns the very first
       frame while MainActivity resolves the real start route. The single
       curve-draw/wordmark animation lives entirely in the Compose

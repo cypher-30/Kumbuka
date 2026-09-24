@@ -2,42 +2,29 @@
 
 package dev.kumbuka.app.ui.screens.packs
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AddCircleOutline
-import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material.icons.outlined.UploadFile
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -45,16 +32,12 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,7 +45,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.bootstrap.DefaultContentSeeder
@@ -72,13 +54,13 @@ import dev.kumbuka.app.data.repository.PackImportResolution
 import dev.kumbuka.app.data.repository.PackImportPreview
 import dev.kumbuka.app.data.repository.PackRepository
 import dev.kumbuka.app.data.repository.TopicConflictChoice
-import dev.kumbuka.app.data.repository.TopicRepository
-import dev.kumbuka.app.data.repository.UnitRepository
-import dev.kumbuka.app.domain.model.Topic
-import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.pack.CoursePack
+import dev.kumbuka.app.ui.components.KbBanner
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbSecondaryButton
+import dev.kumbuka.app.ui.components.KbStatus
+import dev.kumbuka.app.ui.components.KbSurface
+import dev.kumbuka.app.ui.components.KbTopBar
 import dev.kumbuka.app.ui.theme.LocalKbColors
 import dev.kumbuka.app.ui.theme.KbSpacing
 import java.io.BufferedReader
@@ -88,293 +70,9 @@ import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-@Composable
-fun UnitsListBody(
-    units: List<UnitModel>,
-    topicRepository: TopicRepository,
-    onImportPack: () -> Unit,
-    onOpenTopic: (String) -> Unit,
-    onExportUnit: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    headerContent: (LazyListScope.() -> Unit)? = null,
-) {
-    if (units.isEmpty()) {
-        EmptyUnitsState(modifier = modifier.fillMaxSize(), onImportPack = onImportPack)
-    } else {
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(KbSpacing.x2),
-            verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
-        ) {
-            headerContent?.invoke(this)
-            items(units, key = { it.id }) { unit ->
-                UnitCard(
-                    unit = unit,
-                    topicRepository = topicRepository,
-                    onOpenTopic = onOpenTopic,
-                    onExportUnit = onExportUnit,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyUnitsState(modifier: Modifier = Modifier, onImportPack: () -> Unit) {
-    Column(
-        modifier = modifier.padding(KbSpacing.x3),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .background(LocalKbColors.current.primaryTint, RoundedCornerShape(20.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Outlined.AddCircleOutline, contentDescription = null, tint = LocalKbColors.current.primary)
-        }
-        Spacer(Modifier.height(KbSpacing.x2))
-        Text(stringResource(R.string.units_empty_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
-        Spacer(Modifier.height(KbSpacing.x1))
-        Text(
-            text = stringResource(R.string.units_empty_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = LocalKbColors.current.inkMuted,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
-        Spacer(Modifier.height(KbSpacing.x2))
-        KbPrimaryButton(text = stringResource(R.string.import_pack_cta), onClick = onImportPack)
-    }
-}
-
-@Composable
-private fun UnitCard(
-    unit: UnitModel,
-    topicRepository: TopicRepository,
-    onOpenTopic: (String) -> Unit,
-    onExportUnit: (String) -> Unit,
-) {
-    val topics by topicRepository.observeByUnit(unit.id).collectAsState(initial = emptyList())
-    var showAll by remember(unit.id) { mutableStateOf(false) }
-    val visibleTopics = if (showAll) topics else topics.take(4)
-    Card(
-        colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface),
-        shape = RoundedCornerShape(16.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(unit.code, style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.primary)
-                Text(unit.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
-                Text(
-                    text = stringResource(
-                        R.string.unit_pack_version,
-                        unit.packVersion ?: 1,
-                        unit.packId ?: stringResource(R.string.unit_pack_id_missing),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalKbColors.current.inkMuted,
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                KbSecondaryButton(
-                    text = stringResource(R.string.unit_export_pack),
-                    onClick = { onExportUnit(unit.id) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            if (topics.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.unit_no_topics),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalKbColors.current.inkMuted,
-                )
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    visibleTopics.forEach { topic ->
-                        TopicRow(topic = topic, onClick = { onOpenTopic(topic.id) })
-                    }
-                    if (topics.size > 4) {
-                        TextButton(onClick = { showAll = !showAll }) {
-                            Text(
-                                text = if (showAll) {
-                                    stringResource(R.string.unit_show_less_topics)
-                                } else {
-                                    stringResource(R.string.unit_more_topics, topics.size - 4)
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopicRow(topic: Topic, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LocalKbColors.current.paper2, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(topic.title, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                text = topic.objective,
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalKbColors.current.inkMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Text(
-            text = stringResource(R.string.topic_detail_cta),
-            style = MaterialTheme.typography.labelMedium,
-            color = LocalKbColors.current.primary,
-            modifier = Modifier.padding(start = 8.dp),
-        )
-    }
-}
-
-@Composable
-fun TopicDetailScreen(
-    topicRepository: TopicRepository,
-    unitRepository: UnitRepository,
-    topicId: String,
-    onBack: () -> Unit,
-) {
-    val scope = rememberCoroutineScope()
-    val savedMessageText = stringResource(R.string.topic_saved_objective)
-    var topic by remember(topicId) { mutableStateOf<Topic?>(null) }
-    var unit by remember(topicId) { mutableStateOf<UnitModel?>(null) }
-    var objectiveDraft by remember(topicId) { mutableStateOf("") }
-    var saveMessage by remember(topicId) { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(topicId) {
-        topic = topicRepository.getById(topicId)
-        unit = topic?.let { unitRepository.getById(it.unitId) }
-        objectiveDraft = topic?.objective.orEmpty()
-        saveMessage = null
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.topic_detail_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
-            )
-        },
-        containerColor = LocalKbColors.current.paper,
-    ) { innerPadding ->
-        val current = topic
-        if (current == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.topic_not_found), color = LocalKbColors.current.inkMuted)
-            }
-            return@Scaffold
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(16.dp)) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(unit?.code ?: stringResource(R.string.topic_unit_unknown), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.primary)
-                    Text(current.title, style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
-                    Text(
-                        text = stringResource(
-                            R.string.topic_weight_label,
-                            current.examWeight,
-                            if (current.objectiveEditedLocally) stringResource(R.string.topic_edited_by_you) else stringResource(R.string.topic_from_pack),
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalKbColors.current.inkMuted,
-                    )
-                }
-            }
-
-            Text(stringResource(R.string.topic_objective_label), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
-            OutlinedTextField(
-                value = objectiveDraft,
-                onValueChange = {
-                    objectiveDraft = it
-                    saveMessage = null
-                },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 4,
-                maxLines = 8,
-                shape = RoundedCornerShape(14.dp),
-                label = { Text(stringResource(R.string.topic_objective_label)) },
-            )
-
-            Text(
-                text = stringResource(R.string.topic_retrieval_prompt_label),
-                style = MaterialTheme.typography.labelLarge,
-                color = LocalKbColors.current.inkMuted,
-            )
-            Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(14.dp)) {
-                Text(
-                    text = current.retrievalPrompt.ifBlank { stringResource(R.string.topic_retrieval_prompt_empty) },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LocalKbColors.current.ink,
-                    modifier = Modifier.padding(14.dp),
-                )
-            }
-
-            if (current.resourcePointers.isNotEmpty()) {
-                Text(stringResource(R.string.topic_resources_label), style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.inkMuted)
-                current.resourcePointers.forEach { pointer ->
-                    Text(
-                        text = "• $pointer",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LocalKbColors.current.ink,
-                    )
-                }
-            }
-
-            KbPrimaryButton(
-                text = stringResource(R.string.topic_save_objective),
-                onClick = {
-                    if (objectiveDraft != current.objective) {
-                        scope.launch {
-                            topicRepository.upsert(
-                                current.copy(
-                                    objective = objectiveDraft,
-                                    objectiveEditedLocally = true,
-                                    updatedAt = System.currentTimeMillis(),
-                                ),
-                            )
-                            topic = topicRepository.getById(topicId)
-                            saveMessage = savedMessageText
-                        }
-                    }
-                },
-            )
-            saveMessage?.let {
-                Text(text = it, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.primary)
-            }
-        }
-    }
-}
+// .coursepack has no registered MIME type, so providers report it as octet-stream (or nothing).
+// Non-pack files are rejected by the parser with a readable error.
+private val CoursePackMimeTypes = arrayOf("application/json", "text/plain", "application/octet-stream", "*/*")
 
 @Composable
 fun ImportPackScreen(
@@ -382,7 +80,7 @@ fun ImportPackScreen(
     pendingImportUri: String?,
     onPendingImportUriHandled: (String) -> Unit,
     onBack: () -> Unit,
-    onImported: () -> Unit,
+    onImported: (message: String) -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -441,8 +139,7 @@ fun ImportPackScreen(
 
     suspend fun applyPack(pack: CoursePack, resolution: PackImportResolution) {
         val result = packRepository.importPack(pack, resolution)
-        Toast.makeText(context, importSuccessMessage(result), Toast.LENGTH_SHORT).show()
-        onImported()
+        onImported(importSuccessMessage(result))
     }
 
     suspend fun parseAndRoute(raw: String) {
@@ -531,22 +228,9 @@ fun ImportPackScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(
-                            if (showDiff) R.string.diff_title else R.string.import_pack_title,
-                        ),
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = { if (showDiff) showDiff = false else onBack() },
-                        enabled = !busy,
-                    ) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
+            KbTopBar(
+                title = stringResource(if (showDiff) R.string.diff_title else R.string.import_pack_title),
+                onBack = { if (!busy) { if (showDiff) showDiff = false else onBack() } },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -613,34 +297,12 @@ fun ImportPackScreen(
                 )
             }
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface), shape = RoundedCornerShape(14.dp)) {
-                    Column(modifier = Modifier.padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.import_try_sample_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
-                        Text(stringResource(R.string.import_try_sample_body), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
-                        KbSecondaryButton(
-                            text = stringResource(R.string.import_try_sample_cta),
-                            onClick = {
-                                scope.launch {
-                                    busy = true
-                                    try {
-                                        DefaultContentSeeder.seedSamplePacks(packRepository)
-                                        snackbarHostState.showSnackbar(context.getString(R.string.import_try_sample_done))
-                                        onImported()
-                                    } finally {
-                                        busy = false
-                                    }
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-            item {
                 KbPrimaryButton(
+                    icon = Icons.Outlined.FolderOpen,
                     text = stringResource(R.string.import_choose_file),
                     onClick = {
                         parseError = null
-                        openDocument.launch(arrayOf("application/json", "text/plain"))
+                        openDocument.launch(CoursePackMimeTypes)
                     },
                     enabled = !busy,
                 )
@@ -665,7 +327,7 @@ fun ImportPackScreen(
             }
             parseError?.let {
                 item {
-                    InfoBanner(text = it, accent = LocalKbColors.current.accent)
+                    KbBanner(text = it, status = KbStatus.ERROR)
                 }
             }
             if (showPasteInput) {
@@ -704,19 +366,29 @@ fun ImportPackScreen(
                     )
                 }
             }
+            item {
+                KbSurface(modifier = Modifier.padding(top = KbSpacing.x2)) {
+                    run {
+                        Text(stringResource(R.string.import_try_sample_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
+                        Text(stringResource(R.string.import_try_sample_body), style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
+                        KbSecondaryButton(
+                            text = stringResource(R.string.import_try_sample_cta),
+                            onClick = {
+                                scope.launch {
+                                    busy = true
+                                    try {
+                                        DefaultContentSeeder.seedSamplePacks(packRepository)
+                                        onImported(context.getString(R.string.import_try_sample_done))
+                                    } finally {
+                                        busy = false
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun InfoBanner(text: String, accent: androidx.compose.ui.graphics.Color) {
-    Card(colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.warningTint), shape = RoundedCornerShape(14.dp)) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = accent,
-            modifier = Modifier.padding(14.dp),
-        )
     }
 }
 
@@ -737,14 +409,7 @@ fun ExportPackScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.export_pack_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
-                    }
-                },
-            )
+            KbTopBar(title = stringResource(R.string.export_pack_title), onBack = onBack)
         },
         containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
@@ -760,7 +425,7 @@ fun ExportPackScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(result.exceptionOrNull()?.message ?: stringResource(R.string.export_failed), color = LocalKbColors.current.accent)
+                KbBanner(text = result.exceptionOrNull()?.message ?: stringResource(R.string.export_failed), status = KbStatus.ERROR, modifier = Modifier.padding(KbSpacing.x2))
             }
             else -> {
                 val raw = result.getOrNull().orEmpty()

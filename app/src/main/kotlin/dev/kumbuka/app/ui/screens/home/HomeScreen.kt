@@ -1,36 +1,33 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package dev.kumbuka.app.ui.screens.home
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.ContextCompat
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.prefs.AppPreferences
-import dev.kumbuka.app.data.reminders.ReminderScheduler
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
 import dev.kumbuka.app.data.repository.SchedulerLogRepository
@@ -38,18 +35,32 @@ import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
 import dev.kumbuka.app.domain.model.Session
+import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.domain.scheduler.PlaceholderRecallPredictor
 import dev.kumbuka.app.domain.scheduler.SchedulerArmKind
+import dev.kumbuka.app.domain.scheduler.TodayCard
 import dev.kumbuka.app.domain.scheduler.buildTodayPlan
 import dev.kumbuka.app.domain.scheduler.evaluateBothArms
 import dev.kumbuka.app.ui.components.KbBottomNavBar
 import dev.kumbuka.app.ui.components.KbNavTab
+import dev.kumbuka.app.ui.components.KbSettingsAction
+import dev.kumbuka.app.ui.components.KbTopBar
+import dev.kumbuka.app.ui.components.kbNavTabLabel
+import dev.kumbuka.app.ui.components.rememberLocalNow
 import dev.kumbuka.app.ui.theme.LocalKbColors
+import java.time.ZoneId
 import java.util.UUID
 import kotlinx.coroutines.launch
 
+/**
+ * Main workspace shell: Home, Units, Assessments and Progress share one
+ * scaffold and bottom bar. Settings, unit detail and the mark editor are
+ * separate routes reached from here. [shell] is hoisted by the nav graph so
+ * those routes can return the user to a particular tab/segment/filter.
+ */
 @Composable
 fun HomeScreen(
+    shell: WorkspaceShellState,
     preferences: AppPreferences,
     unitRepository: UnitRepository,
     topicRepository: TopicRepository,
@@ -60,34 +71,43 @@ fun HomeScreen(
     onImportPack: () -> Unit,
     onCreateUnit: () -> Unit,
     onOpenTopic: (String) -> Unit,
-    onExportUnit: (String) -> Unit,
+    onOpenUnit: (String) -> Unit,
+    onOpenSettings: () -> Unit,
+    onEditMark: (markId: String?, unitId: String?) -> Unit,
     onStartSession: (String, Int) -> Unit,
-    onOpenInsights: () -> Unit,
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val units by unitRepository.observeAll().collectAsState(initial = emptyList())
+    val unitsOrNull by unitRepository.observeAll().collectAsState(initial = null)
+    val units: List<UnitModel> = unitsOrNull.orEmpty()
     val topics by topicRepository.observeAll().collectAsState(initial = emptyList())
     val sessions by sessionRepository.observeAll().collectAsState(initial = emptyList())
     val deadlines by deadlineRepository.observeAll().collectAsState(initial = emptyList())
     val marks by assessmentMarkRepository.observeAll().collectAsState(initial = emptyList())
     val schedulerLogs by schedulerLogRepository.observeAll().collectAsState(initial = emptyList())
-    val language by preferences.language.collectAsState(initial = "en")
-    val themeMode by preferences.themeMode.collectAsState(initial = "system")
     val sessionLengthMinutes by preferences.sessionLengthMinutes.collectAsState(initial = 60)
     val schedulerArm by preferences.schedulerArm.collectAsState(initial = "baseline")
-    val reminderEnabled by preferences.reminderEnabled.collectAsState(initial = false)
-    val reminderHour by preferences.reminderHour.collectAsState(initial = 20)
-    val reminderMinute by preferences.reminderMinute.collectAsState(initial = 0)
+    val now = rememberLocalNow()
+    val today = now.toLocalDate()
+
+    val activeTopics = remember(topics) { topics.filterNot { it.archived } }
+    // Samples are for exploring: once the student has a unit of their own, Home plans only from
+    // their real units. Samples stay browsable in Units and Assessments.
+    val planUnits = remember(units) { units.filterNot { it.isSample }.ifEmpty { units } }
+    val planUnitIds = remember(planUnits) { planUnits.map { it.id }.toSet() }
+    val planTopics = remember(activeTopics, planUnitIds) { activeTopics.filter { it.unitId in planUnitIds } }
+    val planDeadlines = remember(deadlines, planUnitIds) { deadlines.filter { it.unitId in planUnitIds } }
+    val topicsById = remember(topics) { topics.associateBy { it.id } }
+    val unitCodes = remember(units) { units.associateBy({ it.id }, { it.code }) }
     val requestedArm = remember(schedulerArm) {
         if (schedulerArm == "placeholder") SchedulerArmKind.PLACEHOLDER else SchedulerArmKind.BASELINE
     }
-    val plan = remember(units, topics, sessions, deadlines, sessionLengthMinutes, requestedArm) {
+    // `now` is a key so the plan re-ranks when the day rolls over or the app resumes.
+    val plan = remember(planUnits, planTopics, sessions, planDeadlines, sessionLengthMinutes, requestedArm, now) {
         buildTodayPlan(
-            units = units,
-            topics = topics,
+            units = planUnits,
+            topics = planTopics,
             sessions = sessions,
-            deadlines = deadlines,
+            deadlines = planDeadlines,
             sessionLengthMinutes = sessionLengthMinutes,
             arm = requestedArm,
             predictor = PlaceholderRecallPredictor,
@@ -98,36 +118,36 @@ fun HomeScreen(
         val sampleUnitIds = units.filter { it.isSample }.map { it.id }.toSet()
         topics.filter { it.unitId in sampleUnitIds }.map { it.id }.toSet()
     }
-    val latestSelectedLog = remember(schedulerLogs) {
-        schedulerLogs.filter { it.selected }.maxByOrNull { it.evaluatedAt }
+    val recentReviews = remember(sessions, today, sampleTopicIds) {
+        recentActivity(sessions, today, ZoneId.systemDefault(), 7, sampleTopicIds).sumOf { it.completedReviews }
     }
 
-    var activeTabName by rememberSaveable { mutableStateOf(KbNavTab.TODAY.name) }
-    var pendingReminderEnable by remember { mutableStateOf(false) }
-    var reminderPermissionDenied by remember { mutableStateOf(false) }
-    val activeTab = remember(activeTabName) { KbNavTab.valueOf(activeTabName) }
-    val reminderPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted && pendingReminderEnable) {
-            scope.launch {
-                preferences.setReminderEnabled(true)
-                ReminderScheduler.scheduleDaily(context.applicationContext, reminderHour, reminderMinute)
-            }
-            reminderPermissionDenied = false
-        } else if (pendingReminderEnable) {
-            reminderPermissionDenied = true
-        }
-        pendingReminderEnable = false
+    val homeList = rememberLazyListState()
+    val unitsList = rememberLazyListState()
+    val assessmentsList = rememberLazyListState()
+    val progressList = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val deletedText = stringResource(R.string.marks_deleted_result)
+    val deleteFailedText = stringResource(R.string.marks_delete_failed)
+
+    LaunchedEffect(shell.pendingMessage) {
+        val message = shell.pendingMessage ?: return@LaunchedEffect
+        shell.pendingMessage = null
+        snackbarHostState.showSnackbar(message)
     }
-    val startScheduledSession: (dev.kumbuka.app.domain.scheduler.TodayCard) -> Unit = { card ->
+
+    BackHandler(enabled = shell.tab != KbNavTab.HOME) { shell.tab = KbNavTab.HOME }
+
+    val startScheduledSession: (TodayCard) -> Unit = { card ->
         scope.launch {
-            val now = System.currentTimeMillis()
+            val nowMillis = System.currentTimeMillis()
             val (baseline, placeholder) = evaluateBothArms(
-                units = units,
-                topics = topics,
+                units = planUnits,
+                topics = planTopics,
                 sessions = sessions,
-                deadlines = deadlines,
+                deadlines = planDeadlines,
                 sessionLengthMinutes = sessionLengthMinutes,
-                nowMillis = now,
+                nowMillis = nowMillis,
                 requestedArm = requestedArm,
                 placeholderPredictor = PlaceholderRecallPredictor,
             )
@@ -136,7 +156,7 @@ fun HomeScreen(
                 placeholder = placeholder,
                 unitIdByTopicId = unitIdByTopicId,
                 sampleTopicIds = sampleTopicIds,
-                evaluatedAt = now,
+                evaluatedAt = nowMillis,
             )
             val activeSession = sessionRepository.getLatestActiveForTopic(card.topicId)
             if (activeSession == null) {
@@ -144,14 +164,14 @@ fun HomeScreen(
                     Session(
                         id = UUID.randomUUID().toString(),
                         topicId = card.topicId,
-                        startedAt = now,
+                        startedAt = nowMillis,
                         endedAt = null,
                         plannedMinutes = card.minutes,
                         actualSeconds = 0,
                         confidenceBefore = null,
                         confidenceAfter = null,
                         wasDeferred = false,
-                        updatedAt = now,
+                        updatedAt = nowMillis,
                         sourcePlanId = planId,
                         sourceArm = card.breakdown.actualSource,
                     ),
@@ -160,7 +180,7 @@ fun HomeScreen(
                 sessionRepository.upsert(
                     activeSession.copy(
                         plannedMinutes = activeSession.plannedMinutes.takeIf { it > 0 } ?: card.minutes,
-                        updatedAt = now,
+                        updatedAt = nowMillis,
                         sourcePlanId = activeSession.sourcePlanId ?: planId,
                         sourceArm = activeSession.sourceArm ?: card.breakdown.actualSource,
                     ),
@@ -172,108 +192,112 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        when (activeTab) {
-                            KbNavTab.TODAY -> stringResource(R.string.nav_today)
-                            KbNavTab.UNITS -> stringResource(R.string.nav_units)
-                            KbNavTab.MARKS -> stringResource(R.string.nav_marks)
-                            KbNavTab.SETTINGS -> stringResource(R.string.nav_settings)
-                        },
-                    )
-                },
-                actions = {
-                    if (activeTab == KbNavTab.UNITS) {
-                        IconButton(onClick = onCreateUnit) {
-                            Icon(Icons.Outlined.AddCircleOutline, contentDescription = stringResource(R.string.author_start_cta))
-                        }
-                        IconButton(onClick = onImportPack) {
-                            Icon(Icons.Outlined.UploadFile, contentDescription = stringResource(R.string.import_pack_title))
-                        }
-                    }
-                },
-            )
+            if (shell.tab != KbNavTab.HOME) {
+                KbTopBar(
+                    title = kbNavTabLabel(shell.tab),
+                    actions = {
+                        if (shell.tab == KbNavTab.UNITS) AddUnitMenu(onImportPack = onImportPack, onCreateUnit = onCreateUnit)
+                        KbSettingsAction(onOpenSettings = onOpenSettings)
+                    },
+                )
+            }
         },
-        bottomBar = { KbBottomNavBar(active = activeTab, onSelect = { activeTabName = it.name }) },
+        bottomBar = { KbBottomNavBar(active = shell.tab, onSelect = { shell.tab = it }) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = LocalKbColors.current.paper,
     ) { innerPadding ->
-        when (activeTab) {
-            KbNavTab.TODAY -> TodayTabContent(
+        val contentModifier = Modifier.padding(innerPadding)
+        when (shell.tab) {
+            KbNavTab.HOME -> HomeTabContent(
+                now = now,
+                loaded = unitsOrNull != null,
                 plan = plan,
-                onBrowseUnits = { activeTabName = KbNavTab.UNITS.name },
+                topicsById = topicsById,
+                unitCodes = unitCodes,
+                deadlines = planDeadlines,
+                recentReviews = recentReviews,
+                listState = homeList,
+                onStart = startScheduledSession,
+                onOpenSettings = onOpenSettings,
                 onImportPack = onImportPack,
-                onStartSession = startScheduledSession,
-                onOpenInsights = onOpenInsights,
-                modifier = Modifier.padding(innerPadding),
+                onCreateUnit = onCreateUnit,
+                onOpenUnits = { shell.tab = KbNavTab.UNITS },
+                onOpenAssessments = { shell.showAssessments(AssessmentSegment.UPCOMING) },
+                onOpenProgress = { shell.tab = KbNavTab.PROGRESS },
+                modifier = contentModifier,
             )
             KbNavTab.UNITS -> UnitsTabContent(
                 units = units,
-                topics = topics,
-                topicRepository = topicRepository,
-                sessionLengthMinutes = sessionLengthMinutes,
-                onImportPack = onImportPack,
+                activeTopics = activeTopics,
+                deadlines = deadlines,
+                today = today,
+                listState = unitsList,
+                onOpenUnit = onOpenUnit,
                 onOpenTopic = onOpenTopic,
-                onExportUnit = onExportUnit,
-                onStartSession = onStartSession,
-                modifier = Modifier.padding(innerPadding),
+                onImportPack = onImportPack,
+                onCreateUnit = onCreateUnit,
+                modifier = contentModifier,
             )
-            KbNavTab.MARKS -> MarksTabContent(
+            KbNavTab.ASSESSMENTS -> AssessmentsTabContent(
                 units = units,
-                topics = topics,
                 deadlines = deadlines,
                 marks = marks,
-                assessmentMarkRepository = assessmentMarkRepository,
-                scope = scope,
-                modifier = Modifier.padding(innerPadding),
-            )
-            KbNavTab.SETTINGS -> SettingsTabContent(
-                language = language,
-                themeMode = themeMode,
-                sessionLengthMinutes = sessionLengthMinutes,
-                schedulerArm = schedulerArm,
-                reminderEnabled = reminderEnabled,
-                reminderHour = reminderHour,
-                reminderMinute = reminderMinute,
-                reminderPermissionDenied = reminderPermissionDenied,
-                latestSchedulerActualSource = latestSelectedLog?.actualSource,
-                latestSchedulerFallbackReason = latestSelectedLog?.fallbackReason,
-                onLanguageSelected = { code -> scope.launch { preferences.setLanguage(code) } },
-                onThemeModeSelected = { mode -> scope.launch { preferences.setThemeMode(mode) } },
-                onSessionLengthSelected = { minutes -> scope.launch { preferences.setSessionLengthMinutes(minutes) } },
-                onSchedulerArmSelected = { arm -> scope.launch { preferences.setSchedulerArm(arm) } },
-                onOpenInsights = onOpenInsights,
-                onReminderEnabledChanged = { enabled ->
-                    if (!enabled) {
-                        scope.launch {
-                            preferences.setReminderEnabled(false)
-                            ReminderScheduler.cancel(context.applicationContext)
-                        }
-                        reminderPermissionDenied = false
-                    } else {
-                        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-                        if (needsPermission) {
-                            pendingReminderEnable = true
-                            reminderPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            scope.launch {
-                                preferences.setReminderEnabled(true)
-                                ReminderScheduler.scheduleDaily(context.applicationContext, reminderHour, reminderMinute)
-                            }
-                            reminderPermissionDenied = false
-                        }
-                    }
-                },
-                onReminderTimeSelected = { hour, minute ->
+                today = today,
+                segment = shell.segment,
+                unitFilter = shell.unitFilter,
+                listState = assessmentsList,
+                onSegmentChange = { shell.segment = it },
+                onUnitFilterChange = { shell.unitFilter = it },
+                onAddMark = { onEditMark(null, shell.unitFilter) },
+                onEditMark = { markId -> onEditMark(markId, null) },
+                onDeleteMark = { mark ->
                     scope.launch {
-                        preferences.setReminderTime(hour, minute)
-                        if (reminderEnabled) {
-                            ReminderScheduler.scheduleDaily(context.applicationContext, hour, minute)
-                        }
+                        runCatching { assessmentMarkRepository.delete(mark) }
+                            .onSuccess { shell.pendingMessage = deletedText }
+                            .onFailure { t -> shell.pendingMessage = t.message ?: deleteFailedText }
                     }
                 },
-                modifier = Modifier.padding(innerPadding),
+                onOpenUnits = { shell.tab = KbNavTab.UNITS },
+                modifier = contentModifier,
+            )
+            KbNavTab.PROGRESS -> ProgressTabContent(
+                units = units,
+                topics = topics,
+                sessions = sessions,
+                marks = marks,
+                schedulerLogs = schedulerLogs,
+                today = today,
+                listState = progressList,
+                onStartStudying = { shell.tab = KbNavTab.HOME },
+                modifier = contentModifier,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddUnitMenu(onImportPack: () -> Unit, onCreateUnit: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.units_add_unit))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.import_pack_title)) },
+                leadingIcon = { Icon(Icons.Outlined.UploadFile, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onImportPack()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.author_start_cta)) },
+                leadingIcon = { Icon(Icons.Outlined.EditNote, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onCreateUnit()
+                },
             )
         }
     }

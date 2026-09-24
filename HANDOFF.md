@@ -1,5 +1,36 @@
 # Kumbuka — session handoff
 
+## Latest: Campus Workspace redesign
+
+The "quiet editorial" UI was replaced by a **Campus Workspace** design (see
+`docs/UI-TOKENS.md`): indigo/violet/amber palette, Plus Jakarta Sans, stable per-unit colours,
+and a new information architecture:
+
+- Tabs are now **Home / Units / Assessments / Progress** (`KbNavTab`). Settings is its own
+  route (`KbRoute.SETTINGS`, `ui/screens/settings/SettingsScreen.kt`) opened from the gear icon;
+  hidden research controls moved to `ResearchDiagnosticsScreen.kt` (`KbRoute.RESEARCH`, still
+  unlocked by tapping Version 7 times).
+- `HomeScreen.kt` is the shell; tab bodies are `HomeTabContent.kt` (hero, recommended next,
+  queue, coming up), `UnitsTabContent.kt` (search + your/sample units), `AssessmentsTabContent.kt`
+  (Dates/Results segments, unit filter; replaces Marks), `ProgressTabContent.kt` (replaces
+  Insights). Shell state (tab, segment, unit filter, pending snackbar message) lives in
+  `WorkspaceShellState.kt`.
+- New routes: unit detail (`unit/{unitId}`), full-screen mark editor
+  (`mark-edit?markId=&unitId=`). Topic detail is read-first with a Start revision action.
+- Pure date/greeting/activity helpers are in `WorkspaceLogic.kt` with `WorkspaceLogicTest`.
+  Home passes **active (non-archived) topics** to the scheduler.
+- Verified: unit tests (29+), `assembleDebug`, and an emulator walkthrough (onboarding → sample
+  import → Home → Why this → unit → topic → full session → add mark → Assessments/Progress →
+  Settings, dark theme, Kiswahili). `lintDebug` still reports pre-existing errors
+  (`local.properties` escaping, manifest app-link host, `LocalContext` resource reads in
+  import/session code, `MainActivity` configuration read); none come from the redesign files.
+- Private semester Course Packs are generated outside the repo (session artifacts) and are
+  never committed.
+
+The sections below describe the previous pass; where they mention Today/Marks/Settings tabs,
+`TodayTabContent.kt`, `MarksTabContent.kt`, `SettingsTabContent.kt` or `InsightsScreen.kt`,
+read Home/Assessments/Settings route/Progress as above.
+
 ## What this covers
 
 This handoff replaces all prior phase-numbered notes below the "Superseded history" section.

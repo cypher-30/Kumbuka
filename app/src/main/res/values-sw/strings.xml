@@ -90,9 +90,8 @@
     <string name="search_placeholder">Jaribu msimbo wa kitengo, jina la mada, au lengo</string>
     <string name="search_hint">Utafutaji hubaki hapa kifaa. Hakuna kinachoondoka kwenye kifaa hiki.</string>
     <string name="search_no_results">Hakuna mada iliyolingana na utafutaji wako bado.</string>
-    <string name="search_start_session">Anza %1$d dk</string>
+    <string name="search_start_session">Anza dak %1$d</string>
     <string name="search_results_title">Matokeo</string>
-    <string name="search_results_count">Mada %1$d zimelingana</string>
 
     <!-- Phase 3: packs -->
     <string name="generic_back">Rudi</string>
@@ -124,7 +123,7 @@
     <string name="import_pack_intro">Chagua kwanza faili la Course Pack. Kama limefika kupitia gumzo au barua pepe kama maandishi ya kawaida, unaweza kubandika JSON badala yake.</string>
     <string name="import_choose_file">Chagua faili</string>
     <string name="import_try_sample_title">Huna pakiti bado?</string>
-    <string name="import_try_sample_body">Jaribu pakiti ya mfano kuona jinsi Kumbuka inavyofanya kazi. Imewekwa alama wazi kama mfano na haijumuishwi kwenye Maarifa yako halisi.</string>
+    <string name="import_try_sample_body">Jaribu pakiti ya mfano kuona jinsi Kumbuka inavyofanya kazi. Imewekwa alama wazi kama mfano na haijumuishwi kwenye Maendeleo yako halisi.</string>
     <string name="import_try_sample_cta">Jaribu pakiti ya mfano</string>
     <string name="import_try_sample_done">Pakiti za mfano zimeongezwa - fungua Vitengo kuziona.</string>
     <string name="import_show_paste">Bandika maandishi badala yake</string>
@@ -234,7 +233,7 @@
     <string name="author_discard_cancel">Endelea kuhariri</string>
 
     <!-- Phase 4: Today -->
-    <string name="today_session_length">Kipindi %1$d dk</string>
+    <string name="today_session_length">Kipindi cha dak %1$d</string>
     <string name="today_no_units_body">Ingiza Course Pack kabla Kumbuka haijapanga orodha ya marudio ya leo.</string>
     <string name="today_no_active_topics_body">Vitengo vyako vipo, lakini hakuna mada yake iliyo hai kwa marudio kwa sasa.</string>
     <string name="today_fresh_start_body">Una mada hai lakini bado hakuna historia ya marudio, kwa hiyo Kumbuka inaanza na mada zenye uzito mkubwa kwanza.</string>
@@ -248,7 +247,7 @@
     <string name="today_why_dominant_urgency">Hasa kwa sababu ya tarehe ya mwisho inayokaribia.</string>
     <string name="today_why_dominant_avoidance">Hasa kwa sababu umewahi kuiahirisha hapo awali.</string>
     <string name="today_start_session">Anza kipindi</string>
-    <string name="today_minutes_short">%1$d dk</string>
+    <string name="today_minutes_short">dak %1$d</string>
     <string name="today_reason_due_today">inadaiwa leo</string>
     <string name="today_reason_due_in_days">inadaiwa baada ya siku %1$d</string>
     <string name="today_reason_last_rated">ilipimwa mwisho kama %1$s</string>
@@ -338,7 +337,7 @@
     <string name="marks_delete_confirm">Futa</string>
     <string name="marks_delete_cancel">Hifadhi</string>
     <string name="marks_deadline_date">Inadaiwa %1$s</string>
-    <string name="marks_result_score">%1$.1f / %2$.1f</string>
+    <string name="marks_result_score">%1$s / %2$s</string>
     <string name="marks_edit_result">Hariri alama</string>
     <string name="marks_delete_result">Futa alama</string>
     <string name="marks_edit_title">Hariri alama</string>
@@ -402,4 +401,145 @@
     <string name="confidence_shaky">Dhaifu</string>
     <string name="confidence_ok">Sawa</string>
     <string name="confidence_solid">Imara</string>
+    <!-- Campus Workspace redesign -->
+    <string name="nav_home">Nyumbani</string>
+    <string name="nav_assessments">Tathmini</string>
+    <string name="generic_cancel">Ghairi</string>
+    <string name="generic_close">Funga</string>
+    <string name="generic_loading">Inapakia eneo lako la kazi…</string>
+    <string name="generic_view_all">Tazama zote</string>
+    <string name="greeting_morning">Habari za asubuhi</string>
+    <string name="greeting_afternoon">Habari za mchana</string>
+    <string name="greeting_evening">Habari za jioni</string>
+    <plurals name="home_hero_ready">
+        <item quantity="one">Mada %1$d iko tayari · dak %2$d</item>
+        <item quantity="other">Mada %1$d ziko tayari · dak %2$d</item>
+    </plurals>
+    <string name="home_hero_setup">Tuanze kwa kuongeza kitengo chako cha kwanza.</string>
+    <string name="home_hero_no_active">Bado hakuna mada hai</string>
+    <string name="home_hero_caught_up">Umemaliza kila kitu kwa sasa.</string>
+    <string name="home_hero_next_date">Ijayo: %1$s · %2$s</string>
+    <string name="home_empty_title">Anza na kitengo</string>
+    <string name="home_open_units">Fungua vitengo</string>
+    <string name="home_recommended_next">Inapendekezwa sasa</string>
+    <string name="home_revision_queue">Pia kwenye foleni ya leo</string>
+    <string name="home_start_revision">Anza marudio</string>
+    <string name="home_start_revision_minutes">Anza marudio ya dak %1$d</string>
+    <string name="home_start_topic_cd">Anza marudio: %1$s</string>
+    <string name="home_coming_up">Zinazokuja</string>
+    <string name="home_coming_up_empty">Hakuna CAT, kazi au mitihani inayokuja. Tarehe zinatoka kwenye Course Packs zako.</string>
+    <string name="home_progress_link_title">Maendeleo yako</string>
+    <plurals name="home_progress_link_body">
+        <item quantity="one">Marudio %1$d yamekamilika siku 7 zilizopita</item>
+        <item quantity="other">Marudio %1$d yamekamilika siku 7 zilizopita</item>
+    </plurals>
+    <string name="relative_today">Leo</string>
+    <string name="relative_tomorrow">Kesho</string>
+    <string name="relative_yesterday">Jana</string>
+    <plurals name="relative_in_days">
+        <item quantity="one">Baada ya siku %1$d</item>
+        <item quantity="other">Baada ya siku %1$d</item>
+    </plurals>
+    <plurals name="relative_days_ago">
+        <item quantity="one">Siku %1$d iliyopita</item>
+        <item quantity="other">Siku %1$d zilizopita</item>
+    </plurals>
+    <string name="date_group_today">Leo</string>
+    <string name="date_group_next_7">Siku 7 zijazo</string>
+    <string name="date_group_later">Baadaye</string>
+    <string name="date_group_past">Zilizopita</string>
+    <string name="units_add_unit">Ongeza kitengo</string>
+    <string name="units_your_units">Vitengo vyako</string>
+    <plurals name="units_count">
+        <item quantity="one">Kitengo %1$d</item>
+        <item quantity="other">Vitengo %1$d</item>
+    </plurals>
+    <string name="units_only_samples">Kwa sasa kuna vitengo vya mfano tu. Leta au unda kitengo chako kwa kitufe cha +.</string>
+    <string name="units_samples_title">Vitengo vya mfano</string>
+    <string name="units_samples_body">Maudhui ya mazoezi ya kujaribu Kumbuka. Hayahesabiwi kwenye maendeleo yako.</string>
+    <string name="units_sample_pill">Mfano</string>
+    <plurals name="unit_topics_count">
+        <item quantity="one">Mada %1$d</item>
+        <item quantity="other">Mada %1$d</item>
+    </plurals>
+    <plurals name="unit_upcoming_count">
+        <item quantity="one">Tarehe %1$d inayokuja</item>
+        <item quantity="other">Tarehe %1$d zinazokuja</item>
+    </plurals>
+    <string name="search_clear">Futa utafutaji</string>
+    <string name="unit_detail_title">Kitengo</string>
+    <string name="unit_not_found">Kitengo hicho hakikupatikana.</string>
+    <string name="unit_detail_pack_version">Toleo la Course Pack %1$d</string>
+    <string name="unit_detail_stat_topics">Mada</string>
+    <string name="unit_detail_stat_reviewed">Zimerudiwa</string>
+    <string name="unit_detail_stat_results">Matokeo</string>
+    <string name="unit_detail_dates_title">Tarehe zinazokuja</string>
+    <string name="unit_detail_dates_empty">Hakuna tarehe zinazokuja kwa kitengo hiki.</string>
+    <string name="unit_detail_results_title">Matokeo</string>
+    <plurals name="unit_detail_results_count">
+        <item quantity="one">Tokeo %1$d limehifadhiwa</item>
+        <item quantity="other">Matokeo %1$d yamehifadhiwa</item>
+    </plurals>
+    <string name="unit_detail_topics_title">Mada</string>
+    <string name="unit_detail_topics_body">Fungua mada uisome na uanze marudio.</string>
+    <string name="unit_detail_last_reviewed">Ilirudiwa mwisho %1$s</string>
+    <string name="unit_detail_not_reviewed">Bado haijarudiwa</string>
+    <plurals name="unit_detail_show_archived">
+        <item quantity="one">Onyesha mada %1$d iliyohifadhiwa</item>
+        <item quantity="other">Onyesha mada %1$d zilizohifadhiwa</item>
+    </plurals>
+    <string name="unit_detail_hide_archived">Ficha mada zilizohifadhiwa</string>
+    <string name="unit_detail_archived_label">Imehifadhiwa</string>
+    <string name="assessments_segment_dates">Tarehe</string>
+    <string name="assessments_segment_results">Matokeo</string>
+    <string name="assessments_all_units">Vitengo vyote</string>
+    <string name="assessments_dates_empty_title">Bado hakuna tarehe</string>
+    <string name="assessments_dates_empty_body">Tarehe za CAT, kazi na mitihani huonekana hapa Course Pack ikiwa nazo.</string>
+    <string name="assessments_past_note">Tarehe zilizopita zinabaki kwa kumbukumbu. Kumbuka haifuatilii uwasilishaji.</string>
+    <string name="assessments_results_empty_body">Ongeza alama za CAT, kazi, mitihani ya zamani na mitihani uone jinsi marudio yanavyohusiana na matokeo.</string>
+    <plurals name="assessments_linked_topics">
+        <item quantity="one">Mada %1$d imeunganishwa</item>
+        <item quantity="other">Mada %1$d zimeunganishwa</item>
+    </plurals>
+    <string name="mark_not_found">Tokeo hilo halikupatikana.</string>
+    <string name="mark_editor_percent">Hiyo ni %1$.1f%%</string>
+    <string name="mark_editor_discard_title">Tupa mabadiliko?</string>
+    <string name="mark_editor_discard_body">Mabadiliko yasiyohifadhiwa ya tokeo hili yatapotea.</string>
+    <string name="progress_tile_reviews">Marudio yaliyokamilika</string>
+    <string name="progress_tile_minutes">Dakika za kusoma</string>
+    <string name="progress_tile_topics">Mada zilizorudiwa</string>
+    <string name="progress_tile_results">Matokeo yaliyohifadhiwa</string>
+    <string name="progress_empty_title">Maendeleo yako yanaanzia hapa</string>
+    <string name="progress_go_home">Nenda Nyumbani</string>
+    <string name="progress_week_total">Marudio %1$d wiki hii</string>
+    <string name="progress_coverage_title">Ufikiaji kwa kitengo</string>
+    <string name="progress_coverage_body">Mada hai ulizorudia angalau mara moja.</string>
+    <string name="progress_coverage_value">%1$d kati ya %2$d</string>
+    <string name="progress_confidence_body">Ukadiriaji wako wa hivi karibuni kwa kila mada iliyorudiwa.</string>
+    <string name="progress_marks_title">Matokeo na kujiamini</string>
+    <string name="settings_group_study">Masomo</string>
+    <string name="settings_group_appearance">Mwonekano na lugha</string>
+    <string name="settings_session_length_body">Muda wa kipindi kimoja cha marudio kwenye Nyumbani.</string>
+    <string name="settings_about_version_title">Toleo</string>
+    <string name="settings_privacy_body">Kila kitu kinabaki kwenye kifaa hiki: hakuna akaunti, hakuna usawazishaji wa wingu wala upakiaji wa takwimu.</string>
+    <string name="settings_font_credit">Herufi: Plus Jakarta Sans, SIL Open Font License 1.1.</string>
+    <string name="research_title">Uchunguzi wa utafiti</string>
+    <string name="research_entry_body">Mkono wa kipanga ratiba na idadi ya mapendekezo yaliyorekodiwa</string>
+    <string name="research_latest_title">Pendekezo la hivi karibuni</string>
+    <string name="research_predictor_value">%1$s (kishika nafasi, hakijafunzwa)</string>
+    <string name="topic_edit_objective">Hariri lengo</string>
+    <string name="topic_last_review_rated">Ilirudiwa mwisho %1$s · ukadiriaji %2$s</string>
+    <string name="topic_weight_line">Uzito wa mtihani %1$.2f</string>
+    <string name="topic_discard_title">Tupa uhariri wako?</string>
+    <string name="topic_discard_body">Mabadiliko yako ya lengo hili hayajahifadhiwa.</string>
+    <string name="session_stage_recall">Kumbuka</string>
+    <string name="session_stage_rate">Kadiria</string>
+    <string name="session_stage_restudy">Soma tena</string>
+    <string name="session_stage_rate_again">Kadiria tena</string>
+    <string name="session_timer_caption">kati ya dakika %1$d zilizopangwa</string>
+    <string name="progress_empty_sample_only">Vipindi kwenye vitengo vya mfano ni mazoezi na havihesabiwi hapa. Leta au unda kitengo chako ili uanze kufuatilia maendeleo.</string>
+    <plurals name="search_results_count">
+        <item quantity="one">Mada %1$d imelingana</item>
+        <item quantity="other">Mada %1$d zimelingana</item>
+    </plurals>
 </resources>
