@@ -19,6 +19,7 @@ gaps, gotchas); this file holds the standing rules.
 - Build only through `.\scripts\build.ps1 assembleDebug testDebugUnitTest` (PowerShell).
 - Install: `adb -s <serial> install -r app\build\outputs\apk\debug\app-debug.apk`.
 - `lintDebug` has pre-existing errors unrelated to recent work; do not claim it is clean.
+- Unit tests run on the JVM (`testDebugUnitTest`); instrumented tests need a device or emulator.
 - English and Kiswahili strings must stay in parity (564/564 `<string>` keys). Add every string to
   `values/strings.xml` and `values-sw/strings.xml`.
 
