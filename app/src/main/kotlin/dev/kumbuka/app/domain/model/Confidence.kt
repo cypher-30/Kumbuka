@@ -16,6 +16,7 @@ enum class Confidence(val score: Int) {
     fun asGap(): Float = 1f - (score / SOLID.score.toFloat())
 
     companion object {
+        /** Maps a persisted score (0..3) back to its enum value. */
         fun fromScore(score: Int): Confidence = entries.first { it.score == score }
     }
 }
