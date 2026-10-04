@@ -55,6 +55,7 @@ fun rememberLocalNow(): LocalDateTime {
         onDispose { runCatching { appContext.unregisterReceiver(receiver) } }
     }
 
+    // Wake once at the next greeting/date boundary instead of polling every second.
     LaunchedEffect(now) {
         val wait = Duration.between(LocalDateTime.now(), nextGreetingBoundary(now)).toMillis().coerceAtLeast(1_000L)
         delay(wait)
