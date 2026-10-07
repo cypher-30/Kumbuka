@@ -35,6 +35,9 @@ Unit tests are in `app/src/test`.
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Release signing is not set
 up, so only debug builds exist.
 
+Bundled fonts (Newsreader, Plus Jakarta Sans) and their licences are listed under
+`THIRD_PARTY_LICENSES/`.
+
 ## App layout
 
 Four tabs: **Today** (progress hero, recommended next revision with "Why this?", queue,
