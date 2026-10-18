@@ -20,6 +20,7 @@ fun UnitEntity.toDomain(): UnitModel = UnitModel(
     createdAt = createdAt,
     updatedAt = updatedAt,
     isSample = isSample,
+    isPersonal = isPersonal,
 )
 
 fun UnitModel.toEntity(): UnitEntity = UnitEntity(
@@ -31,6 +32,7 @@ fun UnitModel.toEntity(): UnitEntity = UnitEntity(
     createdAt = createdAt,
     updatedAt = updatedAt,
     isSample = isSample,
+    isPersonal = isPersonal,
 )
 
 fun TopicEntity.toDomain(): Topic = Topic(

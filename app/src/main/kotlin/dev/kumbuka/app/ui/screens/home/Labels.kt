@@ -3,6 +3,8 @@
 package dev.kumbuka.app.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -119,6 +121,8 @@ fun WhyThisSheet(card: TodayCard, unitKey: String, onDismiss: () -> Unit, onStar
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = colors.surface,
+        scrimColor = colors.scrim,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).verticalScroll(rememberScrollState()),
@@ -126,15 +130,24 @@ fun WhyThisSheet(card: TodayCard, unitKey: String, onDismiss: () -> Unit, onStar
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Outlined.Lightbulb, contentDescription = null, tint = colors.primary)
-                Text(stringResource(R.string.today_why_this), style = MaterialTheme.typography.titleLarge, color = colors.ink)
+                Text(stringResource(R.string.today_why_this), style = MaterialTheme.typography.displaySmall.copy(fontSize = 26.sp, lineHeight = 30.sp), color = colors.ink)
             }
             KbUnitLabel(unitKey = unitKey, unitCode = card.unitCode, emphasized = true)
-            Text(card.title, style = MaterialTheme.typography.titleMedium, color = colors.ink)
-            Text(dominantPressureText(card.breakdown.dominantPressure()), style = MaterialTheme.typography.bodyLarge, color = colors.ink)
-            Text(todayReasonText(card, calendarDueDays), style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted)
+            Text(card.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold), color = colors.ink)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.primaryTint, androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(dominantPressureText(card.breakdown.dominantPressure()), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), color = colors.onPrimaryTint)
+                Text(todayReasonText(card, calendarDueDays), style = MaterialTheme.typography.bodyMedium, color = colors.onPrimaryTint)
+            }
             KbPrimaryButton(text = stringResource(R.string.home_start_revision_minutes, card.minutes), onClick = onStart)
             KbSecondaryButton(text = stringResource(R.string.generic_close), onClick = onDismiss)
             Spacer(Modifier.height(16.dp))
         }
     }
 }
+

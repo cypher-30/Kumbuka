@@ -1,6 +1,33 @@
 package dev.kumbuka.app.ui.screens.home
 
 import androidx.compose.runtime.getValue
+import dev.kumbuka.app.ui.screens.packs.TopicDetailScreen
+import dev.kumbuka.app.ui.components.KbNavRail
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.key
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
@@ -8,12 +35,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -70,8 +99,11 @@ fun HomeScreen(
     schedulerLogRepository: SchedulerLogRepository,
     onImportPack: () -> Unit,
     onCreateUnit: () -> Unit,
+    onPasteOutline: () -> Unit,
+    onTrySample: () -> Unit,
     onOpenTopic: (String) -> Unit,
     onOpenUnit: (String) -> Unit,
+    onExportUnit: (String) -> Unit,
     onOpenSettings: () -> Unit,
     onEditMark: (markId: String?, unitId: String?) -> Unit,
     onStartSession: (String, Int) -> Unit,
@@ -118,8 +150,13 @@ fun HomeScreen(
         val sampleUnitIds = units.filter { it.isSample }.map { it.id }.toSet()
         topics.filter { it.unitId in sampleUnitIds }.map { it.id }.toSet()
     }
-    val recentReviews = remember(sessions, today, sampleTopicIds) {
-        recentActivity(sessions, today, ZoneId.systemDefault(), 7, sampleTopicIds).sumOf { it.completedReviews }
+    // Samples and personal goals never feed the research log.
+    val researchExcludedTopicIds = remember(units, topics) {
+        val excludedUnitIds = units.filter { it.isSample || it.isPersonal }.map { it.id }.toSet()
+        topics.filter { it.unitId in excludedUnitIds }.map { it.id }.toSet()
+    }
+    val doneToday = remember(sessions, today, planTopics) {
+        completedToday(sessions, today, ZoneId.systemDefault(), planTopics.map { it.id }.toSet())
     }
 
     val homeList = rememberLazyListState()
@@ -136,7 +173,15 @@ fun HomeScreen(
         snackbarHostState.showSnackbar(message)
     }
 
-    BackHandler(enabled = shell.tab != KbNavTab.HOME) { shell.tab = KbNavTab.HOME }
+    BackHandler(enabled = shell.tab != KbNavTab.TODAY) { shell.tab = KbNavTab.TODAY }
+
+    val startScheduledSessionRef = remember { arrayOfNulls<(TodayCard) -> Unit>(1) }
+    LaunchedEffect(shell.pendingStartTopicId, plan) {
+        val wanted = shell.pendingStartTopicId ?: return@LaunchedEffect
+        val card = plan.cards.firstOrNull { it.topicId == wanted } ?: return@LaunchedEffect
+        shell.pendingStartTopicId = null
+        startScheduledSessionRef[0]?.invoke(card)
+    }
 
     val startScheduledSession: (TodayCard) -> Unit = { card ->
         scope.launch {
@@ -155,7 +200,7 @@ fun HomeScreen(
                 baseline = baseline,
                 placeholder = placeholder,
                 unitIdByTopicId = unitIdByTopicId,
-                sampleTopicIds = sampleTopicIds,
+                sampleTopicIds = researchExcludedTopicIds,
                 evaluatedAt = nowMillis,
             )
             val activeSession = sessionRepository.getLatestActiveForTopic(card.topicId)
@@ -189,51 +234,62 @@ fun HomeScreen(
             onStartSession(card.topicId, card.minutes)
         }
     }
+    startScheduledSessionRef[0] = startScheduledSession
 
-    Scaffold(
-        topBar = {
-            if (shell.tab != KbNavTab.HOME) {
-                KbTopBar(
-                    title = kbNavTabLabel(shell.tab),
-                    actions = {
-                        if (shell.tab == KbNavTab.UNITS) AddUnitMenu(onImportPack = onImportPack, onCreateUnit = onCreateUnit)
-                        KbSettingsAction(onOpenSettings = onOpenSettings)
-                    },
-                )
-            }
-        },
-        bottomBar = { KbBottomNavBar(active = shell.tab, onSelect = { shell.tab = it }) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = LocalKbColors.current.paper,
-    ) { innerPadding ->
-        val contentModifier = Modifier.padding(innerPadding)
+    val colors = LocalKbColors.current
+    val widthDp = LocalConfiguration.current.screenWidthDp
+    val wide = widthDp >= 600
+    val twoPane = widthDp >= 840 && (shell.tab == KbNavTab.TODAY || shell.tab == KbNavTab.UNITS)
+
+    var addSheetOpen by rememberSaveable { mutableStateOf(false) }
+    // Two-pane detail selection. Today shows one topic; Units keeps a small stack of
+    // "unit:<id>" / "topic:<id>" entries so a unit's topic can open and go back.
+    var todayTopicId by rememberSaveable { mutableStateOf<String?>(null) }
+    var unitPaneStack by rememberSaveable { mutableStateOf(ArrayList<String>()) }
+
+    val openTopic: (String) -> Unit = if (twoPane) {
+        { id ->
+            if (shell.tab == KbNavTab.TODAY) todayTopicId = id else unitPaneStack = ArrayList(unitPaneStack + "topic:$id")
+        }
+    } else {
+        onOpenTopic
+    }
+    val openUnit: (String) -> Unit = if (twoPane) {
+        { id -> unitPaneStack = arrayListOf("unit:$id") }
+    } else {
+        onOpenUnit
+    }
+
+    val tabContent: @Composable (Modifier) -> Unit = { contentModifier ->
         when (shell.tab) {
-            KbNavTab.HOME -> HomeTabContent(
+            KbNavTab.TODAY -> HomeTabContent(
                 now = now,
                 loaded = unitsOrNull != null,
                 plan = plan,
                 topicsById = topicsById,
                 unitCodes = unitCodes,
                 deadlines = planDeadlines,
-                recentReviews = recentReviews,
+                doneToday = doneToday,
+                selectedTopicId = if (twoPane) todayTopicId ?: plan.cards.firstOrNull()?.topicId else null,
                 listState = homeList,
                 onStart = startScheduledSession,
-                onOpenSettings = onOpenSettings,
+                onOpenTopic = openTopic,
                 onImportPack = onImportPack,
                 onCreateUnit = onCreateUnit,
+                onTrySample = onTrySample,
                 onOpenUnits = { shell.tab = KbNavTab.UNITS },
                 onOpenAssessments = { shell.showAssessments(AssessmentSegment.UPCOMING) },
-                onOpenProgress = { shell.tab = KbNavTab.PROGRESS },
                 modifier = contentModifier,
             )
             KbNavTab.UNITS -> UnitsTabContent(
                 units = units,
                 activeTopics = activeTopics,
                 deadlines = deadlines,
+                reviewedTopicIds = remember(sessions) { lastReviewByTopic(sessions).keys },
                 today = today,
                 listState = unitsList,
-                onOpenUnit = onOpenUnit,
-                onOpenTopic = onOpenTopic,
+                onOpenUnit = openUnit,
+                onOpenTopic = openTopic,
                 onImportPack = onImportPack,
                 onCreateUnit = onCreateUnit,
                 modifier = contentModifier,
@@ -268,37 +324,179 @@ fun HomeScreen(
                 schedulerLogs = schedulerLogs,
                 today = today,
                 listState = progressList,
-                onStartStudying = { shell.tab = KbNavTab.HOME },
+                onStartStudying = { shell.tab = KbNavTab.TODAY },
                 modifier = contentModifier,
             )
+        }
+    }
+
+    val shellTopBar: @Composable () -> Unit = {
+        val activeList = when (shell.tab) {
+            KbNavTab.TODAY -> homeList
+            KbNavTab.UNITS -> unitsList
+            KbNavTab.ASSESSMENTS -> assessmentsList
+            KbNavTab.PROGRESS -> progressList
+        }
+        KbTopBar(
+            title = kbNavTabLabel(shell.tab),
+            scrolled = activeList.canScrollBackward,
+            actions = {
+                if (shell.tab == KbNavTab.TODAY) {
+                    IconButton(onClick = { shell.tab = KbNavTab.UNITS }) {
+                        Icon(Icons.Outlined.Search, contentDescription = stringResource(R.string.nav_search))
+                    }
+                }
+                if (shell.tab == KbNavTab.UNITS) {
+                    IconButton(onClick = { addSheetOpen = true }) {
+                        Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.units_add_unit))
+                    }
+                }
+                // Wide windows carry Settings in the rail; phones keep it top-right on every tab.
+                if (!wide) KbSettingsAction(onOpenSettings = onOpenSettings)
+            },
+        )
+    }
+
+    Row(modifier = Modifier.fillMaxSize().background(colors.paper)) {
+        if (wide) {
+            KbNavRail(active = shell.tab, onSelect = { shell.tab = it }, onOpenSettings = onOpenSettings)
+        }
+        Scaffold(
+            modifier = Modifier.weight(1f),
+            topBar = { if (!twoPane) shellTopBar() },
+            bottomBar = { if (!wide) KbBottomNavBar(active = shell.tab, onSelect = { shell.tab = it }) },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            floatingActionButton = {
+                if (shell.tab == KbNavTab.ASSESSMENTS && units.isNotEmpty()) {
+                    ExtendedFloatingActionButton(
+                        onClick = { onEditMark(null, shell.unitFilter) },
+                        icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                        text = { Text(stringResource(R.string.marks_add_result), fontWeight = FontWeight.Bold) },
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary,
+                        shape = RoundedCornerShape(18.dp),
+                    )
+                }
+            },
+            containerColor = colors.paper,
+        ) { innerPadding ->
+            if (twoPane) {
+                Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    Column(modifier = Modifier.width(TwoPaneListWidth).fillMaxHeight()) {
+                        shellTopBar()
+                        Box(modifier = Modifier.weight(1f)) { tabContent(Modifier) }
+                    }
+                    Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(colors.border))
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        val paneRef = if (shell.tab == KbNavTab.TODAY) {
+                            (todayTopicId ?: plan.cards.firstOrNull()?.topicId)?.let { "topic:$it" }
+                        } else {
+                            unitPaneStack.lastOrNull()
+                                ?: (units.firstOrNull { !it.isSample } ?: units.firstOrNull())?.let { "unit:${it.id}" }
+                        }
+                        val canGoBack = shell.tab == KbNavTab.UNITS && unitPaneStack.size > 1
+                        val goBack = { unitPaneStack = ArrayList(unitPaneStack.dropLast(1)) }
+                        val kind = paneRef?.substringBefore(':')
+                        val id = paneRef?.substringAfter(':')
+                        when {
+                            paneRef != null && kind == "topic" && id != null -> key(paneRef) {
+                                TopicDetailScreen(
+                                    topicRepository = topicRepository,
+                                    unitRepository = unitRepository,
+                                    sessionRepository = sessionRepository,
+                                    topicId = id,
+                                    sessionLengthMinutes = sessionLengthMinutes,
+                                    onStartSession = onStartSession,
+                                    onBack = goBack,
+                                    showBack = canGoBack,
+                                )
+                            }
+                            paneRef != null && kind == "unit" && id != null -> key(paneRef) {
+                                UnitDetailScreen(
+                                    unitId = id,
+                                    unitRepository = unitRepository,
+                                    topicRepository = topicRepository,
+                                    sessionRepository = sessionRepository,
+                                    deadlineRepository = deadlineRepository,
+                                    assessmentMarkRepository = assessmentMarkRepository,
+                                    onBack = goBack,
+                                    onOpenTopic = openTopic,
+                                    onExportUnit = onExportUnit,
+                                    onShowAssessments = { segment, unitId -> shell.showAssessments(segment, unitId) },
+                                    onAddMark = { unitId -> onEditMark(null, unitId) },
+                                    showBack = canGoBack,
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                tabContent(Modifier.padding(innerPadding))
+            }
+        }
+    }
+
+    if (addSheetOpen) {
+        AddUnitSheet(
+            onDismiss = { addSheetOpen = false },
+            onImportPack = {
+                addSheetOpen = false
+                onImportPack()
+            },
+            onCreateUnit = {
+                addSheetOpen = false
+                onCreateUnit()
+            },
+            onPasteOutline = {
+                addSheetOpen = false
+                onPasteOutline()
+            },
+        )
+    }
+}
+
+private val TwoPaneListWidth = 440.dp
+
+/** "Add unit" bottom sheet: the single entry point for bringing a unit into the app. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddUnitSheet(onDismiss: () -> Unit, onImportPack: () -> Unit, onCreateUnit: () -> Unit, onPasteOutline: () -> Unit) {
+    val colors = LocalKbColors.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        scrimColor = colors.scrim,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+            Text(
+                stringResource(R.string.units_add_unit),
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 21.sp),
+                color = colors.ink,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+            )
+            AddUnitOption(Icons.Outlined.UploadFile, stringResource(R.string.import_pack_title), onImportPack, divider = true)
+            AddUnitOption(Icons.Outlined.ContentPaste, stringResource(R.string.paste_title), onPasteOutline, divider = true)
+            AddUnitOption(Icons.Outlined.EditNote, stringResource(R.string.author_start_cta), onCreateUnit, divider = true)
         }
     }
 }
 
 @Composable
-private fun AddUnitMenu(onImportPack: () -> Unit, onCreateUnit: () -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.units_add_unit))
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.import_pack_title)) },
-                leadingIcon = { Icon(Icons.Outlined.UploadFile, contentDescription = null) },
-                onClick = {
-                    expanded = false
-                    onImportPack()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.author_start_cta)) },
-                leadingIcon = { Icon(Icons.Outlined.EditNote, contentDescription = null) },
-                onClick = {
-                    expanded = false
-                    onCreateUnit()
-                },
-            )
+private fun AddUnitOption(icon: ImageVector, title: String, onClick: () -> Unit, divider: Boolean) {
+    val colors = LocalKbColors.current
+    Column {
+        if (divider) Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border))
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 4.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Box(
+                modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(colors.primaryTint),
+                contentAlignment = Alignment.Center,
+            ) { Icon(icon, contentDescription = null, tint = colors.onPrimaryTint) }
+            Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = colors.ink)
         }
     }
 }

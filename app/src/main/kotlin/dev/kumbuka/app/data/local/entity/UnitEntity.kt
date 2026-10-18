@@ -14,4 +14,6 @@ data class UnitEntity(
     val updatedAt: Long,
     /** True for the bundled "Try a sample pack" units; excluded from research summaries by default. */
     val isSample: Boolean = false,
+    /** A student-made personal goal (not a course): never part of research logs or exports. */
+    val isPersonal: Boolean = false,
 )

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.heightIn
@@ -80,6 +81,9 @@ private enum class SessionStage {
     RateAfter,
 }
 
+/** The topic Kumbuka would recommend after this one, offered on the Done screen. */
+data class NextTopic(val topicId: String, val title: String, val unitKey: String, val unitCode: String, val minutes: Int)
+
 @Composable
 fun SessionFlowScreen(
     topicRepository: TopicRepository,
@@ -87,8 +91,12 @@ fun SessionFlowScreen(
     sessionRepository: SessionRepository,
     topicId: String,
     plannedMinutes: Int,
+    reminderEnabled: Boolean,
+    loadNextTopic: suspend () -> NextTopic?,
     onBack: () -> Unit,
     onFinished: () -> Unit,
+    onStartNext: (topicId: String) -> Unit,
+    onEnableReminder: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -103,7 +111,7 @@ fun SessionFlowScreen(
     var showDeferSheet by rememberSaveable(topicId) { mutableStateOf(false) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var savingWrite by remember { mutableStateOf(false) }
-    val deferSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var nextTopic by remember { mutableStateOf<NextTopic?>(null) }
 
     val currentTopic = topic
     val currentUnit = unit
@@ -225,8 +233,8 @@ fun SessionFlowScreen(
                     val horizontalInset = if (compact) KbSpacing.x1 else KbSpacing.x2
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxSize()
                             .widthIn(max = SessionMaxWidth)
+                            .fillMaxSize()
                             .align(Alignment.TopCenter),
                         contentPadding = PaddingValues(horizontal = horizontalInset, vertical = KbSpacing.x2),
                         verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
@@ -302,32 +310,20 @@ fun SessionFlowScreen(
                                                 scope.launch {
                                                     sessionRepository.upsert(updated)
                                                     session = updated
-                                                    onFinished()
+                                                    nextTopic = runCatching { loadNextTopic() }.getOrNull()
+                                                    savingWrite = false
                                                 }
                                             }
                                         },
                                     )
-                                    null -> Card(
-                                        colors = CardDefaults.cardColors(containerColor = LocalKbColors.current.surface),
-                                        shape = MaterialTheme.shapes.large,
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.padding(KbSpacing.x2),
-                                            verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
-                                        ) {
-                                            Text(
-                                                stringResource(R.string.session_complete_title),
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = LocalKbColors.current.ink,
-                                            )
-                                            Text(
-                                                stringResource(R.string.session_complete_body),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = LocalKbColors.current.inkMuted,
-                                            )
-                                            KbPrimaryButton(text = stringResource(R.string.generic_back), onClick = onFinished)
-                                        }
-                                    }
+                                    null -> SessionDoneCard(
+                                        session = currentSession,
+                                        nextTopic = nextTopic,
+                                        reminderEnabled = reminderEnabled,
+                                        onStartNext = { nextTopic?.let { onStartNext(it.topicId) } },
+                                        onBackToToday = onFinished,
+                                        onEnableReminder = onEnableReminder,
+                                    )
                                 }
                             }
                         }
@@ -338,56 +334,36 @@ fun SessionFlowScreen(
     }
 
     if (showDeferSheet && currentSession != null) {
-        DeferSessionSheet(
-            sheetState = deferSheetState,
-            onDismiss = { showDeferSheet = false },
-            onConfirm = {
-                if (savingWrite) return@DeferSessionSheet
-                val now = System.currentTimeMillis()
-                val updated = currentSession.copy(
-                    endedAt = now,
-                    actualSeconds = ((now - currentSession.startedAt) / 1000L).toInt().coerceAtLeast(0),
-                    wasDeferred = true,
-                    updatedAt = now,
-                )
-                savingWrite = true
-                scope.launch {
-                    sessionRepository.upsert(updated)
-                    session = updated
-                    showDeferSheet = false
-                    onFinished()
-                }
+        val colors = LocalKbColors.current
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeferSheet = false },
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            containerColor = colors.surface,
+            title = { Text(stringResource(R.string.session_defer_title)) },
+            text = { Text(stringResource(R.string.session_defer_body)) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    if (savingWrite) return@TextButton
+                    val now = System.currentTimeMillis()
+                    val updated = currentSession.copy(
+                        endedAt = now,
+                        actualSeconds = ((now - currentSession.startedAt) / 1000L).toInt().coerceAtLeast(0),
+                        wasDeferred = true,
+                        updatedAt = now,
+                    )
+                    savingWrite = true
+                    scope.launch {
+                        sessionRepository.upsert(updated)
+                        session = updated
+                        showDeferSheet = false
+                        onFinished()
+                    }
+                }) { Text(stringResource(R.string.session_defer_confirm)) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showDeferSheet = false }) { Text(stringResource(R.string.session_defer_cancel)) }
             },
         )
-    }
-}
-
-@Composable
-private fun DeferSessionSheet(
-    sheetState: SheetState,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = LocalKbColors.current.surface,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = KbSpacing.x3, vertical = KbSpacing.x1)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
-                Icon(Icons.Outlined.Info, contentDescription = null, tint = LocalKbColors.current.primary)
-                Text(stringResource(R.string.session_defer_title), style = MaterialTheme.typography.titleLarge, color = LocalKbColors.current.ink)
-            }
-            Text(stringResource(R.string.session_defer_body), style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted)
-            KbPrimaryButton(text = stringResource(R.string.session_defer_confirm), onClick = onConfirm)
-            KbSecondaryButton(text = stringResource(R.string.session_defer_cancel), onClick = onDismiss)
-        }
     }
 }
 
@@ -417,55 +393,62 @@ private fun SessionHeaderCard(
                 unitCode = unit?.code ?: stringResource(R.string.session_unit_unknown),
                 emphasized = true,
             )
-            Text(topic.title, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+            Text(topic.title, style = MaterialTheme.typography.displaySmall, color = colors.ink)
         }
-        Card(colors = CardDefaults.cardColors(containerColor = colors.primaryTint), shape = MaterialTheme.shapes.large) {
-            Column(modifier = Modifier.fillMaxWidth().padding(KbSpacing.x2), verticalArrangement = Arrangement.spacedBy(KbSpacing.x1)) {
+        if (session.endedAt == null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                    .background(colors.brand)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(KbSpacing.x1),
+            ) {
                 Text(
                     formatDuration(remainingMillis),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = colors.onPrimaryTint,
+                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                    color = colors.onHero,
                 )
                 Text(
                     stringResource(R.string.session_timer_caption, plannedMinutes),
                     style = MaterialTheme.typography.bodySmall,
-                    color = colors.onPrimaryTint,
+                    color = colors.onHeroMuted,
                 )
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth().height(6.dp),
-                    color = colors.primary,
-                    trackColor = colors.surface,
+                    color = colors.accent,
+                    trackColor = colors.onHero.copy(alpha = 0.16f),
                     strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
                     gapSize = 0.dp,
                     drawStopIndicator = {},
                 )
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            stages.forEachIndexed { index, (_, label) ->
-                val done = index < currentIndex
-                val active = index == currentIndex
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(4.dp)
-                            .background(
-                                when {
-                                    active -> colors.primary
-                                    done -> colors.primary.copy(alpha = 0.45f)
-                                    else -> colors.border
-                                },
-                                MaterialTheme.shapes.small,
-                            ),
-                    )
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (active) colors.ink else colors.inkMuted,
-                        maxLines = 1,
-                    )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                stages.forEachIndexed { index, (_, label) ->
+                    val done = index < currentIndex
+                    val active = index == currentIndex
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .background(
+                                    when {
+                                        active -> colors.primary
+                                        done -> colors.primary.copy(alpha = 0.45f)
+                                        else -> colors.border
+                                    },
+                                    MaterialTheme.shapes.small,
+                                ),
+                        )
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (active) colors.ink else colors.inkMuted,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
         }
@@ -594,11 +577,26 @@ private fun ConfidenceChoice(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (selected) LocalKbColors.current.primary else LocalKbColors.current.ink,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
+                repeat(4) { index ->
+                    Box(
+                        Modifier
+                            .width(5.dp)
+                            .height((8 + index * 4).dp)
+                            .background(
+                                if (index <= confidence.score) LocalKbColors.current.primary else LocalKbColors.current.border,
+                                androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+                            ),
+                    )
+                }
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (selected) LocalKbColors.current.primary else LocalKbColors.current.ink,
+            )
+        }
         if (selected) {
             Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = LocalKbColors.current.primary)
         }
@@ -619,6 +617,62 @@ private fun formatDuration(millis: Long): String {
     }
 }
 
-
-
-
+@Composable
+private fun SessionDoneCard(
+    session: Session,
+    nextTopic: NextTopic?,
+    reminderEnabled: Boolean,
+    onStartNext: () -> Unit,
+    onBackToToday: () -> Unit,
+    onEnableReminder: () -> Unit,
+) {
+    val colors = LocalKbColors.current
+    val before = session.confidenceBefore
+    val after = session.confidenceAfter
+    fun label(c: Confidence) = when (c) {
+        Confidence.BLANK -> R.string.confidence_blank
+        Confidence.SHAKY -> R.string.confidence_shaky
+        Confidence.OK -> R.string.confidence_ok
+        Confidence.SOLID -> R.string.confidence_solid
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(KbSpacing.x2)) {
+        dev.kumbuka.app.ui.components.KbSurface(contentPadding = 20.dp, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)) {
+            Box(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(52.dp)
+                    .background(colors.successContainer, androidx.compose.foundation.shape.RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.success) }
+            Text(stringResource(R.string.session_complete_title), style = MaterialTheme.typography.displaySmall, color = colors.ink)
+            if (before != null && after != null) {
+                Text(
+                    stringResource(R.string.session_done_change, stringResource(label(before)), stringResource(label(after))),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.ink,
+                )
+            }
+            Text(
+                stringResource(R.string.session_done_time, (session.actualSeconds / 60).coerceAtLeast(1)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.inkMuted,
+            )
+        }
+        if (nextTopic != null) {
+            dev.kumbuka.app.ui.components.KbSurface(contentPadding = 18.dp, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)) {
+                Text(stringResource(R.string.session_done_next_label), style = MaterialTheme.typography.labelLarge, color = colors.inkMuted)
+                dev.kumbuka.app.ui.components.KbUnitLabel(unitKey = nextTopic.unitKey, unitCode = nextTopic.unitCode, emphasized = true)
+                Text(nextTopic.title, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+                KbPrimaryButton(text = stringResource(R.string.session_done_start_next, nextTopic.minutes), onClick = onStartNext)
+            }
+        }
+        if (!reminderEnabled) {
+            dev.kumbuka.app.ui.components.KbSurface(contentPadding = 18.dp) {
+                Text(stringResource(R.string.session_nudge_title), style = MaterialTheme.typography.titleMedium, color = colors.ink)
+                Text(stringResource(R.string.session_nudge_body), style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted)
+                KbSecondaryButton(text = stringResource(R.string.session_nudge_cta), onClick = onEnableReminder)
+            }
+        }
+        KbSecondaryButton(text = stringResource(R.string.session_done_back), onClick = onBackToToday)
+    }
+}

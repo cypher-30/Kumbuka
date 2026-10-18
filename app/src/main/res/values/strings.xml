@@ -10,7 +10,7 @@
          separate screen, no trained-model claims. -->
     <string name="onboarding_language_label">Language</string>
     <string name="onboarding_title">Welcome to Kumbuka</string>
-    <string name="onboarding_body">Kumbuka works fully offline. It ranks what to study today from your own imported units, and keeps your review history only on this device - nothing is uploaded or shared.</string>
+    <string name="onboarding_body">Kumbuka works fully offline. It ranks what to study today from your own imported units, and keeps your review history only on this device.</string>
     <string name="onboarding_privacy_checkbox">I understand my review history stays on this device.</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_save_failed">Couldn\'t save that just now. Try again.</string>
@@ -23,6 +23,7 @@
     <string name="nav_progress">Progress</string>
     <string name="nav_exams">Exams</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_search">Search</string>
 
     <!-- Home placeholder (real Today screen lands in a later phase) -->
     <string name="home_placeholder_title">Today\'s review list lands here</string>
@@ -37,7 +38,7 @@
     <string name="progress_body">Your study history stays fully on-device and powers these baseline analytics.</string>
     <string name="progress_summary">%1$d sessions • %2$d study minutes • %3$d/%4$d topics reviewed</string>
     <string name="progress_empty">No completed sessions yet. Start a session to see trends.</string>
-    <string name="progress_confidence_title">Confidence trend</string>
+    <string name="progress_confidence_title">Confidence mix</string>
     <string name="progress_confidence_before">Average before-restudy confidence: %1$d%%</string>
     <string name="progress_confidence_after">Average after-restudy confidence: %1$d%%</string>
     <string name="progress_unit_breakdown_title">Sessions by unit</string>
@@ -401,7 +402,6 @@
     <string name="confidence_ok">OK</string>
     <string name="confidence_solid">Solid</string>
     <!-- Campus Workspace redesign -->
-    <string name="nav_home">Home</string>
     <string name="nav_assessments">Assessments</string>
     <string name="generic_cancel">Cancel</string>
     <string name="generic_close">Close</string>
@@ -509,7 +509,7 @@
     <string name="progress_tile_topics">Topics reviewed</string>
     <string name="progress_tile_results">Results saved</string>
     <string name="progress_empty_title">Your progress starts here</string>
-    <string name="progress_go_home">Go to Home</string>
+    <string name="progress_go_home">Go to Today</string>
     <string name="progress_week_total">%1$d reviews this week</string>
     <string name="progress_coverage_title">Coverage by unit</string>
     <string name="progress_coverage_body">Active topics you have reviewed at least once.</string>
@@ -518,10 +518,10 @@
     <string name="progress_marks_title">Results and confidence</string>
     <string name="settings_group_study">Study</string>
     <string name="settings_group_appearance">Appearance and language</string>
-    <string name="settings_session_length_body">How long a revision block on Home should be.</string>
+    <string name="settings_session_length_body">How long a revision block on Today should be.</string>
     <string name="settings_about_version_title">Version</string>
     <string name="settings_privacy_body">Everything stays on this device: no account, no cloud sync and no analytics upload.</string>
-    <string name="settings_font_credit">Typeface: Plus Jakarta Sans, SIL Open Font License 1.1.</string>
+    <string name="settings_font_credit">Typefaces: Plus Jakarta Sans and Newsreader, SIL Open Font License 1.1.</string>
     <string name="research_title">Research diagnostics</string>
     <string name="research_entry_body">Scheduler arm and logged recommendation counts</string>
     <string name="research_latest_title">Latest recommendation</string>
@@ -541,4 +541,102 @@
         <item quantity="one">%1$d topic matched</item>
         <item quantity="other">%1$d topics matched</item>
     </plurals>
+    <string name="home_hero_done">%1$d of %2$d done today</string>
+    <string name="today_due_soon_banner">%1$s for %2$s is %3$s, so its topics move to the front.</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_skip_for_now">Skip for now</string>
+    <string name="common_required">Required</string>
+    <string name="common_optional">Optional</string>
+    <string name="onboarding_step">%1$d of %2$d</string>
+    <string name="onboarding_how_1">Import a Course Pack for each unit</string>
+    <string name="onboarding_how_2">Recall closed-book, then rate yourself honestly</string>
+    <string name="onboarding_how_3">Kumbuka learns how fast you forget each topic</string>
+    <string name="onboarding_consent_title">Before you start</string>
+    <string name="onboarding_consent_body">Kumbuka is part of a student research project comparing two ways of scheduling revision. Here\'s what that means for you.</string>
+    <string name="onboarding_recorded_title">Recorded on this device</string>
+    <string name="onboarding_recorded_list">Topics from your packs, review times, confidence ratings, and marks you enter.</string>
+    <string name="onboarding_never_title">Never recorded</string>
+    <string name="onboarding_never_list">Your notes, name, contacts or location.</string>
+    <string name="onboarding_check_study">I agree to take part in the study and may share an exported log. I can withdraw any time in Settings.</string>
+    <string name="onboarding_add_first_title">Add your first unit</string>
+    <string name="onboarding_add_first_body">Each unit comes from a Course Pack: a small file your lecturer or class rep shares on WhatsApp or email.</string>
+    <string name="onboarding_import_desc">From a .coursepack file or pasted text</string>
+    <string name="onboarding_sample_desc">Explore with practice units. Never counts toward Progress.</string>
+    <string name="onboarding_create_desc">Type the topics in yourself</string>
+    <string name="settings_privacy_title">Privacy</string>
+    <string name="settings_credits_title">Credits</string>
+    <string name="settings_theme_system_hint">System follows your device setting.</string>
+    <string name="settings_group_data">Data</string>
+    <string name="settings_research_title">Research participation</string>
+    <string name="settings_research_on">Taking part</string>
+    <string name="settings_research_off">Not taking part</string>
+    <string name="settings_research_join_title">Take part in the study?</string>
+    <string name="settings_research_join_body">Your review times, confidence ratings and marks (never notes or names) can then be exported as a file you choose to share. You can withdraw at any time.</string>
+    <string name="settings_research_join_confirm">Take part</string>
+    <string name="settings_research_withdraw_title">Withdraw from the study?</string>
+    <string name="settings_research_withdraw_body">Kumbuka stops offering the export. Anything you already shared stays with the researchers, but nothing more is collected. Your data on this phone is unchanged.</string>
+    <string name="settings_research_withdraw_confirm">Withdraw</string>
+    <string name="settings_export_title">Export review log (CSV)</string>
+    <string name="settings_export_hint">Reviews, ratings and marks only. No notes or names.</string>
+    <string name="settings_export_join_first">Take part in the study to export.</string>
+    <string name="settings_export_done">Review log saved.</string>
+    <string name="settings_export_failed">Couldn\'t save the file.</string>
+    <string name="paste_title">Paste outline</string>
+    <string name="paste_hint">Paste a course outline from WhatsApp, email or your notes. Kumbuka finds the unit, topics and dates for you.</string>
+    <string name="paste_placeholder">ICS 3108 Server Administration\n1. First topic\n2. Second topic\nCAT 1 - 6th Nov (topics 1-2)</string>
+    <string name="paste_use_sample">Use sample text</string>
+    <string name="paste_nothing_found">No topics found yet. Start each topic on its own line with 1. 2. 3. or a dash.</string>
+    <string name="paste_code_label">Unit code</string>
+    <string name="paste_title_label">Unit title</string>
+    <plurals name="paste_skipped">
+        <item quantity="one">%1$d line was left out: %2$s</item>
+        <item quantity="other">%1$d lines were left out: %2$s</item>
+    </plurals>
+    <string name="paste_create">Create unit</string>
+    <string name="paste_created">%1$s created.</string>
+    <plurals name="paste_found_topics">
+        <item quantity="one">%1$d topic</item>
+        <item quantity="other">%1$d topics</item>
+    </plurals>
+    <plurals name="paste_found_dates">
+        <item quantity="one">%1$d date</item>
+        <item quantity="other">%1$d dates</item>
+    </plurals>
+    <string name="session_done_change">%1$s to %2$s</string>
+    <string name="session_done_time">You studied for about %1$d min.</string>
+    <string name="session_done_next_label">Next up</string>
+    <string name="session_done_start_next">Start next topic · %1$d min</string>
+    <string name="session_done_back">Back to Today</string>
+    <string name="session_nudge_title">Make it a habit</string>
+    <string name="session_nudge_body">A daily reminder helps you come back to revision at the same time each day.</string>
+    <string name="session_nudge_cta">Set a daily reminder</string>
+    <string name="create_mode_course">Course</string>
+    <string name="create_mode_goal">Personal goal</string>
+    <string name="create_goal_note">Personal goals are just for you. They never count toward the study.</string>
+    <string name="create_goal_title_label">Goal</string>
+    <string name="create_objectives_title">What do you want to learn?</string>
+    <string name="create_topics_title">Topics</string>
+    <string name="create_objective_hint">Objective %1$d</string>
+    <string name="create_topic_hint">Topic %1$d</string>
+    <string name="create_add_objective">Add objective</string>
+    <string name="create_add_topic">Add topic</string>
+    <string name="create_weight_label">Exam weight</string>
+    <string name="create_weight_low">Low</string>
+    <string name="create_weight_medium">Medium</string>
+    <string name="create_weight_high">High</string>
+    <string name="create_dates_title">Dates</string>
+    <string name="create_add_date">Add date</string>
+    <string name="create_date_title_hint">Title (e.g. CAT 1)</string>
+    <string name="create_date_pick">Pick a date</string>
+    <string name="create_kind_cat">CAT</string>
+    <string name="create_kind_assignment">Assignment</string>
+    <string name="create_kind_exam">Exam</string>
+    <string name="create_remove">Remove</string>
+    <string name="create_share_title">Share as a Course Pack</string>
+    <string name="create_share_body">After saving, open the export screen so you can send it to classmates.</string>
+    <string name="create_save">Save unit</string>
+    <string name="create_discard_title">Discard this unit?</string>
+    <string name="create_discard_body">What you typed will be lost.</string>
+    <string name="create_discard_confirm">Discard</string>
+    <string name="units_goal_pill">Goal</string>
 </resources>

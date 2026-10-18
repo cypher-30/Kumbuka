@@ -1,53 +1,54 @@
 package dev.kumbuka.app.ui.screens.home
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Insights
-import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.domain.model.Deadline
 import dev.kumbuka.app.domain.model.Topic
@@ -60,15 +61,18 @@ import dev.kumbuka.app.ui.components.KbEmptyState
 import dev.kumbuka.app.ui.components.KbListRow
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbSectionHeader
-import dev.kumbuka.app.ui.components.KbSettingsAction
 import dev.kumbuka.app.ui.components.KbStatus
 import dev.kumbuka.app.ui.components.KbStatusPill
 import dev.kumbuka.app.ui.components.KbSurface
+import dev.kumbuka.app.ui.components.KbTonalButton
 import dev.kumbuka.app.ui.components.KbUnitLabel
 import dev.kumbuka.app.ui.components.kbContentWidth
 import dev.kumbuka.app.ui.theme.LocalKbColors
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+/** A deadline closer than this many days pulls its topics to the front and tints its date tile as urgent. */
+private const val SoonDays = 3L
 
 @Composable
 fun HomeTabContent(
@@ -78,15 +82,16 @@ fun HomeTabContent(
     topicsById: Map<String, Topic>,
     unitCodes: Map<String, String>,
     deadlines: List<Deadline>,
-    recentReviews: Int,
+    doneToday: Int,
+    selectedTopicId: String?,
     listState: LazyListState,
     onStart: (TodayCard) -> Unit,
-    onOpenSettings: () -> Unit,
+    onOpenTopic: (String) -> Unit,
     onImportPack: () -> Unit,
     onCreateUnit: () -> Unit,
+    onTrySample: () -> Unit,
     onOpenUnits: () -> Unit,
     onOpenAssessments: () -> Unit,
-    onOpenProgress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val today = now.toLocalDate()
@@ -99,32 +104,39 @@ fun HomeTabContent(
     val dueDaysByTopic = remember(plan.cards, deadlines, today) {
         plan.cards.associate { it.topicId to calendarDueDays(it.topicId, deadlines, today) }
     }
-    val hasDueToday = dueDaysByTopic.values.any { it == 0L }
+    val soonDeadline = remember(upcoming, today) {
+        upcoming.firstOrNull { daysFromToday(it.date, today) in 0..SoonDays }
+    }
     val unitKeyFor: (TodayCard) -> String = { card -> topicsById[card.topicId]?.unitId ?: card.unitCode }
+    val hasPlan = plan.state == TodayState.Today || plan.state == TodayState.FreshStart
+    val dateText = remember(today, locale) { today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", locale)) }
+    val greeting = when (greetingPeriodFor(now.hour)) {
+        GreetingPeriod.MORNING -> stringResource(R.string.greeting_morning)
+        GreetingPeriod.AFTERNOON -> stringResource(R.string.greeting_afternoon)
+        GreetingPeriod.EVENING -> stringResource(R.string.greeting_evening)
+    }
 
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item(key = "hero") {
-            HomeHero(
-                now = now,
-                summary = when {
-                    !loaded -> stringResource(R.string.generic_loading)
-                    plan.state == TodayState.NoUnits -> stringResource(R.string.home_hero_setup)
-                    plan.state == TodayState.NoActiveTopics -> stringResource(R.string.home_hero_no_active)
-                    plan.state == TodayState.AllCaughtUp -> stringResource(R.string.home_hero_caught_up)
-                    else -> pluralStringResource(R.plurals.home_hero_ready, plan.cards.size, plan.cards.size, totalMinutes)
-                },
-                nextDate = upcoming.firstOrNull()?.let { d ->
-                    stringResource(R.string.home_hero_next_date, d.title, relativeDayLabel(daysFromToday(d.date, today)).lowercase(locale))
-                },
-                onOpenSettings = onOpenSettings,
-                modifier = Modifier.kbContentWidth(),
-            )
+        item(key = "header") {
+            Column(modifier = Modifier.kbContentWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    dateText,
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp, letterSpacing = 0.26.sp),
+                    color = LocalKbColors.current.inkMuted,
+                )
+                Text(
+                    greeting,
+                    style = MaterialTheme.typography.displayMedium,
+                    color = LocalKbColors.current.ink,
+                    modifier = Modifier.semantics { heading() },
+                )
+            }
         }
 
         if (!loaded) {
@@ -136,6 +148,21 @@ fun HomeTabContent(
             return@LazyColumn
         }
 
+        if (hasPlan) {
+            item(key = "hero") {
+                TodayHero(
+                    summary = pluralStringResource(R.plurals.home_hero_ready, plan.cards.size, plan.cards.size, totalMinutes),
+                    doneLabel = stringResource(R.string.home_hero_done, doneToday, doneToday + plan.cards.size),
+                    progress = doneToday.toFloat() / (doneToday + plan.cards.size).coerceAtLeast(1),
+                    nextDate = upcoming.firstOrNull()?.let { d ->
+                        stringResource(R.string.home_hero_next_date, d.title, relativeDayLabel(daysFromToday(d.date, today)).lowercase(locale))
+                    },
+                    onOpenNextDate = onOpenAssessments,
+                    modifier = Modifier.kbContentWidth(),
+                )
+            }
+        }
+
         when (plan.state) {
             TodayState.NoUnits -> item(key = "empty") {
                 KbEmptyState(
@@ -144,8 +171,10 @@ fun HomeTabContent(
                     body = stringResource(R.string.today_no_units_body),
                     primaryLabel = stringResource(R.string.import_pack_cta),
                     onPrimary = onImportPack,
-                    secondaryLabel = stringResource(R.string.author_start_cta),
-                    onSecondary = onCreateUnit,
+                    secondaryLabel = stringResource(R.string.import_try_sample_cta),
+                    onSecondary = onTrySample,
+                    tertiaryLabel = stringResource(R.string.author_start_cta),
+                    onTertiary = onCreateUnit,
                     modifier = Modifier.kbContentWidth(),
                 )
             }
@@ -162,6 +191,7 @@ fun HomeTabContent(
             TodayState.AllCaughtUp -> item(key = "caught-up") {
                 KbEmptyState(
                     icon = Icons.Outlined.CheckCircle,
+                    tone = KbStatus.SUCCESS,
                     title = stringResource(R.string.today_all_caught_up_title),
                     body = stringResource(R.string.today_all_caught_up_body),
                     modifier = Modifier.kbContentWidth(),
@@ -170,8 +200,20 @@ fun HomeTabContent(
             TodayState.FreshStart, TodayState.Today -> {
                 if (plan.state == TodayState.FreshStart) {
                     item(key = "fresh") { KbBanner(stringResource(R.string.today_fresh_start_body), KbStatus.INFO, Modifier.kbContentWidth()) }
-                } else if (hasDueToday) {
-                    item(key = "due-today") { KbBanner(stringResource(R.string.today_due_today_body), KbStatus.WARNING, Modifier.kbContentWidth()) }
+                } else if (soonDeadline != null) {
+                    item(key = "due-soon") {
+                        KbBanner(
+                            text = stringResource(
+                                R.string.today_due_soon_banner,
+                                soonDeadline.title,
+                                unitCodes[soonDeadline.unitId] ?: soonDeadline.unitId,
+                                relativeDayLabel(daysFromToday(soonDeadline.date, today)).lowercase(locale),
+                            ),
+                            status = KbStatus.WARNING,
+                            icon = Icons.Outlined.Schedule,
+                            modifier = Modifier.kbContentWidth(),
+                        )
+                    }
                 }
                 if (featured != null) {
                     item(key = "featured-header") {
@@ -181,6 +223,8 @@ fun HomeTabContent(
                         FeaturedCard(
                             card = featured,
                             unitKey = unitKeyFor(featured),
+                            selected = selectedTopicId == featured.topicId,
+                            onOpen = { onOpenTopic(featured.topicId) },
                             onStart = { onStart(featured) },
                             onWhy = { whyTopicId = featured.topicId },
                             dueDays = dueDaysByTopic[featured.topicId],
@@ -200,8 +244,9 @@ fun HomeTabContent(
                         QueueRow(
                             card = card,
                             unitKey = unitKeyFor(card),
+                            selected = selectedTopicId == card.topicId,
+                            onOpen = { onOpenTopic(card.topicId) },
                             onStart = { onStart(card) },
-                            onWhy = { whyTopicId = card.topicId },
                             dueDays = dueDaysByTopic[card.topicId],
                             modifier = Modifier.kbContentWidth(),
                         )
@@ -236,21 +281,6 @@ fun HomeTabContent(
                     )
                 }
             }
-            item(key = "progress-link") {
-                KbListRow(
-                    onClick = onOpenProgress,
-                    leading = { Icon(Icons.Outlined.Insights, contentDescription = null, tint = LocalKbColors.current.primary) },
-                    trailing = { Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = LocalKbColors.current.inkMuted) },
-                    modifier = Modifier.kbContentWidth().padding(top = 8.dp),
-                ) {
-                    Text(stringResource(R.string.home_progress_link_title), style = MaterialTheme.typography.titleSmall, color = LocalKbColors.current.ink)
-                    Text(
-                        pluralStringResource(R.plurals.home_progress_link_body, recentReviews, recentReviews),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalKbColors.current.inkMuted,
-                    )
-                }
-            }
         }
     }
 
@@ -269,144 +299,183 @@ fun HomeTabContent(
     }
 }
 
+/**
+ * The Midnight hero: today's summary, a saffron progress bar and the next
+ * deadline as a tappable chip. The big translucent disc and small solid sun in
+ * the corner are decoration only.
+ */
 @Composable
-private fun HomeHero(
-    now: LocalDateTime,
+private fun TodayHero(
     summary: String,
+    doneLabel: String,
+    progress: Float,
     nextDate: String?,
-    onOpenSettings: () -> Unit,
+    onOpenNextDate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalKbColors.current
-    val locale = currentLocale()
-    val period = greetingPeriodFor(now.hour)
-    val greeting = when (period) {
-        GreetingPeriod.MORNING -> stringResource(R.string.greeting_morning)
-        GreetingPeriod.AFTERNOON -> stringResource(R.string.greeting_afternoon)
-        GreetingPeriod.EVENING -> stringResource(R.string.greeting_evening)
-    }
-    val dateText = remember(now.toLocalDate(), locale) {
-        now.toLocalDate().format(DateTimeFormatter.ofPattern("EEEE, d MMMM", locale))
-    }
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(28.dp))
-            .background(colors.heroEnd),
-    ) {
-        SkyMark(
-            period = period,
-            modifier = Modifier.align(Alignment.TopEnd).padding(top = 44.dp, end = 16.dp).size(52.dp),
+    Box(modifier = modifier.clip(RoundedCornerShape(24.dp)).background(colors.brand)) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 18.dp, y = (-18).dp)
+                .size(96.dp)
+                .background(colors.accent.copy(alpha = 0.14f), CircleShape),
         )
-        Column(modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 8.dp, top = 6.dp, bottom = 16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    dateText,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.onHeroMuted,
-                    modifier = Modifier.weight(1f),
-                )
-                KbSettingsAction(onOpenSettings = onOpenSettings, tint = colors.onHero)
-            }
-            Text(
-                greeting,
-                style = MaterialTheme.typography.headlineMedium,
-                color = colors.onHero,
-                modifier = Modifier.padding(end = 68.dp).semantics { heading() },
-            )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 14.dp, end = 14.dp)
+                .size(28.dp)
+                .background(colors.accent, CircleShape),
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Text(
                 summary,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 19.sp, lineHeight = 25.sp, fontWeight = FontWeight.Bold),
                 color = colors.onHero,
-                modifier = Modifier.padding(top = 4.dp, end = 68.dp),
+                modifier = Modifier.padding(end = 48.dp),
             )
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(colors.onHero.copy(alpha = 0.16f))) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress.coerceIn(0f, 1f))
+                            .background(colors.accent, RoundedCornerShape(3.dp)),
+                    )
+                }
+                Text(doneLabel, style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp), color = colors.onHeroMuted)
+            }
             if (nextDate != null) {
-                Text(
-                    nextDate,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.onHero,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Row(
                     modifier = Modifier
-                        .padding(top = 10.dp, end = 12.dp)
-                        .background(colors.onHero.copy(alpha = 0.16f), RoundedCornerShape(50))
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                )
+                        .clip(RoundedCornerShape(50))
+                        .background(colors.onHero.copy(alpha = 0.12f))
+                        .clickable(onClick = onOpenNextDate)
+                        .padding(start = 10.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(Icons.Outlined.Event, contentDescription = null, tint = colors.onHero, modifier = Modifier.size(18.dp))
+                    Text(
+                        nextDate,
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
+                        color = colors.onHero,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
 }
 
-/** Decorative sun (day) or crescent moon (evening). Not announced to screen readers. */
 @Composable
-private fun SkyMark(period: GreetingPeriod, modifier: Modifier = Modifier) {
+private fun FeaturedCard(
+    card: TodayCard,
+    unitKey: String,
+    selected: Boolean,
+    onOpen: () -> Unit,
+    onStart: () -> Unit,
+    onWhy: () -> Unit,
+    dueDays: Long?,
+    modifier: Modifier = Modifier,
+) {
     val colors = LocalKbColors.current
-    Canvas(modifier = modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
-        val r = size.minDimension / 2f
-        if (period == GreetingPeriod.EVENING) {
-            drawCircle(color = colors.accent.copy(alpha = 0.18f), radius = r)
-            drawCircle(color = colors.accent, radius = r * 0.62f)
-            drawCircle(
-                color = colors.accent,
-                radius = r * 0.62f,
-                center = Offset(center.x + r * 0.34f, center.y - r * 0.26f),
-                blendMode = BlendMode.Clear,
-            )
-        } else {
-            drawCircle(color = colors.accent.copy(alpha = 0.18f), radius = r)
-            drawCircle(color = colors.accent.copy(alpha = 0.32f), radius = r * 0.78f)
-            drawCircle(color = colors.accent, radius = r * 0.56f)
-        }
-    }
-}
-
-@Composable
-private fun FeaturedCard(card: TodayCard, unitKey: String, onStart: () -> Unit, onWhy: () -> Unit, dueDays: Long?, modifier: Modifier = Modifier) {
-    val colors = LocalKbColors.current
-    KbSurface(modifier = modifier, contentPadding = 16.dp, borderColor = colors.primary.copy(alpha = 0.35f)) {
+    KbSurface(
+        modifier = modifier,
+        onClick = onOpen,
+        contentPadding = 18.dp,
+        shape = RoundedCornerShape(24.dp),
+        borderColor = if (selected) colors.primary else null,
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             KbUnitLabel(unitKey = unitKey, unitCode = card.unitCode, emphasized = true, modifier = Modifier.weight(1f))
             KbStatusPill(stringResource(R.string.today_minutes_short, card.minutes), KbStatus.INFO)
         }
-        Text(card.title, style = MaterialTheme.typography.titleLarge, color = colors.ink)
-        if (card.objective.isNotBlank()) {
-            Text(card.objective, style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted, maxLines = 3, overflow = TextOverflow.Ellipsis)
-        }
-        Text(todayReasonText(card, dueDays), style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
-        KbPrimaryButton(
-            text = stringResource(R.string.home_start_revision),
-            onClick = onStart,
-            icon = Icons.Outlined.PlayArrow,
-            modifier = Modifier.padding(top = 4.dp),
+        Text(
+            card.title,
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 21.sp, lineHeight = 26.sp, letterSpacing = (-0.2).sp),
+            color = colors.ink,
         )
-        TextButton(onClick = onWhy, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text(stringResource(R.string.today_why_this), style = MaterialTheme.typography.labelLarge)
+        if (card.objective.isNotBlank()) {
+            Text(
+                card.objective,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 22.sp),
+                color = colors.inkMuted,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(Icons.Outlined.Info, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(16.dp))
+            Text(todayReasonText(card, dueDays), style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp), color = colors.inkMuted)
+        }
+        Row(modifier = Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            KbPrimaryButton(
+                text = stringResource(R.string.home_start_revision),
+                onClick = onStart,
+                icon = Icons.Filled.PlayArrow,
+                fillWidth = false,
+                modifier = Modifier.weight(1f),
+            )
+            KbTonalButton(text = stringResource(R.string.today_why_this), onClick = onWhy)
         }
     }
 }
 
 @Composable
-private fun QueueRow(card: TodayCard, unitKey: String, onStart: () -> Unit, onWhy: () -> Unit, dueDays: Long?, modifier: Modifier = Modifier) {
+private fun QueueRow(
+    card: TodayCard,
+    unitKey: String,
+    selected: Boolean,
+    onOpen: () -> Unit,
+    onStart: () -> Unit,
+    dueDays: Long?,
+    modifier: Modifier = Modifier,
+) {
     val colors = LocalKbColors.current
     val startLabel = stringResource(R.string.home_start_topic_cd, card.title)
     KbListRow(
-        onClick = onWhy,
+        onClick = onOpen,
         modifier = modifier,
+        borderColor = if (selected) colors.primary else null,
         trailing = {
             FilledTonalIconButton(
                 onClick = onStart,
                 modifier = Modifier.size(48.dp),
                 colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = colors.primaryTint, contentColor = colors.onPrimaryTint),
             ) {
-                Icon(Icons.Outlined.PlayArrow, contentDescription = startLabel)
+                Icon(Icons.Filled.PlayArrow, contentDescription = startLabel)
             }
         },
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             KbUnitLabel(unitKey = unitKey, unitCode = card.unitCode)
-            Text(stringResource(R.string.today_minutes_short, card.minutes), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+            Text(
+                "· " + stringResource(R.string.today_minutes_short, card.minutes),
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+                color = colors.inkMuted,
+            )
         }
-        Text(card.title, style = MaterialTheme.typography.titleMedium, color = colors.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Text(todayReasonText(card, dueDays), style = MaterialTheme.typography.bodySmall, color = colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            card.title,
+            style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.5.sp, fontWeight = FontWeight.Bold),
+            color = colors.ink,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            todayReasonText(card, dueDays),
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp),
+            color = colors.inkMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -424,7 +493,7 @@ fun UpcomingRow(
     val date = storedCalendarDate(deadline.date)
     val status = when {
         days < 0 -> KbStatus.NEUTRAL
-        days <= 2 -> KbStatus.WARNING
+        days <= SoonDays -> KbStatus.WARNING
         else -> KbStatus.INFO
     }
     KbListRow(
@@ -432,22 +501,28 @@ fun UpcomingRow(
         modifier = modifier,
         leading = { KbDateTile(month = shortMonth(date, locale), day = date.dayOfMonth.toString(), status = status) },
     ) {
-        Text(deadline.title, style = MaterialTheme.typography.titleMedium, color = colors.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            deadline.title,
+            style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.5.sp, fontWeight = FontWeight.Bold),
+            color = colors.ink,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             KbUnitLabel(unitKey = deadline.unitId, unitCode = unitCode)
             Text("·", color = colors.inkFaint, style = MaterialTheme.typography.labelMedium)
-            Text(deadlineKindLabel(deadline.kind), style = MaterialTheme.typography.labelMedium, color = colors.inkMuted)
+            Text(deadlineKindLabel(deadline.kind), style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp), color = colors.inkMuted)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 relativeDayLabel(days),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp, fontWeight = FontWeight.Bold),
                 color = if (status == KbStatus.WARNING) colors.warning else colors.inkMuted,
             )
             if (linkedTopicCount != null && linkedTopicCount > 0) {
                 Text(
                     pluralStringResource(R.plurals.assessments_linked_topics, linkedTopicCount, linkedTopicCount),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
                     color = colors.inkFaint,
                 )
             }

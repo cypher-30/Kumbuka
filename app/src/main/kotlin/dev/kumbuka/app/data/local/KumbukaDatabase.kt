@@ -31,7 +31,7 @@ import dev.kumbuka.app.data.local.entity.UnitEntity
         AssessmentMarkTopicCrossRef::class,
         SchedulerEvaluationEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -51,6 +51,16 @@ abstract class KumbukaDatabase : RoomDatabase() {
          * scheduler_evaluations table. Purely additive - no destructive rebuild,
          * so every existing unit/topic/session/mark row (and its history) survives.
          */
+        /**
+         * v2 -> v3: adds the personal-goal flag to units. Additive with a default of 0,
+         * so every existing unit, topic, session and mark survives untouched.
+         */
+        val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE units ADD COLUMN isPersonal INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         val MIGRATION_1_2: Migration = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE topics ADD COLUMN archived INTEGER NOT NULL DEFAULT 0")

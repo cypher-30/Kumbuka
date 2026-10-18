@@ -2,18 +2,16 @@
 <resources>
     <style name="Theme.Kumbuka" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/kb_primary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <!--
-      Native Android 12+ SplashScreen (via androidx.core:core-splashscreen for
-      API 26-30 compatibility). Shows the static amber mark on the brand indigo
-      background with no motion of its own - it only owns the very first
-      frame while MainActivity resolves the real start route. The single
-      curve-draw/wordmark animation lives entirely in the Compose
-      SplashScreen composable that plays right after (KbRoute.SPLASH), so
-      there is exactly one animated launch beat, not two. postSplashScreenTheme
-      hands off to the normal app theme once the keep-on-screen condition
-      clears.
+      Native SplashScreen (androidx.core:core-splashscreen, API 26+). This is the
+      one and only launch beat. Here (API < 31) it shows the fully drawn static
+      mark on Midnight; values-v31/themes.xml swaps in the animated icon where the
+      platform can play it. postSplashScreenTheme hands off to the normal app
+      theme once MainActivity clears the keep-on-screen condition.
     -->
     <style name="Theme.Kumbuka.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/kb_primary</item>

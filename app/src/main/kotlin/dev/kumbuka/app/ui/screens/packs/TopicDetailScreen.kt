@@ -40,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
@@ -71,6 +72,8 @@ fun TopicDetailScreen(
     sessionLengthMinutes: Int,
     onStartSession: (String, Int) -> Unit,
     onBack: () -> Unit,
+    /** False when embedded as the detail pane of a two-pane layout with nothing to go back to. */
+    showBack: Boolean = true,
 ) {
     val colors = LocalKbColors.current
     val locale = currentLocale()
@@ -104,7 +107,11 @@ fun TopicDetailScreen(
         topBar = {
             KbTopBar(
                 title = unit?.code ?: stringResource(R.string.topic_detail_title),
-                onBack = { if (dirty) showDiscard = true else if (editing) exitEdit() else onBack() },
+                onBack = if (showBack || editing) {
+                    { if (dirty) showDiscard = true else if (editing) exitEdit() else onBack() }
+                } else {
+                    null
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -136,7 +143,7 @@ fun TopicDetailScreen(
                     KbUnitLabel(unitKey = current.unitId, unitCode = unit?.let { "${it.code} · ${it.title}" } ?: stringResource(R.string.topic_unit_unknown), emphasized = true)
                     if (current.archived) KbStatusPill(stringResource(R.string.unit_detail_archived_label), KbStatus.NEUTRAL)
                 }
-                Text(current.title, style = MaterialTheme.typography.headlineSmall, color = colors.ink, modifier = Modifier.semantics { heading() })
+                Text(current.title, style = MaterialTheme.typography.displaySmall.copy(fontSize = 30.sp, lineHeight = 34.sp), color = colors.ink, modifier = Modifier.semantics { heading() })
                 Text(
                     if (lastFinished != null) {
                         val rating = lastFinished.confidenceAfter ?: lastFinished.confidenceBefore

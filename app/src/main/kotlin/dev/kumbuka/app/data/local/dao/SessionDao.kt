@@ -31,6 +31,10 @@ interface SessionDao {
     @Query("SELECT COUNT(*) FROM sessions WHERE topicId = :topicId AND wasDeferred = 1")
     suspend fun countDeferralsForTopic(topicId: String): Int
 
+    /** Developer demo seeding only: removes sessions whose id starts with [prefix] (e.g. "demo-s-"). */
+    @Query("DELETE FROM sessions WHERE id LIKE :prefix || '%'")
+    suspend fun deleteWithIdPrefix(prefix: String)
+
     @Query("SELECT * FROM sessions ORDER BY startedAt DESC")
     fun observeAll(): Flow<List<SessionEntity>>
 }

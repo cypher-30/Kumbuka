@@ -54,6 +54,39 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import dev.kumbuka.app.R
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import dev.kumbuka.app.data.repository.AssessmentMarkRepository
+import dev.kumbuka.app.data.repository.SessionRepository
+import dev.kumbuka.app.data.repository.TopicRepository
+import dev.kumbuka.app.data.repository.UnitRepository
+import dev.kumbuka.app.domain.analytics.ReviewLogExporter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import dev.kumbuka.app.ui.components.AppMarkGlyph
 import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.reminders.ReminderScheduler
 import dev.kumbuka.app.ui.components.KbBanner
@@ -68,6 +101,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     preferences: AppPreferences,
+    unitRepository: UnitRepository,
+    topicRepository: TopicRepository,
+    sessionRepository: SessionRepository,
+    assessmentMarkRepository: AssessmentMarkRepository,
     onBack: () -> Unit,
     onOpenResearch: () -> Unit,
 ) {
@@ -75,11 +112,39 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val colors = LocalKbColors.current
     val language by preferences.language.collectAsState(initial = "en")
-    val themeMode by preferences.themeMode.collectAsState(initial = "system")
+    val themeMode by preferences.themeMode.collectAsState(initial = "light")
     val sessionLengthMinutes by preferences.sessionLengthMinutes.collectAsState(initial = 60)
     val reminderEnabled by preferences.reminderEnabled.collectAsState(initial = false)
     val reminderHour by preferences.reminderHour.collectAsState(initial = 20)
     val reminderMinute by preferences.reminderMinute.collectAsState(initial = 0)
+    val studyParticipation by preferences.studyParticipation.collectAsState(initial = false)
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showParticipationDialog by rememberSaveable { mutableStateOf(false) }
+    val exportedText = stringResource(R.string.settings_export_done)
+    val exportFailedText = stringResource(R.string.settings_export_failed)
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val outcome = runCatching {
+                    val units = unitRepository.observeAll().first()
+                    val topics = topicRepository.observeAll().first()
+                    val sampleUnitIds = units.filter { it.isSample || it.isPersonal }.map { it.id }.toSet()
+                    val sampleTopicIds = topics.filter { it.unitId in sampleUnitIds }.map { it.id }.toSet()
+                    val csv = ReviewLogExporter.build(
+                        sessions = sessionRepository.observeAll().first(),
+                        marks = assessmentMarkRepository.observeAll().first(),
+                        unitIdByTopic = topics.associate { it.id to it.unitId },
+                        excludedTopicIds = sampleTopicIds,
+                        excludedUnitIds = sampleUnitIds,
+                    )
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(csv.toByteArray(Charsets.UTF_8)) }
+                    }
+                }
+                snackbarHostState.showSnackbar(if (outcome.isSuccess) exportedText else exportFailedText)
+            }
+        }
+    }
     val versionName = remember(context) {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
     }
@@ -132,47 +197,82 @@ fun SettingsScreen(
         }.time.let { DateFormat.getTimeFormat(context).format(it) }
     }
 
+    val themeLabel: @Composable (String) -> String = {
+        when (it) {
+            "light" -> stringResource(R.string.settings_theme_light)
+            "dark" -> stringResource(R.string.settings_theme_dark)
+            else -> stringResource(R.string.settings_theme_system)
+        }
+    }
+    val languageLabel: (String) -> String = { if (it == "sw") "Kiswahili" else "English" }
+    var openPicker by rememberSaveable { mutableStateOf<String?>(null) }
+    var privacyOpen by rememberSaveable { mutableStateOf(false) }
+    var creditsOpen by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         topBar = { KbTopBar(title = stringResource(R.string.settings_title), onBack = onBack) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = colors.paper,
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            item(key = "intro") {
+                Row(
+                    modifier = Modifier
+                        .kbContentWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(colors.brand)
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    AppMarkGlyph(size = 40.dp, color = colors.accent)
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Kumbuka", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = colors.onHero)
+                        Text(
+                            stringResource(R.string.settings_privacy_body),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 19.sp),
+                            color = colors.onHeroMuted,
+                        )
+                    }
+                }
+            }
             item(key = "study") {
                 SettingsGroup(stringResource(R.string.settings_group_study)) {
-                    SettingBlock(stringResource(R.string.settings_session_length_title), stringResource(R.string.settings_session_length_body)) {
-                        SegmentedChoice(
-                            options = listOf(30, 45, 60, 90),
-                            selected = sessionLengthMinutes,
-                            label = { stringResource(R.string.settings_minutes_short, it) },
-                            onSelect = { minutes -> scope.launch { preferences.setSessionLengthMinutes(minutes) } },
-                        )
-                    }
-                    GroupDivider()
-                    Row(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(stringResource(R.string.reminders_title), style = MaterialTheme.typography.titleSmall, color = colors.ink)
-                            Text(stringResource(R.string.reminders_approximate_caption), style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
-                        }
-                        Switch(
-                            checked = reminderEnabled,
-                            onCheckedChange = onReminderToggle,
-                            colors = SwitchDefaults.colors(checkedTrackColor = colors.primary, checkedThumbColor = colors.onPrimary),
-                        )
-                    }
-                    GroupDivider()
-                    NavRow(
-                        title = stringResource(R.string.settings_pick_time),
-                        value = reminderTimeText,
-                        onClick = { showTimePicker = true },
+                    ValueRow(
+                        icon = Icons.Outlined.Timer,
+                        title = stringResource(R.string.settings_session_length_title),
+                        value = stringResource(R.string.settings_minutes_short, sessionLengthMinutes),
+                        onClick = { openPicker = "length" },
                     )
+                    GroupDivider()
+                    ValueRow(
+                        icon = Icons.Outlined.NotificationsNone,
+                        title = stringResource(R.string.reminders_title),
+                        value = if (reminderEnabled) reminderTimeText else null,
+                        supporting = stringResource(R.string.reminders_approximate_caption),
+                        onClick = { onReminderToggle(!reminderEnabled) },
+                        trailing = {
+                            Switch(
+                                checked = reminderEnabled,
+                                onCheckedChange = onReminderToggle,
+                                colors = SwitchDefaults.colors(checkedTrackColor = colors.primary, checkedThumbColor = colors.onPrimary),
+                            )
+                        },
+                    )
+                    if (reminderEnabled) {
+                        GroupDivider()
+                        ValueRow(
+                            icon = Icons.Outlined.Schedule,
+                            title = stringResource(R.string.settings_pick_time),
+                            value = reminderTimeText,
+                            onClick = { showTimePicker = true },
+                        )
+                    }
                     if (reminderPermissionDenied) {
                         KbBanner(stringResource(R.string.reminders_permission_denied), KbStatus.ERROR, Modifier.padding(12.dp))
                     }
@@ -180,36 +280,59 @@ fun SettingsScreen(
             }
             item(key = "appearance") {
                 SettingsGroup(stringResource(R.string.settings_group_appearance)) {
-                    SettingBlock(stringResource(R.string.settings_theme_title), null) {
-                        SegmentedChoice(
-                            options = listOf("system", "light", "dark"),
-                            selected = themeMode,
-                            label = {
-                                when (it) {
-                                    "light" -> stringResource(R.string.settings_theme_light)
-                                    "dark" -> stringResource(R.string.settings_theme_dark)
-                                    else -> stringResource(R.string.settings_theme_system)
-                                }
-                            },
-                            onSelect = { mode -> scope.launch { preferences.setThemeMode(mode) } },
-                        )
-                    }
+                    ValueRow(
+                        icon = Icons.Outlined.Palette,
+                        title = stringResource(R.string.settings_theme_title),
+                        value = themeLabel(themeMode),
+                        onClick = { openPicker = "theme" },
+                    )
                     GroupDivider()
-                    SettingBlock(stringResource(R.string.settings_language_title), null) {
-                        SegmentedChoice(
-                            options = listOf("en", "sw"),
-                            selected = language,
-                            label = { if (it == "sw") "Kiswahili" else "English" },
-                            onSelect = { code -> scope.launch { preferences.setLanguage(code) } },
-                        )
-                    }
+                    ValueRow(
+                        icon = Icons.Outlined.Language,
+                        title = stringResource(R.string.settings_language_title),
+                        value = languageLabel(language),
+                        onClick = { openPicker = "language" },
+                    )
+                }
+            }
+            item(key = "data") {
+                SettingsGroup(stringResource(R.string.settings_group_data)) {
+                    ValueRow(
+                        icon = Icons.Outlined.Science,
+                        title = stringResource(R.string.settings_research_title),
+                        value = stringResource(if (studyParticipation) R.string.settings_research_on else R.string.settings_research_off),
+                        onClick = { showParticipationDialog = true },
+                    )
+                    GroupDivider()
+                    ValueRow(
+                        icon = Icons.Outlined.FileDownload,
+                        title = stringResource(R.string.settings_export_title),
+                        value = null,
+                        supporting = stringResource(if (studyParticipation) R.string.settings_export_hint else R.string.settings_export_join_first),
+                        onClick = { if (studyParticipation) exportLauncher.launch("kumbuka-review-log.csv") else showParticipationDialog = true },
+                    )
                 }
             }
             item(key = "about") {
                 SettingsGroup(stringResource(R.string.settings_about_title)) {
-                    NavRow(
+                    ValueRow(
+                        icon = Icons.Outlined.Lock,
+                        title = stringResource(R.string.settings_privacy_title),
+                        value = null,
+                        onClick = { privacyOpen = true },
+                    )
+                    GroupDivider()
+                    ValueRow(
+                        icon = Icons.Outlined.FavoriteBorder,
+                        title = stringResource(R.string.settings_credits_title),
+                        value = null,
+                        onClick = { creditsOpen = true },
+                    )
+                    GroupDivider()
+                    ValueRow(
+                        icon = Icons.Outlined.Info,
                         title = stringResource(R.string.settings_about_version_title),
-                        value = stringResource(R.string.settings_about_subtitle, versionName),
+                        value = versionName,
                         showChevron = false,
                         onClick = {
                             val now = System.currentTimeMillis()
@@ -221,28 +344,16 @@ fun SettingsScreen(
                             }
                         },
                     )
-                    GroupDivider()
-                    Text(
-                        stringResource(R.string.settings_privacy_body),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.inkMuted,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                    GroupDivider()
-                    Text(
-                        stringResource(R.string.settings_font_credit),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.inkMuted,
-                        modifier = Modifier.padding(16.dp),
-                    )
                 }
             }
             if (researchUnlocked) {
                 item(key = "research") {
                     SettingsGroup(stringResource(R.string.settings_research_controls_title)) {
-                        NavRow(
+                        ValueRow(
+                            icon = Icons.Outlined.Science,
                             title = stringResource(R.string.research_title),
-                            value = stringResource(R.string.research_entry_body),
+                            value = null,
+                            supporting = stringResource(R.string.research_entry_body),
                             onClick = onOpenResearch,
                         )
                         GroupDivider()
@@ -253,6 +364,64 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    when (openPicker) {
+        "length" -> ChoiceSheet(
+            title = stringResource(R.string.settings_session_length_title),
+            supporting = stringResource(R.string.settings_session_length_body),
+            options = listOf(30, 45, 60, 90),
+            selected = sessionLengthMinutes,
+            label = { stringResource(R.string.settings_minutes_short, it) },
+            onSelect = { minutes -> scope.launch { preferences.setSessionLengthMinutes(minutes) } },
+            onDismiss = { openPicker = null },
+        )
+        "theme" -> ChoiceSheet(
+            title = stringResource(R.string.settings_theme_title),
+            supporting = stringResource(R.string.settings_theme_system_hint),
+            options = listOf("system", "light", "dark"),
+            selected = themeMode,
+            label = { themeLabel(it) },
+            onSelect = { mode -> scope.launch { preferences.setThemeMode(mode) } },
+            onDismiss = { openPicker = null },
+        )
+        "language" -> ChoiceSheet(
+            title = stringResource(R.string.settings_language_title),
+            supporting = null,
+            options = listOf("en", "sw"),
+            selected = language,
+            label = { languageLabel(it) },
+            onSelect = { code -> scope.launch { preferences.setLanguage(code) } },
+            onDismiss = { openPicker = null },
+        )
+    }
+    if (showParticipationDialog) {
+        AlertDialog(
+            onDismissRequest = { showParticipationDialog = false },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = colors.surface,
+            title = {
+                Text(stringResource(if (studyParticipation) R.string.settings_research_withdraw_title else R.string.settings_research_join_title))
+            },
+            text = {
+                Text(stringResource(if (studyParticipation) R.string.settings_research_withdraw_body else R.string.settings_research_join_body))
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch { preferences.setStudyParticipation(!studyParticipation) }
+                    showParticipationDialog = false
+                }) {
+                    Text(stringResource(if (studyParticipation) R.string.settings_research_withdraw_confirm else R.string.settings_research_join_confirm))
+                }
+            },
+            dismissButton = { TextButton(onClick = { showParticipationDialog = false }) { Text(stringResource(R.string.generic_cancel)) } },
+        )
+    }
+    if (privacyOpen) {
+        InfoSheet(stringResource(R.string.settings_privacy_title), stringResource(R.string.settings_privacy_body)) { privacyOpen = false }
+    }
+    if (creditsOpen) {
+        InfoSheet(stringResource(R.string.settings_credits_title), stringResource(R.string.settings_font_credit)) { creditsOpen = false }
     }
 
     if (showTimePicker) {
@@ -352,6 +521,115 @@ internal fun <T> SegmentedChoice(options: List<T>, selected: T, label: @Composab
             ) {
                 Text(label(option), maxLines = 1)
             }
+        }
+    }
+}
+
+/** One settings row: icon tile, title (+ optional supporting line), current value and a chevron or custom trailing control. */
+@Composable
+internal fun ValueRow(
+    icon: ImageVector,
+    title: String,
+    value: String?,
+    onClick: () -> Unit,
+    supporting: String? = null,
+    showChevron: Boolean = true,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    val colors = LocalKbColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(40.dp).background(colors.primaryTint, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = colors.onPrimaryTint, modifier = Modifier.size(22.dp))
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = colors.ink)
+            if (supporting != null) {
+                Text(supporting, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp), color = colors.inkMuted)
+            }
+        }
+        if (trailing != null) {
+            trailing()
+        } else {
+            if (value != null) Text(value, style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted, maxLines = 1)
+            if (showChevron) Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = colors.inkMuted)
+        }
+    }
+}
+
+/** Single-choice picker in a bottom sheet; picking applies immediately and closes the sheet. */
+@Composable
+private fun <T> ChoiceSheet(
+    title: String,
+    supporting: String?,
+    options: List<T>,
+    selected: T,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = LocalKbColors.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        scrimColor = colors.scrim,
+    ) {
+        Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = colors.ink, modifier = Modifier.semantics { heading() })
+            if (supporting != null) Text(supporting, style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted)
+            Column(Modifier.padding(top = 8.dp)) {
+                options.forEach { option ->
+                    val isSelected = option == selected
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) colors.primaryTint else Color.Transparent)
+                            .clickable(role = Role.RadioButton) {
+                                onSelect(option)
+                                onDismiss()
+                            }
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            label(option),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium),
+                            color = if (isSelected) colors.onPrimaryTint else colors.ink,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (isSelected) Icon(Icons.Outlined.Check, contentDescription = null, tint = colors.onPrimaryTint)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoSheet(title: String, body: String, onDismiss: () -> Unit) {
+    val colors = LocalKbColors.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        scrimColor = colors.scrim,
+    ) {
+        Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = colors.ink, modifier = Modifier.semantics { heading() })
+            Text(body, style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp), color = colors.inkMuted)
         }
     }
 }

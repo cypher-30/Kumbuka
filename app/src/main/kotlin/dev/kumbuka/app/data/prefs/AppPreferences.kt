@@ -25,6 +25,7 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
         val REMINDER_HOUR = intPreferencesKey("reminder_hour")
         val REMINDER_MINUTE = intPreferencesKey("reminder_minute")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val STUDY_PARTICIPATION = booleanPreferencesKey("study_participation")
     }
 
     val onboardingComplete: Flow<Boolean> =
@@ -58,9 +59,13 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
     val reminderMinute: Flow<Int> =
         dataStore.data.map { (it[Keys.REMINDER_MINUTE] ?: 0).coerceIn(0, 59) }
 
-    /** "system" (follow device setting), "light", or "dark". */
+    /** Opt-in to the research study. Off until the student explicitly agrees; changeable any time in Settings. */
+    val studyParticipation: Flow<Boolean> =
+        dataStore.data.map { it[Keys.STUDY_PARTICIPATION] ?: false }
+
+    /** "light" (the default), "dark", or "system" (follow the device setting). */
     val themeMode: Flow<String> =
-        dataStore.data.map { it[Keys.THEME_MODE] ?: "system" }
+        dataStore.data.map { it[Keys.THEME_MODE] ?: "light" }
 
     suspend fun setOnboardingComplete(value: Boolean) {
         dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = value }
@@ -73,11 +78,16 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
     /** Saves consent + onboarding completion in a single DataStore transaction, so a
      * partial write (e.g. process death mid-write) can never leave a user stuck in a
      * "half onboarded" state that neither shows onboarding again nor reaches Home cleanly. */
-    suspend fun completeOnboarding() {
+    suspend fun completeOnboarding(participateInStudy: Boolean = false) {
         dataStore.edit {
             it[Keys.CONSENT_ACCEPTED] = true
             it[Keys.ONBOARDING_COMPLETE] = true
+            it[Keys.STUDY_PARTICIPATION] = participateInStudy
         }
+    }
+
+    suspend fun setStudyParticipation(value: Boolean) {
+        dataStore.edit { it[Keys.STUDY_PARTICIPATION] = value }
     }
 
     suspend fun setLanguage(code: String) {

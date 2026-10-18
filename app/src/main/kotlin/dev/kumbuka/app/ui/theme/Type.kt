@@ -26,6 +26,23 @@ val PlusJakartaSans = FontFamily(
     jakarta(FontWeight.ExtraBold),
 )
 
+private fun newsreader(weight: FontWeight) = Font(
+    resId = R.font.newsreader,
+    weight = weight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+)
+
+/**
+ * Newsreader (OFL, bundled locally) - the serif used only for display moments:
+ * the greeting, onboarding and session headings, topic/unit titles and the
+ * wordmark. Everything else stays in [PlusJakartaSans].
+ */
+val Newsreader = FontFamily(
+    newsreader(FontWeight.Normal),
+    newsreader(FontWeight.Medium),
+    newsreader(FontWeight.SemiBold),
+)
+
 private fun style(size: Int, line: Int, weight: FontWeight, letterSpacing: Float = 0f) = TextStyle(
     fontFamily = PlusJakartaSans,
     fontWeight = weight,
@@ -34,8 +51,17 @@ private fun style(size: Int, line: Int, weight: FontWeight, letterSpacing: Float
     letterSpacing = letterSpacing.sp,
 )
 
+private fun serif(size: Int, line: Int) = TextStyle(
+    fontFamily = Newsreader,
+    fontWeight = FontWeight.Medium,
+    fontSize = size.sp,
+    lineHeight = line.sp,
+)
+
 val KumbukaTypography = Typography(
-    displaySmall = style(28, 34, FontWeight.Bold, -0.4f),
+    displayLarge = serif(36, 40), // splash/onboarding wordmark scale
+    displayMedium = serif(32, 37), // greeting, onboarding and consent titles
+    displaySmall = serif(28, 32), // session and import headings, topic title (30 via override)
     headlineLarge = style(26, 32, FontWeight.Bold, -0.3f),
     headlineMedium = style(24, 30, FontWeight.Bold, -0.2f),
     headlineSmall = style(20, 26, FontWeight.Bold, -0.1f),

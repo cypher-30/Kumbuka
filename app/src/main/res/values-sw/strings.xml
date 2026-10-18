@@ -11,7 +11,7 @@
          uliofunzwa. -->
     <string name="onboarding_language_label">Lugha</string>
     <string name="onboarding_title">Karibu Kumbuka</string>
-    <string name="onboarding_body">Kumbuka inafanya kazi bila mtandao kabisa. Inapanga la kujifunza leo kutoka kwenye vitengo ulivyoingiza mwenyewe, na kuhifadhi historia yako ya marudio kwenye kifaa hiki tu - hakuna kinachopakiwa au kushirikiwa.</string>
+    <string name="onboarding_body">Kumbuka inafanya kazi bila mtandao kabisa. Inapanga la kujifunza leo kutoka kwenye vitengo ulivyoingiza mwenyewe, na kuhifadhi historia yako ya marudio kwenye kifaa hiki tu.</string>
     <string name="onboarding_privacy_checkbox">Ninaelewa historia yangu ya marudio inabaki kwenye kifaa hiki.</string>
     <string name="onboarding_get_started">Anza</string>
     <string name="onboarding_save_failed">Imeshindwa kuhifadhi hivi punde. Jaribu tena.</string>
@@ -24,6 +24,7 @@
     <string name="nav_progress">Maendeleo</string>
     <string name="nav_exams">Mitihani</string>
     <string name="nav_settings">Mipangilio</string>
+    <string name="nav_search">Tafuta</string>
 
     <!-- Home placeholder (real Today screen lands in a later phase) -->
     <string name="home_placeholder_title">Orodha ya marudio ya leo itaonekana hapa</string>
@@ -38,7 +39,7 @@
     <string name="progress_body">Historia yako ya kujifunza inabaki kwenye kifaa na ndiyo msingi wa uchanganuzi huu wa awali.</string>
     <string name="progress_summary">Vipindi %1$d • dakika za kusoma %2$d • mada zilizopitiwa %3$d/%4$d</string>
     <string name="progress_empty">Bado hakuna vipindi vilivyokamilika. Anza kipindi kuona mwenendo.</string>
-    <string name="progress_confidence_title">Mwenendo wa kujiamini</string>
+    <string name="progress_confidence_title">Mchanganyiko wa kujiamini</string>
     <string name="progress_confidence_before">Wastani wa kujiamini kabla ya kujisomea tena: %1$d%%</string>
     <string name="progress_confidence_after">Wastani wa kujiamini baada ya kujisomea tena: %1$d%%</string>
     <string name="progress_unit_breakdown_title">Vipindi kwa kitengo</string>
@@ -402,7 +403,6 @@
     <string name="confidence_ok">Sawa</string>
     <string name="confidence_solid">Imara</string>
     <!-- Campus Workspace redesign -->
-    <string name="nav_home">Nyumbani</string>
     <string name="nav_assessments">Tathmini</string>
     <string name="generic_cancel">Ghairi</string>
     <string name="generic_close">Funga</string>
@@ -510,7 +510,7 @@
     <string name="progress_tile_topics">Mada zilizorudiwa</string>
     <string name="progress_tile_results">Matokeo yaliyohifadhiwa</string>
     <string name="progress_empty_title">Maendeleo yako yanaanzia hapa</string>
-    <string name="progress_go_home">Nenda Nyumbani</string>
+    <string name="progress_go_home">Nenda kwa Leo</string>
     <string name="progress_week_total">Marudio %1$d wiki hii</string>
     <string name="progress_coverage_title">Ufikiaji kwa kitengo</string>
     <string name="progress_coverage_body">Mada hai ulizorudia angalau mara moja.</string>
@@ -519,10 +519,10 @@
     <string name="progress_marks_title">Matokeo na kujiamini</string>
     <string name="settings_group_study">Masomo</string>
     <string name="settings_group_appearance">Mwonekano na lugha</string>
-    <string name="settings_session_length_body">Muda wa kipindi kimoja cha marudio kwenye Nyumbani.</string>
+    <string name="settings_session_length_body">Muda wa kipindi kimoja cha marudio kwenye Leo.</string>
     <string name="settings_about_version_title">Toleo</string>
     <string name="settings_privacy_body">Kila kitu kinabaki kwenye kifaa hiki: hakuna akaunti, hakuna usawazishaji wa wingu wala upakiaji wa takwimu.</string>
-    <string name="settings_font_credit">Herufi: Plus Jakarta Sans, SIL Open Font License 1.1.</string>
+    <string name="settings_font_credit">Herufi: Plus Jakarta Sans na Newsreader, SIL Open Font License 1.1.</string>
     <string name="research_title">Uchunguzi wa utafiti</string>
     <string name="research_entry_body">Mkono wa kipanga ratiba na idadi ya mapendekezo yaliyorekodiwa</string>
     <string name="research_latest_title">Pendekezo la hivi karibuni</string>
@@ -542,4 +542,102 @@
         <item quantity="one">Mada %1$d imelingana</item>
         <item quantity="other">Mada %1$d zimelingana</item>
     </plurals>
+    <string name="home_hero_done">%1$d kati ya %2$d zimekamilika leo</string>
+    <string name="today_due_soon_banner">%1$s ya %2$s iko %3$s, kwa hiyo mada zake zinasogezwa mbele.</string>
+    <string name="common_continue">Endelea</string>
+    <string name="common_skip_for_now">Ruka kwa sasa</string>
+    <string name="common_required">Lazima</string>
+    <string name="common_optional">Si lazima</string>
+    <string name="onboarding_step">%1$d kati ya %2$d</string>
+    <string name="onboarding_how_1">Ingiza Course Pack kwa kila kitengo</string>
+    <string name="onboarding_how_2">Kumbuka bila madokezo, kisha jikadirie kwa ukweli</string>
+    <string name="onboarding_how_3">Kumbuka hujifunza kasi unayosahau kila mada</string>
+    <string name="onboarding_consent_title">Kabla hujaanza</string>
+    <string name="onboarding_consent_body">Kumbuka ni sehemu ya mradi wa utafiti wa wanafunzi unaolinganisha njia mbili za kupanga marudio. Hii ndiyo maana yake kwako.</string>
+    <string name="onboarding_recorded_title">Hurekodiwa kwenye kifaa hiki</string>
+    <string name="onboarding_recorded_list">Mada kutoka pakiti zako, nyakati za marudio, ukadiriaji wa kujiamini, na alama unazoingiza.</string>
+    <string name="onboarding_never_title">Hairekodiwi kamwe</string>
+    <string name="onboarding_never_list">Madokezo yako, jina, anwani au mahali.</string>
+    <string name="onboarding_check_study">Nakubali kushiriki kwenye utafiti na ninaweza kushiriki kumbukumbu iliyohamishwa. Naweza kujiondoa wakati wowote kwenye Mipangilio.</string>
+    <string name="onboarding_add_first_title">Ongeza kitengo chako cha kwanza</string>
+    <string name="onboarding_add_first_body">Kila kitengo kinatoka kwenye Course Pack: faili dogo ambalo mhadhiri au mwakilishi wa darasa hushiriki kupitia WhatsApp au barua pepe.</string>
+    <string name="onboarding_import_desc">Kutoka faili la .coursepack au maandishi yaliyobandikwa</string>
+    <string name="onboarding_sample_desc">Jaribu kwa vitengo vya mazoezi. Havihesabiwi kwenye Maendeleo.</string>
+    <string name="onboarding_create_desc">Andika mada mwenyewe</string>
+    <string name="settings_privacy_title">Faragha</string>
+    <string name="settings_credits_title">Shukrani</string>
+    <string name="settings_theme_system_hint">Mfumo hufuata mipangilio ya kifaa chako.</string>
+    <string name="settings_group_data">Data</string>
+    <string name="settings_research_title">Ushiriki wa utafiti</string>
+    <string name="settings_research_on">Unashiriki</string>
+    <string name="settings_research_off">Hushiriki</string>
+    <string name="settings_research_join_title">Ungependa kushiriki kwenye utafiti?</string>
+    <string name="settings_research_join_body">Nyakati zako za marudio, ukadiriaji wa kujiamini na alama (kamwe si madokezo wala majina) vinaweza kuhamishwa kama faili unalochagua kushiriki. Unaweza kujiondoa wakati wowote.</string>
+    <string name="settings_research_join_confirm">Shiriki</string>
+    <string name="settings_research_withdraw_title">Ungependa kujiondoa kwenye utafiti?</string>
+    <string name="settings_research_withdraw_body">Kumbuka itaacha kutoa uhamishaji. Chochote ulichoshiriki tayari kinabaki kwa watafiti, lakini hakuna kitakachokusanywa zaidi. Data yako kwenye simu hii haibadiliki.</string>
+    <string name="settings_research_withdraw_confirm">Jiondoe</string>
+    <string name="settings_export_title">Hamisha kumbukumbu ya marudio (CSV)</string>
+    <string name="settings_export_hint">Marudio, ukadiriaji na alama tu. Hakuna madokezo wala majina.</string>
+    <string name="settings_export_join_first">Shiriki kwenye utafiti ili kuhamisha.</string>
+    <string name="settings_export_done">Kumbukumbu imehifadhiwa.</string>
+    <string name="settings_export_failed">Imeshindwa kuhifadhi faili.</string>
+    <string name="paste_title">Bandika muhtasari</string>
+    <string name="paste_hint">Bandika muhtasari wa kozi kutoka WhatsApp, barua pepe au madokezo yako. Kumbuka hutafuta kitengo, mada na tarehe kwa ajili yako.</string>
+    <string name="paste_placeholder">ICS 3108 Server Administration\n1. Mada ya kwanza\n2. Mada ya pili\nCAT 1 - 6th Nov (topics 1-2)</string>
+    <string name="paste_use_sample">Tumia maandishi ya mfano</string>
+    <string name="paste_nothing_found">Hakuna mada iliyopatikana bado. Anza kila mada kwenye mstari wake na 1. 2. 3. au kistari.</string>
+    <string name="paste_code_label">Msimbo wa kitengo</string>
+    <string name="paste_title_label">Jina la kitengo</string>
+    <plurals name="paste_skipped">
+        <item quantity="one">Mstari %1$d uliachwa: %2$s</item>
+        <item quantity="other">Mistari %1$d iliachwa: %2$s</item>
+    </plurals>
+    <string name="paste_create">Unda kitengo</string>
+    <string name="paste_created">%1$s imeundwa.</string>
+    <plurals name="paste_found_topics">
+        <item quantity="one">mada %1$d</item>
+        <item quantity="other">mada %1$d</item>
+    </plurals>
+    <plurals name="paste_found_dates">
+        <item quantity="one">tarehe %1$d</item>
+        <item quantity="other">tarehe %1$d</item>
+    </plurals>
+    <string name="session_done_change">%1$s hadi %2$s</string>
+    <string name="session_done_time">Umesoma kwa takriban dakika %1$d.</string>
+    <string name="session_done_next_label">Inayofuata</string>
+    <string name="session_done_start_next">Anza mada inayofuata · dak %1$d</string>
+    <string name="session_done_back">Rudi kwa Leo</string>
+    <string name="session_nudge_title">Fanya iwe mazoea</string>
+    <string name="session_nudge_body">Ukumbusho wa kila siku hukusaidia kurudi kwenye marudio wakati ule ule kila siku.</string>
+    <string name="session_nudge_cta">Weka ukumbusho wa kila siku</string>
+    <string name="create_mode_course">Kozi</string>
+    <string name="create_mode_goal">Lengo binafsi</string>
+    <string name="create_goal_note">Malengo binafsi ni yako tu. Hayahesabiwi kwenye utafiti.</string>
+    <string name="create_goal_title_label">Lengo</string>
+    <string name="create_objectives_title">Unataka kujifunza nini?</string>
+    <string name="create_topics_title">Mada</string>
+    <string name="create_objective_hint">Lengo %1$d</string>
+    <string name="create_topic_hint">Mada %1$d</string>
+    <string name="create_add_objective">Ongeza lengo</string>
+    <string name="create_add_topic">Ongeza mada</string>
+    <string name="create_weight_label">Uzito wa mtihani</string>
+    <string name="create_weight_low">Chini</string>
+    <string name="create_weight_medium">Wastani</string>
+    <string name="create_weight_high">Juu</string>
+    <string name="create_dates_title">Tarehe</string>
+    <string name="create_add_date">Ongeza tarehe</string>
+    <string name="create_date_title_hint">Jina (mf. CAT 1)</string>
+    <string name="create_date_pick">Chagua tarehe</string>
+    <string name="create_kind_cat">CAT</string>
+    <string name="create_kind_assignment">Kazi</string>
+    <string name="create_kind_exam">Mtihani</string>
+    <string name="create_remove">Ondoa</string>
+    <string name="create_share_title">Shiriki kama Course Pack</string>
+    <string name="create_share_body">Baada ya kuhifadhi, fungua skrini ya kuhamisha ili uwatumie wenzako.</string>
+    <string name="create_save">Hifadhi kitengo</string>
+    <string name="create_discard_title">Tupa kitengo hiki?</string>
+    <string name="create_discard_body">Ulichoandika kitapotea.</string>
+    <string name="create_discard_confirm">Tupa</string>
+    <string name="units_goal_pill">Lengo</string>
 </resources>

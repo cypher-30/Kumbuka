@@ -3,7 +3,16 @@
 package dev.kumbuka.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +21,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,42 +63,66 @@ import dev.kumbuka.app.ui.theme.unitMarker
 val KbContentMaxWidth = 720.dp
 
 /** Bounded, centered content column for expanded windows. */
-fun Modifier.kbContentWidth(): Modifier = this.fillMaxWidth().widthIn(max = KbContentMaxWidth)
+fun Modifier.kbContentWidth(): Modifier = this
+    .fillMaxWidth()
+    .wrapContentWidth(Alignment.CenterHorizontally)
+    .widthIn(max = KbContentMaxWidth)
+    .fillMaxWidth()
 
-/** Standard top bar for main and secondary screens (paper background, no divider). */
+/**
+ * Standard top bar for main and secondary screens: a 64dp row under the status
+ * bar with the title on the left and actions on the right. It sits on the paper
+ * background and picks up a surface tint plus a hairline once the content
+ * beneath it has scrolled ([scrolled]). Main destinations (no back arrow) use
+ * the larger 22sp title; secondary screens use 20sp.
+ */
 @Composable
 fun KbTopBar(
     title: String,
     onBack: (() -> Unit)? = null,
+    scrolled: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val colors = LocalKbColors.current
-    TopAppBar(
-        title = {
-            Text(
-                title,
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.semantics { heading() },
-            )
-        },
-        navigationIcon = {
+    val background by animateColorAsState(if (scrolled) colors.surface else colors.paper, label = "topBarBackground")
+    val rule by animateColorAsState(if (scrolled) colors.border else Color.Transparent, label = "topBarRule")
+    val titleStyle = if (onBack == null) {
+        MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.2).sp)
+    } else {
+        MaterialTheme.typography.headlineSmall
+    }
+    Column(modifier = Modifier.fillMaxWidth().background(background).statusBarsPadding()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(start = if (onBack != null) 8.dp else 20.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.generic_back))
+                IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                    Icon(
+                        Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = stringResource(R.string.generic_back),
+                        tint = colors.ink,
+                    )
                 }
             }
-        },
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colors.paper,
-            scrolledContainerColor = colors.paper,
-            titleContentColor = colors.ink,
-            navigationIconContentColor = colors.ink,
-            actionIconContentColor = colors.ink,
-        ),
-    )
+            Text(
+                title,
+                style = titleStyle,
+                color = colors.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = if (onBack != null) 4.dp else 0.dp)
+                    .semantics { heading() },
+            )
+            CompositionLocalProvider(LocalContentColor provides colors.ink) { actions() }
+        }
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(rule))
+    }
 }
 
 /** Toolbar entry point to Settings, present on every main destination. */
@@ -130,13 +165,13 @@ fun KbSectionHeader(
     }
 }
 
-/** Opaque content surface with a hairline border - for distinct blocks, not every record. */
+/** Opaque white content surface on the paper background. Pass [borderColor] only for a selected or emphasised state. */
 @Composable
 fun KbSurface(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     color: Color = LocalKbColors.current.surface,
-    borderColor: Color? = LocalKbColors.current.border,
+    borderColor: Color? = null,
     shape: androidx.compose.ui.graphics.Shape = MaterialTheme.shapes.large,
     contentPadding: androidx.compose.ui.unit.Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit,
@@ -144,7 +179,9 @@ fun KbSurface(
     val inner: @Composable () -> Unit = {
         Column(modifier = Modifier.padding(contentPadding), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
     }
-    val border = borderColor?.let { BorderStroke(1.dp, it) }
+    // Always a hairline so white cards stay distinct from the paper in light mode;
+    // a caller-supplied colour marks a selected/emphasised state.
+    val border = BorderStroke(if (borderColor != null) 1.5.dp else 1.dp, borderColor ?: LocalKbColors.current.border)
     if (onClick != null) {
         Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = shape, color = color, border = border, content = inner)
     } else {
@@ -158,10 +195,14 @@ fun KbUnitLabel(unitKey: String, unitCode: String, modifier: Modifier = Modifier
     val colors = LocalKbColors.current
     val marker = colors.unitMarker(unitKey)
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Box(Modifier.size(10.dp).background(marker, CircleShape))
+        Box(Modifier.size(if (emphasized) 10.dp else 8.dp).background(marker, CircleShape))
         Text(
             unitCode,
-            style = if (emphasized) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelMedium,
+            style = if (emphasized) {
+                MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp)
+            },
             color = if (emphasized) colors.ink else colors.inkMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -214,7 +255,7 @@ fun KbStatusPill(text: String, status: KbStatus = KbStatus.NEUTRAL, modifier: Mo
     val (bg, fg) = statusColors(status)
     Text(
         text,
-        style = MaterialTheme.typography.labelMedium,
+        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp, fontWeight = FontWeight.Bold),
         color = fg,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -226,9 +267,9 @@ fun KbStatusPill(text: String, status: KbStatus = KbStatus.NEUTRAL, modifier: Mo
 
 /** Inline feedback / notice banner with icon + text. */
 @Composable
-fun KbBanner(text: String, status: KbStatus, modifier: Modifier = Modifier) {
+fun KbBanner(text: String, status: KbStatus, modifier: Modifier = Modifier, icon: ImageVector? = null) {
     val (bg, fg) = statusColors(status)
-    val icon = when (status) {
+    val icon = icon ?: when (status) {
         KbStatus.SUCCESS -> Icons.Outlined.CheckCircle
         KbStatus.WARNING -> Icons.Outlined.WarningAmber
         KbStatus.ERROR -> Icons.Outlined.ErrorOutline
@@ -258,22 +299,33 @@ fun KbEmptyState(
     onPrimary: (() -> Unit)? = null,
     secondaryLabel: String? = null,
     onSecondary: (() -> Unit)? = null,
+    tertiaryLabel: String? = null,
+    onTertiary: (() -> Unit)? = null,
+    tone: KbStatus = KbStatus.INFO,
 ) {
     val colors = LocalKbColors.current
-    KbSurface(modifier = modifier, contentPadding = 20.dp) {
+    val (tileBackground, tileForeground) = statusColors(tone)
+    KbSurface(modifier = modifier, contentPadding = 22.dp, shape = RoundedCornerShape(24.dp)) {
         Box(
-            modifier = Modifier.size(52.dp).background(colors.primaryTint, RoundedCornerShape(16.dp)),
+            modifier = Modifier.size(52.dp).background(tileBackground, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = null, tint = colors.onPrimaryTint)
+            Icon(icon, contentDescription = null, tint = tileForeground)
         }
-        Text(title, style = MaterialTheme.typography.titleLarge, color = colors.ink, modifier = Modifier.semantics { heading() })
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted)
+        Text(title, style = MaterialTheme.typography.headlineSmall, color = colors.ink, modifier = Modifier.semantics { heading() })
+        Text(body, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 22.sp), color = colors.inkMuted)
         if (primaryLabel != null && onPrimary != null) {
             KbPrimaryButton(text = primaryLabel, onClick = onPrimary, modifier = Modifier.padding(top = 4.dp))
         }
         if (secondaryLabel != null && onSecondary != null) {
-            KbSecondaryButton(text = secondaryLabel, onClick = onSecondary)
+            if (tertiaryLabel != null && onTertiary != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    KbSecondaryButton(text = secondaryLabel, onClick = onSecondary, modifier = Modifier.weight(1f), fillWidth = false)
+                    KbSecondaryButton(text = tertiaryLabel, onClick = onTertiary, modifier = Modifier.weight(1f), fillWidth = false)
+                }
+            } else {
+                KbSecondaryButton(text = secondaryLabel, onClick = onSecondary)
+            }
         }
     }
 }
@@ -285,6 +337,7 @@ fun KbListRow(
     onClick: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+    borderColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = LocalKbColors.current
@@ -292,9 +345,11 @@ fun KbListRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .background(colors.surface, MaterialTheme.shapes.medium)
+            .border(if (borderColor != null) 1.5.dp else 1.dp, borderColor ?: colors.border, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -315,8 +370,19 @@ fun KbDateTile(month: String, day: String, status: KbStatus = KbStatus.INFO) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(month.uppercase(), style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 1)
-        Text(day, style = MaterialTheme.typography.titleLarge, color = fg, maxLines = 1, textAlign = TextAlign.Center)
+        Text(
+            month.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.66.sp),
+            color = fg,
+            maxLines = 1,
+        )
+        Text(
+            day,
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 21.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold),
+            color = fg,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

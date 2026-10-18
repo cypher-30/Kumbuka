@@ -23,7 +23,7 @@ class KumbukaApplication : Application() {
 
     val database: KumbukaDatabase by lazy {
         Room.databaseBuilder(this, KumbukaDatabase::class.java, KumbukaDatabase.DATABASE_NAME)
-            .addMigrations(KumbukaDatabase.MIGRATION_1_2)
+            .addMigrations(KumbukaDatabase.MIGRATION_1_2, KumbukaDatabase.MIGRATION_2_3)
             .build()
     }
 
