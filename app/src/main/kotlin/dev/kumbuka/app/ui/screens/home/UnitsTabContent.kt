@@ -2,7 +2,15 @@ package dev.kumbuka.app.ui.screens.home
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +55,7 @@ import dev.kumbuka.app.ui.components.KbUnitBadge
 import dev.kumbuka.app.ui.components.KbUnitLabel
 import dev.kumbuka.app.ui.components.kbContentWidth
 import dev.kumbuka.app.ui.theme.LocalKbColors
+import dev.kumbuka.app.ui.theme.unitMarker
 import java.time.LocalDate
 
 @Composable
@@ -54,6 +63,7 @@ fun UnitsTabContent(
     units: List<UnitModel>,
     activeTopics: List<Topic>,
     deadlines: List<Deadline>,
+    reviewedTopicIds: Set<String>,
     today: LocalDate,
     listState: LazyListState,
     onOpenUnit: (String) -> Unit,
@@ -174,6 +184,7 @@ fun UnitsTabContent(
             UnitLibraryRow(
                 unit = unit,
                 topicCount = topicsByUnit[unit.id].orEmpty().size,
+                reviewedCount = topicsByUnit[unit.id].orEmpty().count { it.id in reviewedTopicIds },
                 upcomingCount = upcomingByUnit[unit.id].orEmpty().size,
                 onClick = { onOpenUnit(unit.id) },
                 modifier = Modifier.kbContentWidth(),
@@ -191,6 +202,7 @@ fun UnitsTabContent(
                 UnitLibraryRow(
                     unit = unit,
                     topicCount = topicsByUnit[unit.id].orEmpty().size,
+                    reviewedCount = 0,
                     upcomingCount = upcomingByUnit[unit.id].orEmpty().size,
                     onClick = { onOpenUnit(unit.id) },
                     modifier = Modifier.kbContentWidth(),
@@ -201,7 +213,7 @@ fun UnitsTabContent(
 }
 
 @Composable
-private fun UnitLibraryRow(unit: UnitModel, topicCount: Int, upcomingCount: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun UnitLibraryRow(unit: UnitModel, topicCount: Int, reviewedCount: Int, upcomingCount: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = LocalKbColors.current
     KbListRow(
         onClick = onClick,
@@ -212,6 +224,7 @@ private fun UnitLibraryRow(unit: UnitModel, topicCount: Int, upcomingCount: Int,
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(unit.code, style = MaterialTheme.typography.labelLarge, color = colors.inkMuted)
             if (unit.isSample) KbStatusPill(stringResource(R.string.units_sample_pill), KbStatus.NEUTRAL)
+            if (unit.isPersonal) KbStatusPill(stringResource(R.string.units_goal_pill), KbStatus.INFO)
         }
         Text(unit.title, style = MaterialTheme.typography.titleMedium, color = colors.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(
@@ -220,6 +233,19 @@ private fun UnitLibraryRow(unit: UnitModel, topicCount: Int, upcomingCount: Int,
             style = MaterialTheme.typography.bodySmall,
             color = colors.inkMuted,
         )
+        if (!unit.isSample && topicCount > 0) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(3.dp)).background(colors.border)) {
+                    Box(
+                        Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(reviewedCount.toFloat() / topicCount)
+                            .background(colors.unitMarker(unit.id), RoundedCornerShape(3.dp)),
+                    )
+                }
+                Text("$reviewedCount/$topicCount", style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp), color = colors.inkMuted)
+            }
+        }
     }
 }
 

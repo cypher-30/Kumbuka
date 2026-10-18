@@ -23,6 +23,13 @@ import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.prefs.AppPreferences
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
+import dev.kumbuka.app.data.repository.DeadlineRepository
+import dev.kumbuka.app.data.bootstrap.DemoHistorySeeder
+import android.content.pm.ApplicationInfo
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import dev.kumbuka.app.ui.components.KbSecondaryButton
 import dev.kumbuka.app.data.repository.SchedulerLogRepository
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
@@ -45,6 +52,7 @@ fun ResearchDiagnosticsScreen(
     sessionRepository: SessionRepository,
     assessmentMarkRepository: AssessmentMarkRepository,
     schedulerLogRepository: SchedulerLogRepository,
+    deadlineRepository: DeadlineRepository,
     onBack: () -> Unit,
 ) {
     val colors = LocalKbColors.current
@@ -58,6 +66,9 @@ fun ResearchDiagnosticsScreen(
     val report = remember(units, topics, sessions, marks, logs) { reduceInsights(units, topics, sessions, marks, logs) }
     val latest = remember(logs) { logs.filter { it.selected }.maxByOrNull { it.evaluatedAt } }
     val scheduler = report.schedulerInsights
+    val context = LocalContext.current
+    val isDebuggable = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    var demoStatus by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = { KbTopBar(title = stringResource(R.string.research_title), onBack = onBack) },
@@ -71,6 +82,24 @@ fun ResearchDiagnosticsScreen(
         ) {
             item(key = "notice") {
                 KbBanner(stringResource(R.string.settings_research_controls_body), KbStatus.INFO, Modifier.kbContentWidth())
+            }
+            if (isDebuggable) {
+                item(key = "demo") {
+                    Column(Modifier.kbContentWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        KbSecondaryButton(
+                            text = "Load demo history (debug build only)",
+                            onClick = {
+                                demoStatus = "Loading..."
+                                scope.launch {
+                                    demoStatus = runCatching {
+                                        DemoHistorySeeder.seed(unitRepository, topicRepository, sessionRepository, deadlineRepository, assessmentMarkRepository)
+                                    }.fold({ "Demo history loaded: 5 units, ~3 months of reviews, dates and marks." }, { "Failed: ${it.message}" })
+                                }
+                            },
+                        )
+                        demoStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = colors.inkMuted) }
+                    }
+                }
             }
             item(key = "arm") {
                 SettingsGroup(stringResource(R.string.settings_scheduler_arm_title)) {
@@ -120,8 +149,9 @@ fun ResearchDiagnosticsScreen(
 
 @Composable
 private fun DiagnosticLine(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalKbColors.current.inkMuted, modifier = Modifier.weight(1f))
+    // Stacked so a long value (e.g. the predictor name) never squeezes the label into a one-letter column.
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = LocalKbColors.current.inkMuted)
         Text(value, style = MaterialTheme.typography.labelLarge, color = LocalKbColors.current.ink)
     }
 }

@@ -13,6 +13,11 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -297,15 +302,50 @@ fun ImportPackScreen(
                 )
             }
             item {
-                KbPrimaryButton(
-                    icon = Icons.Outlined.FolderOpen,
-                    text = stringResource(R.string.import_choose_file),
-                    onClick = {
-                        parseError = null
-                        openDocument.launch(CoursePackMimeTypes)
-                    },
-                    enabled = !busy,
-                )
+                val colors = LocalKbColors.current
+                val dashColor = colors.outlineStrong
+                androidx.compose.foundation.layout.Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(colors.surface)
+                        .drawBehind {
+                            drawRoundRect(
+                                color = dashColor,
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()),
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = 2.dp.toPx(),
+                                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(14.dp.toPx(), 10.dp.toPx())),
+                                ),
+                            )
+                        }
+                        .clickable(enabled = !busy, role = androidx.compose.ui.semantics.Role.Button) {
+                            parseError = null
+                            openDocument.launch(CoursePackMimeTypes)
+                        }
+                        .padding(horizontal = 20.dp, vertical = 32.dp),
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(colors.primaryTint, RoundedCornerShape(18.dp)),
+                        contentAlignment = androidx.compose.ui.Alignment.Center,
+                    ) {
+                        androidx.compose.material3.Icon(Icons.Outlined.FolderOpen, contentDescription = null, tint = colors.onPrimaryTint)
+                    }
+                    Text(
+                        stringResource(R.string.import_choose_file),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                        color = colors.ink,
+                    )
+                    Text(
+                        stringResource(R.string.onboarding_import_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.inkMuted,
+                    )
+                }
             }
             item {
                 TextButton(

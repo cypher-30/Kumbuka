@@ -155,6 +155,18 @@ fun recentActivity(
     }
 }
 
+/**
+ * Reviews finished (not deferred) on local day [today] for the given topics - the
+ * "done today" count on the Today hero. Only topics in [topicIds] count, so it
+ * lines up with the plan the hero is summarising.
+ */
+fun completedToday(sessions: List<Session>, today: LocalDate, zone: ZoneId, topicIds: Set<String>): Int =
+    sessions.count { session ->
+        val endedAt = session.endedAt
+        endedAt != null && !session.wasDeferred && session.topicId in topicIds &&
+            Instant.ofEpochMilli(endedAt).atZone(zone).toLocalDate() == today
+    }
+
 /** Most recent finished, non-deferred review instant per topic. */
 fun lastReviewByTopic(sessions: List<Session>): Map<String, Long> =
     sessions.filter { it.endedAt != null && !it.wasDeferred }

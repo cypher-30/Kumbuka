@@ -47,6 +47,7 @@ import dev.kumbuka.app.domain.model.AssessmentMark
 import dev.kumbuka.app.domain.model.Deadline
 import dev.kumbuka.app.domain.model.Unit as UnitModel
 import dev.kumbuka.app.ui.components.KbEmptyState
+import dev.kumbuka.app.ui.components.KbSegmentedControl
 import dev.kumbuka.app.ui.components.KbListRow
 import dev.kumbuka.app.ui.components.KbPrimaryButton
 import dev.kumbuka.app.ui.components.KbStatus
@@ -93,30 +94,18 @@ fun AssessmentsTabContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         item(key = "segments") {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.kbContentWidth()) {
-                AssessmentSegment.entries.forEachIndexed { index, option ->
-                    SegmentedButton(
-                        selected = segment == option,
-                        onClick = { onSegmentChange(option) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = AssessmentSegment.entries.size),
-                        colors = SegmentedButtonDefaults.colors(
-                            activeContainerColor = colors.primaryTint,
-                            activeContentColor = colors.onPrimaryTint,
-                            inactiveContainerColor = colors.surface,
-                            inactiveContentColor = colors.ink,
-                            activeBorderColor = colors.outlineStrong,
-                            inactiveBorderColor = colors.outlineStrong,
-                        ),
-                    ) {
-                        Text(
-                            when (option) {
-                                AssessmentSegment.UPCOMING -> stringResource(R.string.assessments_segment_dates)
-                                AssessmentSegment.RESULTS -> stringResource(R.string.assessments_segment_results)
-                            },
-                        )
+            val entries = AssessmentSegment.entries
+            KbSegmentedControl(
+                options = entries.map {
+                    when (it) {
+                        AssessmentSegment.UPCOMING -> stringResource(R.string.assessments_segment_dates)
+                        AssessmentSegment.RESULTS -> stringResource(R.string.assessments_segment_results)
                     }
-                }
-            }
+                },
+                selectedIndex = entries.indexOf(segment),
+                onSelect = { onSegmentChange(entries[it]) },
+                modifier = Modifier.kbContentWidth(),
+            )
         }
         if (units.size > 1) {
             item(key = "filters") {

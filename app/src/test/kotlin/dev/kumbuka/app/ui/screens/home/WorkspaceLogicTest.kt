@@ -35,6 +35,21 @@ class WorkspaceLogicTest {
         )
 
     @Test
+    fun completedTodayCountsOnlyFinishedTodaySessionsForPlannedTopics() {
+        val noon = today.atTime(12, 0)
+        val sessions = listOf(
+            session("a", "t1", noon),
+            session("b", "t2", noon),
+            session("deferred", "t1", noon, deferred = true),
+            session("active", "t1", null),
+            session("yesterday", "t1", today.minusDays(1).atTime(12, 0)),
+            session("other-topic", "t9", noon),
+        )
+        assertEquals(2, completedToday(sessions, today, ZoneOffset.UTC, setOf("t1", "t2")))
+        assertEquals(0, completedToday(emptyList(), today, ZoneOffset.UTC, setOf("t1")))
+    }
+
+    @Test
     fun greetingPeriodsSwitchAtBoundaries() {
         assertEquals(GreetingPeriod.EVENING, greetingPeriodFor(4))
         assertEquals(GreetingPeriod.MORNING, greetingPeriodFor(5))

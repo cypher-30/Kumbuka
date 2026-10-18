@@ -25,4 +25,7 @@ class SessionRepository(private val sessionDao: SessionDao) {
         sessionDao.countDeferralsForTopic(topicId)
 
     suspend fun upsert(session: Session) = sessionDao.upsert(session.toEntity())
+
+    /** Developer demo seeding only. */
+    suspend fun deleteDemoSessions(prefix: String) = sessionDao.deleteWithIdPrefix(prefix)
 }

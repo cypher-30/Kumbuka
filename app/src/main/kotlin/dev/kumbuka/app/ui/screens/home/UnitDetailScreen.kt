@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.kumbuka.app.R
 import dev.kumbuka.app.data.repository.AssessmentMarkRepository
 import dev.kumbuka.app.data.repository.DeadlineRepository
@@ -62,6 +63,8 @@ fun UnitDetailScreen(
     onExportUnit: (String) -> Unit,
     onShowAssessments: (AssessmentSegment, String) -> Unit,
     onAddMark: (String) -> Unit,
+    /** False when embedded as the detail pane of a two-pane layout with nothing to go back to. */
+    showBack: Boolean = true,
 ) {
     val colors = LocalKbColors.current
     val locale = currentLocale()
@@ -84,9 +87,9 @@ fun UnitDetailScreen(
         topBar = {
             KbTopBar(
                 title = unit?.code ?: stringResource(R.string.unit_detail_title),
-                onBack = onBack,
+                onBack = if (showBack) onBack else null,
                 actions = {
-                    if (unit != null) {
+                    if (unit != null && !unit.isPersonal) {
                         IconButton(onClick = { onExportUnit(unit.id) }) {
                             Icon(Icons.Outlined.IosShare, contentDescription = stringResource(R.string.unit_export_pack))
                         }
@@ -117,15 +120,21 @@ fun UnitDetailScreen(
         ) {
             item(key = "header") {
                 Row(Modifier.kbContentWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    KbUnitBadge(unitKey = unit.id, unitCode = unit.code, size = 60.dp)
+                    KbUnitBadge(unitKey = unit.id, unitCode = unit.code, size = 56.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(unit.title, style = MaterialTheme.typography.headlineSmall, color = colors.ink)
+                        Text(
+                            unit.title,
+                            style = MaterialTheme.typography.displaySmall.copy(fontSize = 26.sp, lineHeight = 30.sp),
+                            color = colors.ink,
+                        )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                stringResource(R.string.unit_detail_pack_version, unit.packVersion ?: 1),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.inkMuted,
-                            )
+                            unit.packVersion?.let { version ->
+                                Text(
+                                    stringResource(R.string.unit_detail_pack_version, version),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.inkMuted,
+                                )
+                            }
                             if (unit.isSample) KbStatusPill(stringResource(R.string.units_sample_pill), KbStatus.NEUTRAL)
                         }
                     }

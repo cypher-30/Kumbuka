@@ -47,7 +47,7 @@ private fun KbPalette.toColorScheme(): ColorScheme {
         inverseSurface = ink,
         inverseOnSurface = paper,
         inversePrimary = if (isDark) KbLightPalette.primary else KbDarkPalette.primary,
-        scrim = base.scrim,
+        scrim = scrim,
     )
 }
 

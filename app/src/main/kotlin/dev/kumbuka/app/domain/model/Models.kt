@@ -19,6 +19,7 @@ data class Unit(
     val createdAt: Long,
     val updatedAt: Long,
     val isSample: Boolean = false,
+    val isPersonal: Boolean = false,
 )
 
 data class Topic(

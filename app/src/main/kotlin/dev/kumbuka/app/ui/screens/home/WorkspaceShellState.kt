@@ -18,7 +18,7 @@ enum class AssessmentSegment { UPCOMING, RESULTS }
  */
 @Stable
 class WorkspaceShellState(
-    tab: KbNavTab = KbNavTab.HOME,
+    tab: KbNavTab = KbNavTab.TODAY,
     segment: AssessmentSegment = AssessmentSegment.UPCOMING,
     unitFilter: String? = null,
 ) {
@@ -28,6 +28,9 @@ class WorkspaceShellState(
 
     /** One-shot snackbar text shown by the shell, then cleared. Not persisted. */
     var pendingMessage by mutableStateOf<String?>(null)
+
+    /** Set by the session Done screen: Today starts this topic through its normal, logged path. */
+    var pendingStartTopicId by mutableStateOf<String?>(null)
 
     fun showAssessments(segment: AssessmentSegment, unitId: String? = null) {
         this.segment = segment
@@ -42,7 +45,7 @@ class WorkspaceShellState(
                 @Suppress("UNCHECKED_CAST")
                 val parts = raw as List<String>
                 WorkspaceShellState(
-                    tab = runCatching { KbNavTab.valueOf(parts[0]) }.getOrDefault(KbNavTab.HOME),
+                    tab = KbNavTab.fromSaved(parts[0]),
                     segment = runCatching { AssessmentSegment.valueOf(parts[1]) }.getOrDefault(AssessmentSegment.UPCOMING),
                     unitFilter = parts[2].ifBlank { null },
                 )

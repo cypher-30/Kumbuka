@@ -4,19 +4,22 @@ import android.content.Intent
 import android.net.Uri
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
+import android.graphics.Color
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,9 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import dev.kumbuka.app.ui.navigation.KbRoute
 import dev.kumbuka.app.ui.navigation.KumbukaNavGraph
@@ -40,22 +41,34 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Must be called before super.onCreate() - installs the native
-        // Android 12+ SplashScreen (androidx compat on 26-30). It owns only
-        // the very first frame while startRoute is resolving; once resolved,
-        // KumbukaNavGraph's own KbRoute.SPLASH plays the fuller icon/wordmark
-        // animation before routing to onboarding/Today (restored by request).
+        // Android 12+ SplashScreen (androidx compat on 26-30). This is the one
+        // and only launch beat ("Usiku na Jua" splash A): on API 31+ the
+        // animated icon draws the curve and lands the sun in under a second,
+        // then fades into the app; older APIs show the fully drawn static mark.
         val splashScreen = installSplashScreen()
+        val launchedAtMs = SystemClock.uptimeMillis()
+        val playFullAnimation = savedInstanceState == null && coldStartPending
+        coldStartPending = false
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         val app = application as KumbukaApplication
         cachePendingImportFromIntent(intent, app)
 
         var startRoute by mutableStateOf<String?>(null)
-        // Keeps the native splash on screen only while the real routing
-        // decision (onboarding complete or not) is still loading - not to
-        // force the icon animation to finish, and not an indefinite hold if
-        // the read fails.
-        splashScreen.setKeepOnScreenCondition { startRoute == null }
+        // Keeps the native splash on screen while the real routing decision
+        // (onboarding complete or not) is loading, and - on a cold start only -
+        // until the icon animation has had time to finish. Warm/hot starts get
+        // no artificial wait. Never an indefinite hold if the read fails.
+        splashScreen.setKeepOnScreenCondition {
+            startRoute == null ||
+                (playFullAnimation && SystemClock.uptimeMillis() - launchedAtMs < SPLASH_ANIMATION_MS)
+        }
+        splashScreen.setOnExitAnimationListener { splashView ->
+            splashView.view.animate()
+                .alpha(0f)
+                .setDuration(SPLASH_FADE_MS)
+                .withEndAction { splashView.remove() }
+                .start()
+        }
         lifecycleScope.launch {
             startRoute = runCatching { app.preferences.onboardingComplete.first() }
                 .onFailure { error -> Log.e(TAG, "Failed to read onboarding preference; starting fresh", error) }
@@ -65,16 +78,21 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val language by app.preferences.language.collectAsState(initial = "en")
-            val themeMode by app.preferences.themeMode.collectAsState(initial = "system")
+            val themeMode by app.preferences.themeMode.collectAsState(initial = "light")
             val systemDark = isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
                 "dark" -> true
                 "light" -> false
                 else -> systemDark
             }
-            val view = LocalView.current
-            SideEffect {
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            // Bars are transparent and follow the app's own light/dark choice (not
+            // the system setting), so the app background shows through seamlessly.
+            DisposableEffect(darkTheme) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
+                    navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
+                )
+                onDispose { }
             }
 
             KumbukaTheme(darkTheme = darkTheme) {
@@ -116,6 +134,13 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+
+        /** Native animated icon runs ~1s (windowSplashScreenAnimationDuration); hold slightly less so the fade overlaps. */
+        private const val SPLASH_ANIMATION_MS = 950L
+        private const val SPLASH_FADE_MS = 200L
+
+        /** True only for the first Activity of a freshly started process. */
+        private var coldStartPending = true
     }
 }
 
