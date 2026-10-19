@@ -25,3 +25,9 @@ keystore.properties
 
 # Kotlin compiler daemon state / error logs
 .kotlin/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.iml
