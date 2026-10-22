@@ -94,6 +94,7 @@ class AppPreferences(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { it[Keys.LANGUAGE] = code }
     }
 
+    /** Clamped to the 15..120 minute range the session UI offers. */
     suspend fun setSessionLengthMinutes(value: Int) {
         dataStore.edit { it[Keys.SESSION_LENGTH_MINUTES] = value.coerceIn(15, 120) }
     }
