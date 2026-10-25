@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 
+/** Projects our semantic palette onto the Material 3 slots the components read. */
 private fun KbPalette.toColorScheme(): ColorScheme {
     val base = if (isDark) darkColorScheme() else lightColorScheme()
     return base.copy(
