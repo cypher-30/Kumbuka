@@ -17,6 +17,7 @@ import java.time.ZoneOffset
  * [excludedUnitIds], matching how Progress ignores them.
  */
 object ReviewLogExporter {
+    /** Column order for the CSV; one constant so tests and the header cannot drift. */
     const val HEADER = "record_type,id,unit_id,topic_id,kind,started_at_utc,ended_at_utc," +
         "planned_minutes,actual_seconds,confidence_before,confidence_after,deferred,scheduler_arm," +
         "score,out_of,date"
