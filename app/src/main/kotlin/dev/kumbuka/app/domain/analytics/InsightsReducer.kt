@@ -48,6 +48,10 @@ data class InsightsReport(
     val schedulerInsights: SchedulerInsights,
 )
 
+/**
+ * Rolls sessions, marks and scheduler logs into the Progress screen's report.
+ * Sample-pack data is excluded so demo content never skews real statistics.
+ */
 fun reduceInsights(
     units: List<Unit>,
     topics: List<Topic>,
