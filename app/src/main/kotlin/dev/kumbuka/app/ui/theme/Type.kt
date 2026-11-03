@@ -43,6 +43,7 @@ val Newsreader = FontFamily(
     newsreader(FontWeight.SemiBold),
 )
 
+/** Body/UI style builder: Jakarta Sans with an explicit size/line-height pair. */
 private fun style(size: Int, line: Int, weight: FontWeight, letterSpacing: Float = 0f) = TextStyle(
     fontFamily = PlusJakartaSans,
     fontWeight = weight,
