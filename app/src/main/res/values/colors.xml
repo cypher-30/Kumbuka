@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#172238</color>
+
+    <!-- "Usiku na Jua" brand: Midnight launch surface + Saffron mark (see ui/theme/Color.kt KbBrand) -->
+    <color name="kb_primary">#172238</color>
+    <color name="kb_paper">#F7F3EC</color>
+    <color name="kb_accent">#F0B23E</color>
+</resources>
