@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13+ themed-icon layer: same artwork as ic_launcher_foreground in one flat colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.9"
+        android:scaleY="0.9"
+        android:translateX="25.2"
+        android:translateY="25.2">
+        <path
+            android:pathData="M8,46C20,30 44,30 56,46"
+            android:strokeColor="#000000"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="5.5" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M24,22a8,8 0 1,0 16,0a8,8 0 1,0 -16,0" />
+    </group>
+</vector>

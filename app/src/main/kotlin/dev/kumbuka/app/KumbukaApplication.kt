@@ -1,0 +1,63 @@
+package dev.kumbuka.app
+
+import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.room.Room
+import dev.kumbuka.app.data.local.KumbukaDatabase
+import dev.kumbuka.app.data.prefs.AppPreferences
+import dev.kumbuka.app.data.reminders.ReminderWorker
+import dev.kumbuka.app.data.repository.AssessmentMarkRepository
+import dev.kumbuka.app.data.repository.DeadlineRepository
+import dev.kumbuka.app.data.repository.PackRepository
+import dev.kumbuka.app.data.repository.SchedulerLogRepository
+import dev.kumbuka.app.data.repository.SessionRepository
+import dev.kumbuka.app.data.repository.TopicRepository
+import dev.kumbuka.app.data.repository.UnitRepository
+
+private val android.content.Context.dataStore by preferencesDataStore(name = "kumbuka_prefs")
+
+class KumbukaApplication : Application() {
+
+    val database: KumbukaDatabase by lazy {
+        Room.databaseBuilder(this, KumbukaDatabase::class.java, KumbukaDatabase.DATABASE_NAME)
+            .addMigrations(KumbukaDatabase.MIGRATION_1_2, KumbukaDatabase.MIGRATION_2_3)
+            .build()
+    }
+
+    val unitRepository: UnitRepository by lazy { UnitRepository(database.unitDao()) }
+    val topicRepository: TopicRepository by lazy { TopicRepository(database.topicDao()) }
+    val sessionRepository: SessionRepository by lazy { SessionRepository(database.sessionDao()) }
+    val deadlineRepository: DeadlineRepository by lazy { DeadlineRepository(database.deadlineDao()) }
+    val assessmentMarkRepository: AssessmentMarkRepository by lazy {
+        AssessmentMarkRepository(database.assessmentMarkDao())
+    }
+    val packRepository: PackRepository by lazy {
+        PackRepository(database, unitRepository, topicRepository, deadlineRepository)
+    }
+    val schedulerLogRepository: SchedulerLogRepository by lazy {
+        SchedulerLogRepository(database.schedulerEvaluationDao())
+    }
+
+    val preferences: AppPreferences by lazy { AppPreferences(dataStore) }
+
+    var pendingImportUri by mutableStateOf<String?>(null)
+        private set
+
+    fun queuePendingImportUri(uri: String?) {
+        pendingImportUri = uri
+    }
+
+    fun clearPendingImportUri(expectedUri: String? = null) {
+        if (expectedUri == null || pendingImportUri == expectedUri) {
+            pendingImportUri = null
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        ReminderWorker.ensureChannel(this)
+    }
+}

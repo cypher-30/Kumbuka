@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Kumbuka" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/kb_primary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!--
+      Native SplashScreen (androidx.core:core-splashscreen, API 26+). This is the
+      one and only launch beat. Here (API < 31) it shows the fully drawn static
+      mark on Midnight; values-v31/themes.xml swaps in the animated icon where the
+      platform can play it. postSplashScreenTheme hands off to the normal app
+      theme once MainActivity clears the keep-on-screen condition.
+    -->
+    <style name="Theme.Kumbuka.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/kb_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_static</item>
+        <item name="postSplashScreenTheme">@style/Theme.Kumbuka</item>
+    </style>
+</resources>

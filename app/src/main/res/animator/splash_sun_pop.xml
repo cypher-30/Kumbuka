@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Overshoot pop 0 -> 1.25 -> 1 (the prototype's kbPop keyframes), starting once the curve is drawn. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="together">
+    <set android:ordering="sequentially">
+        <objectAnimator
+            android:duration="245"
+            android:propertyName="scaleX"
+            android:startOffset="600"
+            android:valueFrom="0"
+            android:valueTo="1.25"
+            android:valueType="floatType" />
+        <objectAnimator
+            android:duration="105"
+            android:propertyName="scaleX"
+            android:valueFrom="1.25"
+            android:valueTo="1"
+            android:valueType="floatType" />
+    </set>
+    <set android:ordering="sequentially">
+        <objectAnimator
+            android:duration="245"
+            android:propertyName="scaleY"
+            android:startOffset="600"
+            android:valueFrom="0"
+            android:valueTo="1.25"
+            android:valueType="floatType" />
+        <objectAnimator
+            android:duration="105"
+            android:propertyName="scaleY"
+            android:valueFrom="1.25"
+            android:valueTo="1"
+            android:valueType="floatType" />
+    </set>
+</set>
