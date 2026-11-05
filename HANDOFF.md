@@ -1,6 +1,128 @@
 # Kumbuka — session handoff
 
-## Latest: Campus Workspace redesign
+## Latest: "Usiku na Jua" redesign (read this first)
+
+**Branch:** `redesign/usiku-na-jua` (pushed to `origin`, no PR opened). Commit `f90965d` sits on
+`fe3e5e7`. `main` is untouched. Nothing is merged.
+
+This pass replaced the Campus Workspace look with the Claude Design redesign (Claude Design project
+`19535662-7f6e-4a0b-afb3-b545a907af3d`, files `Kumbuka Prototype.dc.html` and `Kumbuka Brand.dc.html`),
+tested on a real phone (OPPO CPH2159) and a real tablet (Galaxy Tab S7+). The user said "close to
+Claude Design" is good enough, not a pixel replica.
+
+### What changed in the app
+
+- **Theme** (`ui/theme/Color.kt`, `Theme.kt`, `Type.kt`): Midnight `#172238`, Clay `#B4442A`,
+  Saffron `#F0B23E`. The light palette was deliberately calmed (paper `#EFE9DD`, surface `#FBF9F4`,
+  hairline borders) after the user found the design's brighter light mode "too bright". Newsreader
+  headings (`res/font/newsreader.ttf`), Plus Jakarta Sans body. **Light is the default theme**;
+  Settings still offers System / Light / Dark (`AppPreferences.themeMode`).
+- **System bars:** transparent in `themes.xml` + `enableEdgeToEdge(SystemBarStyle.auto(...))` in a
+  `DisposableEffect(darkTheme)` in `MainActivity`. This fixes the grey status-bar strip (rule is also
+  in the user's global `~/.claude/CLAUDE.md`). Always check light and dark on a device.
+- **Splash:** native animated icon only (Android 12+). The Compose `SplashScreen.kt` and
+  `KbRoute.SPLASH` are deleted. Older APIs show the static mark.
+- **Shell:** tabs are now **Today / Units / Assessments / Progress**. Rail + two-pane layout at
+  >= 840dp (tablet landscape); rotation follows the device (no lock). `kbContentWidth()` caps content
+  at 720dp and centres it (it had a modifier-order bug that never capped; fixed).
+- **Onboarding** (`OnboardingScreen.kt`): 3 steps (language + how it works, consent with one
+  required and one optional box, first unit or Skip). Optional study participation is **unticked by
+  default** (the design pre-ticks it).
+- **Today:** Midnight hero with progress, next-date chip, due banner, featured card with Why this?,
+  queue rows with play buttons, Coming up.
+- **Session:** restyled; defer is an `AlertDialog`; new **Done screen** (confidence change, time,
+  Next up with "Start next topic", reminder nudge). "Start next topic" sets
+  `shell.pendingStartTopicId` and Today starts it through its normal logged path. The reminder nudge
+  asks for the Android 13 notification permission in context and enables the reminder.
+- **Create unit** (`CreateUnitScreen.kt`, replaces the deleted `PackAuthoringScreen.kt`): Course
+  (code, topics with Low/Medium/High weight, dates, share toggle) or Personal goal (title +
+  objectives). Route is still `KbRoute.AUTHOR_PACK`.
+- **Paste outline** (`PasteOutlineScreen.kt`, parser in `pack/OutlineParser.kt`, ported from the
+  prototype's `parseOutline`). Add-unit sheet: Import / Paste outline / Create unit.
+- **Import** restyled (dashed file picker, paste link, sample card).
+- **Settings:** grouped list with icon tiles; Session length / Appearance / Language / Reminder open
+  choice sheets; Privacy and Credits open info sheets; Version tapped 7x unlocks Research
+  diagnostics. **Data group:** research participation (join/withdraw dialogs) and **Export review
+  log (CSV)** via `CreateDocument("text/csv")`, enabled only when participating
+  (`domain/analytics/ReviewLogExporter.kt`; ids only, excludes sample and personal units).
+- **Units tab:** reviewed-progress bars; goal pill on personal goals; share icon hidden for goals.
+  **Assessments:** pill Dates/Results control plus an "Add mark" FAB.
+- **Debug-only demo history** (`data/bootstrap/DemoHistorySeeder.kt`): 5 units, ~150 reviews over
+  ~90 days, dates and marks. Settings -> tap Version 7x -> Research diagnostics -> "Load demo
+  history". Hidden in non-debuggable builds. It writes fake study data into the DB.
+
+### Data
+
+- **Room v3.** `MIGRATION_2_3` adds `units.isPersonal INTEGER NOT NULL DEFAULT 0` (additive).
+  Verified by installing over a v2 database on both phone and tablet; data survived.
+- Personal goals are **excluded from the research log and export** (`researchExcludedTopicIds` in
+  `HomeScreen`) but still count in Progress.
+- `allowBackup` stays **true** (user's decision). After uninstall + reinstall the app restores its
+  data, so a clean state needs clearing storage by hand.
+
+### Tests
+
+45 unit tests, all passing at `f90965d` (`.\scripts\build.ps1 assembleDebug testDebugUnitTest`).
+New: `OutlineParserTest`, `ReviewLogExporterTest`, `completedToday` in `WorkspaceLogicTest`.
+EN/SW string parity: 569/569 keys. Always add every string to both locales.
+
+### Verified on devices
+
+Phone and tablet: onboarding, Today, Why this?, full session to Done, Units/Assessments/Progress,
+Settings and sheets, join/withdraw dialogs, CSV save dialog opens (cancelled, no file written),
+Add unit, Create unit, Paste outline, Import screen, light/dark, Kiswahili, portrait + landscape,
+the v2->v3 migration.
+
+### Not verified / known gaps
+
+- A real CSV save (contents only covered by unit tests), Import with a real pack file, external
+  file open, large-font, process recreation, TalkBack.
+- Mark editor was only visually checked; no save-then-edit round trip this pass.
+- Progress charts are simple (week bars, confidence mix, coverage). No per-unit graphs.
+- Release build is **not** done: signing is still deferred, so the shareable APK is a debug build
+  (`Kumbuka-redesign-f90965d-debug.apk` in the user's Downloads; 0.1.0, minSdk 26).
+- `lintDebug` still has pre-existing errors unrelated to this work.
+- The tablet app language/theme were reset to English/Light after testing.
+
+### Figma (separate from the repo)
+
+File key `v24q8OFYX1D0navj77jrVe`. Page **"Legacy (pre-redesign)"** = the old frames, untouched.
+Page **"Kumbuka v2"** = variables (Light/Dark colour, spacing, radius), text styles, components
+(Button, Chip, StatusPill, TopBar, BottomNav, logo), bare screens, and the prototype.
+- Prototype frames are the **"▶" wrappers** (phone bezel + status bar around a clone of each screen).
+  `▶ D · ...` are the dark twins (colour mode switched). Rating states (none/Blank/Shaky/OK/Solid)
+  and a share-switch on/off frame make ratings and the switch interactive. Chips toggle through
+  component variants and are **not exclusive**.
+- Flow starts: `▶ 00 Splash start` (light), `▶ D · 00 Splash start` (dark), two tablet frames.
+- Play: `https://www.figma.com/proto/v24q8OFYX1D0navj77jrVe/Kumbuka?node-id=256-2863&starting-point-node-id=256-2863&scaling=contain&content-scaling=fixed&hide-ui=1`
+  (dark start node `264-3003`).
+- Audit script result: all 92 phone frames reachable, no dead ends. Present mode's own device frame
+  can't be set through the API, so the phone is built into the frames; set Figma's device to None.
+- Figma gotchas: load fonts before changing text sizing; toggle `layoutSizingHorizontal`
+  HUG->FILL to force relayout; `createAutoLayout` frames have a default white fill; a frame cloned
+  with variable bindings can render stale in screenshots (re-take).
+
+### Tooling gotchas
+
+- Build only via `scripts\build.ps1`. Install with `adb -s <serial> install -r app\build\outputs\apk\debug\app-debug.apk`.
+- Devices: phone serial `22309369` (portrait-locked, `pm clear` and `screenrecord` blocked by
+  ColorOS); tablet `R52T10DCT1H`. `cmd locale set-app-locales` conflicts with the app's own saved
+  language and gives mixed-language UI; change language in Settings instead.
+- Chrome extension: the Figma prototype page is heavy; loading a second prototype link in the same
+  tab froze the renderer repeatedly. Use a fresh tab per prototype load.
+- Write files with the Write tool; heredocs with apostrophes fail in this shell. Never use
+  negative `.dp` padding (it crashed onboarding).
+
+### Next steps (suggested)
+
+1. Make the weight/language/unit chips single-select in Figma (state frames) if wanted.
+2. Release build: signing, shrinker check, a pass over the unverified items above.
+3. Richer Progress charts and per-unit graphs; real-pack Import test.
+4. Decide merge: open a PR from `redesign/usiku-na-jua` into `main` (not done).
+
+---
+
+## Previous: Campus Workspace redesign (superseded by the section above)
 
 The "quiet editorial" UI was replaced by a **Campus Workspace** design (see
 `docs/UI-TOKENS.md`): indigo/violet/amber palette, Plus Jakarta Sans, stable per-unit colours,
