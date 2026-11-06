@@ -140,6 +140,7 @@ val KbDarkPalette = KbPalette(
 fun KbPalette.unitMarker(unitKey: String): Color =
     unitMarkers[unitMarkerIndex(unitKey, unitMarkers.size)]
 
+/** Stable hash so a unit keeps the same marker colour across launches and devices. */
 fun unitMarkerIndex(unitKey: String, size: Int): Int {
     var hash = 0
     unitKey.forEach { hash = (hash * 31 + it.code) and 0x7FFFFFFF }
