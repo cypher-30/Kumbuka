@@ -1,3 +1,4 @@
+// Entity <-> domain-model mappers; the domain layer never sees Room types.
 package dev.kumbuka.app.data.repository
 
 import dev.kumbuka.app.data.local.entity.AssessmentMarkEntity
