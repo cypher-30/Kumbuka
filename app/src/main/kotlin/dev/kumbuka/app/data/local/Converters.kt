@@ -7,6 +7,7 @@ import dev.kumbuka.app.domain.model.DeadlineKind
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+/** Room type converters. Enums are stored by name (readable in DB tools); lists as JSON. */
 class Converters {
     private val json = Json { ignoreUnknownKeys = true }
 
