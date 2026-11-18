@@ -3,7 +3,10 @@ package dev.kumbuka.app.ui.theme
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** 8pt spacing scale for consistent rhythm across screens. */
+/**
+ * 8pt spacing scale for consistent rhythm across screens. Prefer these tokens
+ * over raw `dp` values so padding stays on the same grid everywhere.
+ */
 object KbSpacing {
     val x0: Dp = 0.dp
     val x1: Dp = 8.dp
