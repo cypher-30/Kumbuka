@@ -5,7 +5,8 @@ your units, and for how long learning how fast you personally forget each topic
 instead of using a fixed formula.
 
 Kotlin, Jetpack Compose (Material 3), Room (schema v3), DataStore, Navigation-Compose.
-No accounts, no login, no backend. minSdk 26.
+No accounts, no login, no backend. minSdk 26. It is not a flashcard app and does
+not sync: everything you import or rate stays in a local Room database on the device.
 
 ## Reviewing this work
 
