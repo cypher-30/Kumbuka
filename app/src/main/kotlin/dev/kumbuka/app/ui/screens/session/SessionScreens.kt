@@ -57,6 +57,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import dev.kumbuka.app.R
+import dev.kumbuka.app.domain.scheduler.HlrRecallPredictor
+import dev.kumbuka.app.domain.scheduler.MODEL_TARGET_RECALL
+import dev.kumbuka.app.domain.scheduler.RecallPrediction
 import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
@@ -112,6 +115,7 @@ fun SessionFlowScreen(
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var savingWrite by remember { mutableStateOf(false) }
     var nextTopic by remember { mutableStateOf<NextTopic?>(null) }
+    var modelOutlook by remember { mutableStateOf<RecallPrediction?>(null) }
 
     val currentTopic = topic
     val currentUnit = unit
@@ -310,6 +314,10 @@ fun SessionFlowScreen(
                                                 scope.launch {
                                                     sessionRepository.upsert(updated)
                                                     session = updated
+                                                    modelOutlook = runCatching {
+                                                        val history = sessionRepository.getByTopicOnce(updated.topicId)
+                                                        HlrRecallPredictor.predictRecall(currentTopic ?: return@runCatching null, history, System.currentTimeMillis())
+                                                    }.getOrNull()
                                                     nextTopic = runCatching { loadNextTopic() }.getOrNull()
                                                     savingWrite = false
                                                 }
@@ -318,6 +326,7 @@ fun SessionFlowScreen(
                                     )
                                     null -> SessionDoneCard(
                                         session = currentSession,
+                                        modelOutlook = modelOutlook,
                                         nextTopic = nextTopic,
                                         reminderEnabled = reminderEnabled,
                                         onStartNext = { nextTopic?.let { onStartNext(it.topicId) } },
@@ -620,6 +629,7 @@ private fun formatDuration(millis: Long): String {
 @Composable
 private fun SessionDoneCard(
     session: Session,
+    modelOutlook: RecallPrediction?,
     nextTopic: NextTopic?,
     reminderEnabled: Boolean,
     onStartNext: () -> Unit,
@@ -649,6 +659,23 @@ private fun SessionDoneCard(
                 Text(
                     stringResource(R.string.session_done_change, stringResource(label(before)), stringResource(label(after))),
                     style = MaterialTheme.typography.titleMedium,
+                    color = colors.ink,
+                )
+            }
+            // Explainable AI: the model's updated view of this topic, from the ratings just given.
+            val h = modelOutlook?.halfLifeDays
+            if (h != null) {
+                val fmt: (Double) -> String = { java.lang.String.format(java.util.Locale.getDefault(), "%.1f", it) }
+                val dueAfter = h * kotlin.math.ln(1.0 / MODEL_TARGET_RECALL) / kotlin.math.ln(2.0)
+                Text(
+                    stringResource(
+                        R.string.session_done_model_outlook,
+                        modelOutlook.rightCount ?: 0,
+                        modelOutlook.wrongCount ?: 0,
+                        fmt(h.toDouble()),
+                        fmt(dueAfter),
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = colors.ink,
                 )
             }
