@@ -7,7 +7,6 @@ import dev.kumbuka.app.domain.model.Topic
 import dev.kumbuka.app.domain.model.Unit as UnitModel
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.min
 
 private const val DAY_MILLIS = 86_400_000L
 const val DEFAULT_SESSION_LENGTH_MINUTES = 60
