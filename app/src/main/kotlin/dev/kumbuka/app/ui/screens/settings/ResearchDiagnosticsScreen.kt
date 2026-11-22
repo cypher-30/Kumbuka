@@ -35,7 +35,7 @@ import dev.kumbuka.app.data.repository.SessionRepository
 import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
 import dev.kumbuka.app.domain.analytics.reduceInsights
-import dev.kumbuka.app.domain.scheduler.PlaceholderRecallPredictor
+import dev.kumbuka.app.domain.scheduler.HlrRecallPredictor
 import dev.kumbuka.app.ui.components.KbBanner
 import dev.kumbuka.app.ui.components.KbStatus
 import dev.kumbuka.app.ui.components.KbTopBar
@@ -123,7 +123,7 @@ fun ResearchDiagnosticsScreen(
                         DiagnosticLine(stringResource(R.string.settings_research_fallback_state), fallbackLabel(latest?.fallbackReason))
                         DiagnosticLine(
                             stringResource(R.string.settings_research_predictor),
-                            stringResource(R.string.research_predictor_value, PlaceholderRecallPredictor.VERSION),
+                            stringResource(R.string.research_predictor_value, HlrRecallPredictor.VERSION),
                         )
                     }
                 }
@@ -137,7 +137,7 @@ fun ResearchDiagnosticsScreen(
                             stringResource(R.string.insights_actual_baseline),
                             ((scheduler.actualCounts["baseline"] ?: 0) + (scheduler.actualCounts["baseline_fallback"] ?: 0)).toString(),
                         )
-                        DiagnosticLine(stringResource(R.string.insights_actual_placeholder), (scheduler.actualCounts["placeholder"] ?: 0).toString())
+                        DiagnosticLine(stringResource(R.string.insights_actual_placeholder), ((scheduler.actualCounts["trained"] ?: 0) + (scheduler.actualCounts["placeholder"] ?: 0)).toString())
                         DiagnosticLine(stringResource(R.string.insights_fallbacks), scheduler.fallbackCount.toString())
                         Text(stringResource(R.string.insights_scheduler_note), style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
                     }
