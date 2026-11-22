@@ -9,9 +9,9 @@ No accounts, no login, no backend. minSdk 26.
 
 ## Reviewing this work
 
-The current work is on the branch **`redesign/usiku-na-jua`** (the "Usiku na Jua" redesign);
-`main` still shows the earlier state. Start with **[`HANDOFF.md`](HANDOFF.md)**: its first
-section lists what changed, what was verified on real devices, and the known gaps.
+All current work is on **`main`**: the "Usiku na Jua" redesign (merged in PR #1) and the
+trained recall model. Start with **[`HANDOFF.md`](HANDOFF.md)**: its first sections list what
+changed, what was verified on real devices, and the known gaps.
 
 Source lives under `app/src/main/kotlin/dev/kumbuka/app/`:
 
@@ -45,11 +45,15 @@ rail and a two-pane layout.
 
 ## Implementation status (read before assuming a claim below is live)
 
-- **No trained model ships in this app.** The "learned" scheduler arm currently runs
-  `PlaceholderRecallPredictor` (`domain/scheduler/TodayScheduler.kt`), a hand-set, versioned
-  exponential-decay stand-in — not a trained model. Every prediction, log row, and Progress/
-  research-controls surface labels it as placeholder. The real model is trained in the separate
-  `SemProject_MLEngine` repository; wiring that trained artifact into this app is future work.
+- **The Learned scheduler arm runs a trained model.** `HlrRecallPredictor` (`hlr-v2`,
+  `domain/scheduler/TodayScheduler.kt`) is a half-life regression fitted on Duolingo review data in
+  the separate `SemProject_MLEngine` repository; its coefficients are copied into the app and unit
+  tests check it against the notebook's own test values. A topic is suggested once its predicted
+  chance of remembering drops below 90%. Topics with no rated review yet fall back to the baseline
+  formula, and every log row records whether the baseline, the trained model or the old
+  placeholder produced it. "Why this?" and the Session Done screen show the model's inputs and
+  working. The baseline formula is still the default displayed arm; the Learned arm is chosen in
+  the hidden Research diagnostics.
 - **Research data is opt-in.** Study participation is unticked by default, and personal goals
   never count toward research data or the CSV export.
 - **Native splash limitations**: startup uses one platform-owned `core-splashscreen` sequence

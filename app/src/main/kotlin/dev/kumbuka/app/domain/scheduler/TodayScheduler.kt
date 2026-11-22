@@ -24,12 +24,95 @@ enum class SchedulerArmKind { BASELINE, PLACEHOLDER }
 data class RecallPrediction(
     val probability: Float,
     val version: String,
+    /** What really produced this number: "placeholder" (hand-set) or "trained" (learned from data). */
+    val source: String = "placeholder",
+    /** Explainable-AI inputs, filled by the trained model so "Why this?" can show its working. */
+    val halfLifeDays: Float? = null,
+    val rightCount: Int? = null,
+    val wrongCount: Int? = null,
+    val daysSinceReview: Float? = null,
 )
 
 interface RecallPredictor {
+    /** Rated reviews needed before this predictor will run; below it the arm falls back to baseline ("cold_start"). */
+    val minRatedReviews: Int get() = MIN_RATED_REVIEWS_FOR_PLACEHOLDER
+
     /** Returns null when this predictor has no eligible history to predict from. */
     fun predictRecall(topic: Topic, history: List<Session>, nowMillis: Long): RecallPrediction?
 }
+
+/**
+ * The trained model: half-life regression (Settles & Meeder, 2016) fitted on the Duolingo
+ * review dataset in `HalfLifeRegression_Final.ipynb` (repo `SemProject_MLEngine`). The three
+ * learned numbers below are copied from that notebook's `kumbuka_hlr_v2.json` export, and
+ * `TodaySchedulerTest` checks this code against the notebook's own test values.
+ *
+ * Inputs from a topic's history (completed, rated, non-deferred reviews only):
+ * - right = reviews whose "before" self-rating was OK or Solid (the student could recall it),
+ * - wrong = reviews rated Blank or Shaky,
+ * - t = days (fractional) since the most recent of those reviews.
+ *
+ * Half-life h = 2^(intercept + wRight*sqrt(1+right) + wWrong*sqrt(1+wrong)) days, clipped to
+ * [15 minutes, 274 days]; chance of remembering now p = 2^(-t/h).
+ */
+object HlrRecallPredictor : RecallPredictor {
+    const val VERSION = "hlr-v2"
+    const val INTERCEPT = 5.938361999953164
+    const val W_RIGHT = 0.09741891008618403
+    const val W_WRONG = -0.602679947698708
+    const val H_MIN_DAYS = 15.0 / (60.0 * 24.0)
+    const val H_MAX_DAYS = 274.0
+
+    override val minRatedReviews: Int get() = MIN_RATED_REVIEWS_FOR_MODEL
+
+    /** The pure formula, shared with the unit test that mirrors the notebook. Bad inputs are clamped, never thrown. */
+    fun halfLifeDays(right: Int, wrong: Int): Double {
+        val r = right.coerceAtLeast(0)
+        val w = wrong.coerceAtLeast(0)
+        val log2h = INTERCEPT + W_RIGHT * kotlin.math.sqrt(1.0 + r) + W_WRONG * kotlin.math.sqrt(1.0 + w)
+        return Math.pow(2.0, log2h).coerceIn(H_MIN_DAYS, H_MAX_DAYS)
+    }
+
+    fun recall(right: Int, wrong: Int, daysSince: Double): Double {
+        val t = if (daysSince.isNaN()) 0.0 else daysSince.coerceAtLeast(0.0) // a clock set backwards must not give p > 1
+        return Math.pow(2.0, -t / halfLifeDays(right, wrong)).coerceIn(0.0, 1.0)
+    }
+
+    override fun predictRecall(topic: Topic, history: List<Session>, nowMillis: Long): RecallPrediction? {
+        val rated = ratedCompletedReviews(history)
+        if (rated.size < MIN_RATED_REVIEWS_FOR_MODEL) return null
+        val right = rated.count { (it.confidenceBefore?.score ?: 0) >= Confidence.OK.score }
+        val wrong = rated.size - right
+        val latest = rated.maxOf { it.endedAt ?: it.startedAt }
+        val daysSince = (nowMillis - latest).coerceAtLeast(0L) / DAY_MILLIS.toDouble()
+        val h = halfLifeDays(right, wrong)
+        val p = recall(right, wrong, daysSince)
+        if (p.isNaN()) return null
+        return RecallPrediction(
+            probability = p.toFloat(),
+            version = VERSION,
+            source = "trained",
+            halfLifeDays = h.toFloat(),
+            rightCount = right,
+            wrongCount = wrong,
+            daysSinceReview = daysSince.toFloat(),
+        )
+    }
+}
+
+/** One rated review is enough: the trained model needs a last-review time, not a long history. */
+const val MIN_RATED_REVIEWS_FOR_MODEL = 1
+
+/**
+ * The model arm's due rule: revise a topic once its predicted chance of remembering falls below
+ * this target. 90% is the usual default in spaced-repetition tools, and it errs early because
+ * the model was overconfident on the Anki check (said ~95% where reality was ~79%).
+ */
+const val MODEL_TARGET_RECALL = 0.90f
+
+/** Memory term for the trained arm: equals [DUE_SCORE_THRESHOLD] exactly when p == [MODEL_TARGET_RECALL]. */
+fun trainedMemoryNeed(probability: Float): Float =
+    DUE_SCORE_THRESHOLD * (1f - probability.coerceIn(0f, 1f)) / (1f - MODEL_TARGET_RECALL)
 
 /** The hand-written formula itself - never predicts a recall probability. */
 object BaselineRecallPredictor : RecallPredictor {
@@ -117,9 +200,14 @@ data class ScoreBreakdown(
     val arm: SchedulerArmKind = SchedulerArmKind.BASELINE,
     val predictedRecall: Float? = null,
     val predictorVersion: String? = null,
-    /** "baseline", "placeholder", or "baseline_fallback" when the placeholder arm was requested but had no eligible history. */
+    /** "baseline", "trained", "placeholder" (old hand-set stand-in), or "baseline_fallback" when the model arm had no eligible history. */
     val actualSource: String = "baseline",
     val fallbackReason: String? = null,
+    /** Explainable-AI inputs from the trained model; null on the baseline arm or a fallback. */
+    val modelHalfLifeDays: Float? = null,
+    val modelRightCount: Int? = null,
+    val modelWrongCount: Int? = null,
+    val modelDaysSinceReview: Float? = null,
 ) {
     /**
      * The single largest scoring pressure behind this ranking, expressed as a category rather
@@ -286,7 +374,7 @@ fun scoreTopicForArm(
 
     val prediction = predictor.predictRecall(topic, history, nowMillis)
     if (prediction == null) {
-        val reason = if (ratedCompletedReviews(history).size < MIN_RATED_REVIEWS_FOR_PLACEHOLDER) {
+        val reason = if (ratedCompletedReviews(history).size < predictor.minRatedReviews) {
             "cold_start"
         } else {
             "predictor_unavailable"
@@ -300,15 +388,26 @@ fun scoreTopicForArm(
         )
     }
 
-    val score = 0.60f * (1f - prediction.probability) + 0.30f * baseline.breakdown.urgency + 0.10f * baseline.breakdown.avoidance
+    // The trained arm ranks by memory need against the 90% target (see MODEL_TARGET_RECALL);
+    // the old placeholder keeps its original formula so its logged comparisons stay valid.
+    val memoryTerm = if (prediction.source == "trained") {
+        trainedMemoryNeed(prediction.probability)
+    } else {
+        0.60f * (1f - prediction.probability)
+    }
+    val score = memoryTerm + 0.30f * baseline.breakdown.urgency + 0.10f * baseline.breakdown.avoidance
     return baseline.copy(
         breakdown = baseline.breakdown.copy(
             score = score,
             arm = SchedulerArmKind.PLACEHOLDER,
             predictedRecall = prediction.probability,
             predictorVersion = prediction.version,
-            actualSource = "placeholder",
+            actualSource = prediction.source,
             fallbackReason = null,
+            modelHalfLifeDays = prediction.halfLifeDays,
+            modelRightCount = prediction.rightCount,
+            modelWrongCount = prediction.wrongCount,
+            modelDaysSinceReview = prediction.daysSinceReview,
         ),
     )
 }
@@ -337,7 +436,7 @@ fun evaluateBothArms(
     sessionLengthMinutes: Int,
     nowMillis: Long,
     requestedArm: SchedulerArmKind,
-    placeholderPredictor: RecallPredictor = PlaceholderRecallPredictor,
+    placeholderPredictor: RecallPredictor = HlrRecallPredictor,
 ): Pair<ArmEvaluation, ArmEvaluation> {
     val baseline = evaluateArm(units, topics, sessions, deadlines, sessionLengthMinutes, nowMillis, SchedulerArmKind.BASELINE, requestedArm, BaselineRecallPredictor)
     val placeholder = evaluateArm(units, topics, sessions, deadlines, sessionLengthMinutes, nowMillis, SchedulerArmKind.PLACEHOLDER, requestedArm, placeholderPredictor)

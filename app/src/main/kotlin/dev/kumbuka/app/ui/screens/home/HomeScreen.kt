@@ -65,7 +65,7 @@ import dev.kumbuka.app.data.repository.TopicRepository
 import dev.kumbuka.app.data.repository.UnitRepository
 import dev.kumbuka.app.domain.model.Session
 import dev.kumbuka.app.domain.model.Unit as UnitModel
-import dev.kumbuka.app.domain.scheduler.PlaceholderRecallPredictor
+import dev.kumbuka.app.domain.scheduler.HlrRecallPredictor
 import dev.kumbuka.app.domain.scheduler.SchedulerArmKind
 import dev.kumbuka.app.domain.scheduler.TodayCard
 import dev.kumbuka.app.domain.scheduler.buildTodayPlan
@@ -142,7 +142,7 @@ fun HomeScreen(
             deadlines = planDeadlines,
             sessionLengthMinutes = sessionLengthMinutes,
             arm = requestedArm,
-            predictor = PlaceholderRecallPredictor,
+            predictor = HlrRecallPredictor,
         )
     }
     val unitIdByTopicId = remember(topics) { topics.associateBy({ it.id }, { it.unitId }) }
@@ -194,7 +194,7 @@ fun HomeScreen(
                 sessionLengthMinutes = sessionLengthMinutes,
                 nowMillis = nowMillis,
                 requestedArm = requestedArm,
-                placeholderPredictor = PlaceholderRecallPredictor,
+                placeholderPredictor = HlrRecallPredictor,
             )
             val planId = schedulerLogRepository.logPlan(
                 baseline = baseline,
