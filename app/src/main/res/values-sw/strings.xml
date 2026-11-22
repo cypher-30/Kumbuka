@@ -47,7 +47,7 @@
     <string name="progress_weekly_row">%1$s • vipindi %2$d</string>
     <string name="comparison_title">Ulinganisho</string>
     <string name="comparison_active_arm">Tawi la ratiba linalotumika: %1$s</string>
-    <string name="comparison_no_model">Bado hakuna mfano uliofunzwa uliopakiwa. Kwa sasa Kumbuka inatumia fomula ya msingi kupanga mada zote.</string>
+    <string name="comparison_no_model">Mkono wa Iliyojifunza unatumia mfano uliofunzwa wa half-life regression (umejifunza kutoka data ya marudio ya Duolingo). Mada ambazo bado hazina marudio yaliyokadiriwa zinatumia fomula ya msingi.</string>
     <string name="comparison_predictor_state">Hali ya mtabiri - msingi: %1$s, uliojifunza: %2$s</string>
 
     <!-- Phase 10: Settings + Reminders + Search -->
@@ -69,7 +69,7 @@
     <string name="settings_about_title">Kuhusu na faragha</string>
     <string name="settings_about_subtitle">Kumbuka %1$s • data ya hapa kifaa pekee</string>
     <string name="settings_research_controls_title">Vidhibiti vya utafiti</string>
-    <string name="settings_research_controls_body">Vidhibiti hivi ni vya kulinganisha ratiba ya msingi na predictor ya placeholder isiyofunzwa.</string>
+    <string name="settings_research_controls_body">Vidhibiti hivi ni vya kulinganisha ratiba ya msingi na mfano uliofunzwa (half-life regression).</string>
     <string name="settings_research_requested_arm">Tawi lililoombwa</string>
     <string name="settings_research_actual_source">Chanzo halisi kilichotumika</string>
     <string name="settings_research_predictor">Hali ya predictor</string>
@@ -268,10 +268,10 @@
     <string name="insights_same_day_note">Vipindi vya siku ileile vinaondolewa kwenye ulinganisho wa kujiamini na alama kwa sababu alama huhifadhiwa kama tarehe pekee.</string>
     <string name="insights_not_enough_data">Bado hakuna data ya kutosha kutoa ulinganisho wenye manufaa hapa.</string>
     <string name="insights_requested_baseline">Mapendekezo ya msingi yaliyoombwa</string>
-    <string name="insights_requested_placeholder">Mapendekezo ya placeholder yaliyoombwa</string>
+    <string name="insights_requested_placeholder">Mapendekezo ya mfano yaliyoombwa</string>
     <string name="insights_actual_baseline">Mapendekezo yaliyohusishwa na msingi kwa kweli</string>
-    <string name="insights_actual_placeholder">Mapendekezo yaliyohusishwa na placeholder kwa kweli</string>
-    <string name="insights_fallbacks">Fallback za placeholder</string>
+    <string name="insights_actual_placeholder">Mapendekezo yaliyotolewa na mfano kwa kweli</string>
+    <string name="insights_fallbacks">Mara mfano ulirudi kwa fomula ya msingi</string>
     <string name="insights_scheduler_note">Hesabu hizi zinaeleza kile programu ilichagua na kuhifadhi. Hazionyeshi umuhimu wa takwimu wala kuthibitisha athari ya kisababishi.</string>
     <string name="insights_mark_score">Alama: %1$.1f%%</string>
     <string name="insights_mark_not_enough_data">Hakuna ratings za kutosha kabla ya tathmini hii (mada %1$d/%2$d zimefunikwa).</string>
@@ -526,7 +526,7 @@
     <string name="research_title">Uchunguzi wa utafiti</string>
     <string name="research_entry_body">Mkono wa kipanga ratiba na idadi ya mapendekezo yaliyorekodiwa</string>
     <string name="research_latest_title">Pendekezo la hivi karibuni</string>
-    <string name="research_predictor_value">%1$s (kishika nafasi, hakijafunzwa)</string>
+    <string name="research_predictor_value">%1$s (umefunzwa: half-life regression)</string>
     <string name="topic_edit_objective">Hariri lengo</string>
     <string name="topic_last_review_rated">Ilirudiwa mwisho %1$s · ukadiriaji %2$s</string>
     <string name="topic_weight_line">Uzito wa mtihani %1$.2f</string>
@@ -640,4 +640,13 @@
     <string name="create_discard_body">Ulichoandika kitapotea.</string>
     <string name="create_discard_confirm">Tupa</string>
     <string name="units_goal_pill">Lengo</string>
+    <string name="why_model_title">Mfano unaona nini</string>
+    <string name="why_model_counts">Uliikadiria Sawa au Imara mara %1$d na Sifuri au Dhaifu mara %2$d kabla ya kurudia.</string>
+    <string name="why_model_half_life">Kutokana na historia hiyo, mfano unatarajia kumbukumbu yako itashuka hadi nafasi ya 50/50 baada ya takriban siku %1$s.</string>
+    <string name="why_model_since">Zimepita siku %1$s tangu marudio yako ya mwisho, kwa hivyo nafasi ya bado kukumbuka ni takriban %2$d%%.</string>
+    <string name="why_model_rule">Kumbuka inapendekeza kurudia nafasi hiyo inaposhuka chini ya 90%.</string>
+    <string name="why_model_source">Mfano: half-life regression, umefunzwa kwa data ya marudio ya Duolingo (%1$s).</string>
+    <string name="why_model_fallback">Mfano unahitaji angalau marudio moja yaliyokadiriwa ya mada hii, kwa hivyo pendekezo hili linatumia fomula ya msingi kwa sasa.</string>
+    <string name="today_why_dominant_model">Hasa kwa sababu mfano unatabiri unaanza kuisahau.</string>
+    <string name="session_done_model_outlook">Mfano umesasishwa: Sawa au Imara mara %1$d na Sifuri au Dhaifu mara %2$d, kwa hivyo sasa unatarajia mada hii idumu takriban siku %3$s kabla ya nafasi ya 50/50. Kumbuka itairudisha baada ya takriban siku %4$s.</string>
 </resources>
