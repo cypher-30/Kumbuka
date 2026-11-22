@@ -2,8 +2,6 @@ package dev.kumbuka.app.data.repository
 
 import dev.kumbuka.app.data.local.dao.SchedulerEvaluationDao
 import dev.kumbuka.app.data.local.entity.SchedulerEvaluationEntity
-import dev.kumbuka.app.domain.model.AssessmentMark
-import dev.kumbuka.app.domain.model.Session
 import dev.kumbuka.app.domain.scheduler.ArmEvaluation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
