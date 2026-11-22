@@ -113,6 +113,44 @@ private fun dominantPressureText(pressure: DominantPressure): String = when (pre
     DominantPressure.AVOIDANCE -> stringResource(R.string.today_why_dominant_avoidance)
 }
 
+/**
+ * Explainable-AI panel for the trained (Learned) arm: shows the model's inputs (right/wrong
+ * counts, days since review) and its working (half-life, chance of remembering, the 90% rule).
+ * Shows a short fallback note when the Learned arm had to use the baseline formula, and
+ * nothing at all on the baseline arm.
+ */
+@Composable
+private fun ModelExplanation(card: TodayCard) {
+    val colors = LocalKbColors.current
+    val b = card.breakdown
+    val trained = b.actualSource == "trained" && b.predictedRecall != null && b.modelHalfLifeDays != null
+    val fallback = b.actualSource == "baseline_fallback"
+    if (!trained && !fallback) return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.paper, androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(stringResource(R.string.why_model_title), style = MaterialTheme.typography.titleSmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), color = colors.ink)
+        if (fallback) {
+            Text(stringResource(R.string.why_model_fallback), style = MaterialTheme.typography.bodyMedium, color = colors.inkMuted)
+            return@Column
+        }
+        val oneDecimal: (Float) -> String = { java.lang.String.format(java.util.Locale.getDefault(), "%.1f", it) }
+        Text(stringResource(R.string.why_model_counts, b.modelRightCount ?: 0, b.modelWrongCount ?: 0), style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+        Text(stringResource(R.string.why_model_half_life, oneDecimal(b.modelHalfLifeDays ?: 0f)), style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+        Text(
+            stringResource(R.string.why_model_since, oneDecimal(b.modelDaysSinceReview ?: 0f), kotlin.math.round((b.predictedRecall ?: 0f) * 100f).toInt()),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.ink,
+        )
+        Text(stringResource(R.string.why_model_rule), style = MaterialTheme.typography.bodyMedium, color = colors.ink)
+        Text(stringResource(R.string.why_model_source, b.predictorVersion.orEmpty()), style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+    }
+}
+
 /** Plain-language explanation of a recommendation, with a direct Start action. */
 @Composable
 fun WhyThisSheet(card: TodayCard, unitKey: String, onDismiss: () -> Unit, onStart: () -> Unit, calendarDueDays: Long? = null) {
@@ -141,9 +179,15 @@ fun WhyThisSheet(card: TodayCard, unitKey: String, onDismiss: () -> Unit, onStar
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(dominantPressureText(card.breakdown.dominantPressure()), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), color = colors.onPrimaryTint)
+                // When the trained model chose this topic and memory (not a deadline) is the main reason, say so.
+                val modelLed = card.breakdown.actualSource == "trained" &&
+                    card.breakdown.dominantPressure() != DominantPressure.URGENCY &&
+                    (card.breakdown.predictedRecall ?: 1f) < dev.kumbuka.app.domain.scheduler.MODEL_TARGET_RECALL
+                val headline = if (modelLed) stringResource(R.string.today_why_dominant_model) else dominantPressureText(card.breakdown.dominantPressure())
+                Text(headline, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), color = colors.onPrimaryTint)
                 Text(todayReasonText(card, calendarDueDays), style = MaterialTheme.typography.bodyMedium, color = colors.onPrimaryTint)
             }
+            ModelExplanation(card)
             KbPrimaryButton(text = stringResource(R.string.home_start_revision_minutes, card.minutes), onClick = onStart)
             KbSecondaryButton(text = stringResource(R.string.generic_close), onClick = onDismiss)
             Spacer(Modifier.height(16.dp))
