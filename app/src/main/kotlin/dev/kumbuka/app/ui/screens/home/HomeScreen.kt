@@ -38,8 +38,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.UploadFile
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExtendedFloatingActionButton
