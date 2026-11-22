@@ -1,9 +1,42 @@
 # Kumbuka — session handoff
 
-## Latest: "Usiku na Jua" redesign (read this first)
+## Repository state (2026-11-22)
 
-**Branch:** `redesign/usiku-na-jua` (pushed to `origin`, no PR opened). Commit `f90965d` sits on
-`fe3e5e7`. `main` is untouched. Nothing is merged.
+- **Everything is on `main`.** PR #1 merged `redesign/usiku-na-jua` into `main` on 2026-11-05, and the
+  trained-model work below was committed straight to `main` (6 commits by Travis Njenga `Trav1s5` and
+  Jeremy `Byterem`). `redesign/usiku-na-jua` points at the same commit as `main`; `whynot` is an older
+  point on the same line. Work on `main` from now on unless told otherwise.
+- **History was rewritten on 2026-11-22** to drop `Co-authored-by: Copilot` trailers (so Copilot no
+  longer shows as a contributor). Code, authors and dates are unchanged, but every commit ID changed;
+  the hashes in this file are the new ones. Old clones must re-clone or
+  `git fetch && git reset --hard origin/main`. PR #1 on GitHub still lists the old commit IDs.
+
+## Trained model wired into the Learned arm (2026-11-20, committed 2026-11-22)
+
+- `domain/scheduler/TodayScheduler.kt`: `HlrRecallPredictor` (`hlr-v2`, half-life regression; coefficients from
+  the `kumbuka_hlr_v2.json` export of `HalfLifeRegression_Final.ipynb` in `SemProject_MLEngine`) is now the Learned arm's predictor (`HomeScreen`,
+  `evaluateBothArms` default). `PlaceholderRecallPredictor` stays in code for old comparisons and tests.
+- Inputs: completed, rated, non-deferred reviews; `confidenceBefore` OK/Solid = right, Blank/Shaky = wrong; t in
+  fractional days, clamped >= 0. Needs `MIN_RATED_REVIEWS_FOR_MODEL` (1); else `baseline_fallback`/`cold_start`.
+- Scoring: `trainedMemoryNeed(p) + 0.30*urgency + 0.10*avoidance`, where the memory term equals the 0.35 due threshold
+  exactly at p = `MODEL_TARGET_RECALL` (0.90). The old `0.60*(1-p)` could never make a topic due (model p stays > 0.66
+  for a month). Placeholder predictions keep the old formula.
+- `actualSource` is now `"trained"` for model rows (stored arm/pref values stay `"placeholder"` to avoid a migration).
+  Research diagnostics counts trained + placeholder together; predictor line shows `hlr-v2`.
+- "Why this?" (`Labels.kt` `ModelExplanation`): right/wrong counts, half-life, days since review, chance of
+  remembering, the 90% rule, model source; a fallback note on cold start; headline switches to the model reason.
+  8 new EN/SW strings (563/563 `<string>` keys).
+- Session Done screen: a "Model update" line (new right/wrong counts, half-life, days until due), computed with
+  `HlrRecallPredictor` right after the final rating (`session_done_model_outlook`, EN+SW, 564/564 keys).
+- Tests: 51 pass, incl. `hlr_matchesNotebookTestCases` (values copied from the notebook export).
+- Verified on emulator `Kumbuka_Test` (light + dark, no grey status band) with demo history and Learned arm.
+  Not verified on the physical phone. Emulator theme was left on Dark.
+
+
+## "Usiku na Jua" redesign
+
+**Branch:** built on `redesign/usiku-na-jua` (commit `c1a87e5`, on top of `ec920c6`) and merged into
+`main` through PR #1.
 
 This pass replaced the Campus Workspace look with the Claude Design redesign (Claude Design project
 `19535662-7f6e-4a0b-afb3-b545a907af3d`, files `Kumbuka Prototype.dc.html` and `Kumbuka Brand.dc.html`),
@@ -62,7 +95,7 @@ Claude Design" is good enough, not a pixel replica.
 
 ### Tests
 
-45 unit tests, all passing at `f90965d` (`.\scripts\build.ps1 assembleDebug testDebugUnitTest`).
+45 unit tests, all passing at `c1a87e5` (`.\scripts\build.ps1 assembleDebug testDebugUnitTest`).
 New: `OutlineParserTest`, `ReviewLogExporterTest`, `completedToday` in `WorkspaceLogicTest`.
 EN/SW string parity: 569/569 keys. Always add every string to both locales.
 
@@ -118,7 +151,8 @@ Page **"Kumbuka v2"** = variables (Light/Dark colour, spacing, radius), text sty
 1. Make the weight/language/unit chips single-select in Figma (state frames) if wanted.
 2. Release build: signing, shrinker check, a pass over the unverified items above.
 3. Richer Progress charts and per-unit graphs; real-pack Import test.
-4. Decide merge: open a PR from `redesign/usiku-na-jua` into `main` (not done).
+4. ~~Decide merge~~: done (PR #1 merged into `main`).
+5. Verify the trained-model screens ("Why this?" panel, Session Done "Model update") on the physical phone.
 
 ---
 
@@ -157,7 +191,7 @@ read Home/Assessments/Settings route/Progress as above.
 
 This handoff replaces all prior phase-numbered notes below the "Superseded history" section.
 It reflects the production-readiness pass done on branch `whynot` starting from baseline
-commit `80b5ff2`, driven by a 14-todo plan covering: removing login, no fake sample data, a
+commit `c2d7d5d`, driven by a 14-todo plan covering: removing login, no fake sample data, a
 four-tab shell (Today/Units/Marks/Settings), reworked Today and Session screens, an expanded
 Marks tab (CATs + assignments + exams + past papers), dual-arm scheduler logging with a
 placeholder model, an Insights screen replacing Progress, a simpler Settings screen, a simpler
@@ -213,6 +247,10 @@ locked-in notes below):
 
 ## Placeholder scheduler arm and the real-model adapter contract
 
+> **Superseded (2026-11-20):** the trained model is now wired in as `HlrRecallPredictor`; see
+> "Trained model wired into the Learned arm" at the top. The notes below describe the placeholder
+> and are kept for its historical comparisons.
+
 - `PlaceholderRecallPredictor` (`domain/scheduler/TodayScheduler.kt`, `VERSION = "placeholder-v1"`)
   is a deterministic, hand-set exponential-decay stand-in seeded from the student's last rated
   after-confidence. It requires `MIN_RATED_REVIEWS_FOR_PLACEHOLDER` (3) completed, non-deferred,
@@ -267,27 +305,27 @@ on malformed content.
 
 ## What's done (all 14 planning todos)
 
-1. `execution-baseline` — confirmed green `compileDebugKotlin`/`testDebugUnitTest` at `80b5ff2`.
+1. `execution-baseline` — confirmed green `compileDebugKotlin`/`testDebugUnitTest` at `c2d7d5d`.
 2. `history-research-storage` — topic archive flag, additive v1→v2 migration, plan/evaluation
-   persistence schema (`c8daf11`).
-3. `dual-arm-scheduler` — both-arm planning + `PlaceholderRecallPredictor` (`c8daf11`).
+   persistence schema (`e27afba`).
+3. `dual-arm-scheduler` — both-arm planning + `PlaceholderRecallPredictor` (`e27afba`).
 4. `optional-samples` — removed automatic seeding; opt-in "Try a sample pack" action only
-   (`c8daf11`).
+   (`e27afba`).
 5. `startup-onboarding` — native splash, merged single-page onboarding, removed Consent/Login
-   routes (`b3cc6b5`).
+   routes (`c203163`).
 6. `four-tab-shell` — `HomeScreen.kt` shell + Today/Units/Marks/Settings extraction, Insights
-   route, removed the now-unreachable standalone Units route (`0461085`, `a3e08cc`).
+   route, removed the now-unreachable standalone Units route (`48cc6b3`, `b25cfc6`).
 7. `today-reasons` — quiet fact-based reason rows, "Why this?" sheet, no raw scores in ordinary
-   UI (`6972c9a`).
+   UI (`4c68ef9`).
 8. `focused-session` — archived-topic guard, double-tap write guard, large accessible
-   `ConfidenceChoice` picker (`6a382a1`).
+   `ConfidenceChoice` picker (`d9ee7a2`).
 9. `marks-tab` — CAT/assignment/exam/past-paper support, transactional upsert, full mark list
-   (`71dc5ea`).
+   (`3c89e8e`).
 10. `honest-insights` — deterministic `InsightsReducer.kt` replacing Progress's mixed UI math
-    (`defcf5c`).
-11. `simple-settings` — one grouped list, hidden research-controls gesture (`cc738d7`).
+    (`760bb81`).
+11. `simple-settings` — one grouped list, hidden research-controls gesture (`17878fe`).
 12. `simple-import` — file-first import, skip-diff for new packs, `ACTION_VIEW` wiring
-    (`1ce40ed`, dead-string cleanup in `6a6a125`).
+    (`c1fdb27`, dead-string cleanup in `0f0b28e`).
 13. `polish-docs` — this document, `README.md` status note, `docs/UI-TOKENS.md` additions
     (added `titleSmall` — it was referenced across ~15 call sites but never defined in
     `KumbukaTypography`, silently falling back to Material3's default Roboto style).
@@ -346,7 +384,7 @@ device/emulator, since none was available during this pass."
 
 ---
 
-## Superseded history (pre-`80b5ff2`, kept for archaeology only)
+## Superseded history (pre-`c2d7d5d`, kept for archaeology only)
 
 The sections below describe an earlier phase-numbered build (Login/Consent/Onboarding pager,
 `TodayScreen.kt` as a single monolith, Progress/Exams placeholder tabs). All of it has since been
